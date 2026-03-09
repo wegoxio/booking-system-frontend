@@ -1,35 +1,24 @@
 "use client";
 
 import { ReactNode, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  Building2,
-  LayoutDashboard,
-  ReceiptText,
-  Settings,
-  Users,
-} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import DashboardNavbar from "@/modules/layout/components/DashboardNavbar";
 import DashboardSidebar, {
-  DashboardNavItem,
 } from "@/modules/layout/components/DashboardSidebar";
+import {
+  getDashboardNavItems,
+  isRoleAllowedPath,
+} from "@/modules/layout/config/dashboard-nav";
 
 type DashboardShellProps = {
   children: ReactNode;
 };
 
-const navItems: DashboardNavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/tenants", label: "Tenants", icon: Building2 },
-  { href: "/dashboard/users", label: "Users", icon: Users },
-  { href: "/dashboard/audit-logs", label: "Audit Logs", icon: ReceiptText },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
-];
-
 export default function DashboardShell({ children }: DashboardShellProps) {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const pathname = usePathname();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -37,6 +26,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
       router.replace("/");
     }
   }, [isLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (!isLoading && user && !isRoleAllowedPath(user.role, pathname)) {
+      router.replace("/dashboard");
+    }
+  }, [isLoading, user, pathname, router]);
 
   if (isLoading) {
     return (
@@ -47,6 +42,10 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   }
 
   if (!isAuthenticated) return null;
+  if (!user) return null;
+  if (!isRoleAllowedPath(user.role, pathname)) return null;
+
+  const navItems = getDashboardNavItems(user.role);
 
   return (
     <div className="min-h-screen bg-[#d6d6db]">

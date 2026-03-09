@@ -85,6 +85,10 @@ export default function LoginForm() {
                             <Button type="submit" disabled={isLoading} className="bg-amber-300 p-3 w-full rounded-lg text-gray-200 transition-all hover:bg-amber-400 cursor-pointer">
                                 {isLoading ? "Entrando..." : "Entrar"}
                             </Button>
+
+                            {errorMessage && (
+                                <p className="text-sm text-red-600">{errorMessage}</p>
+                            )}
                         </form>
                     </div>
                 </div>

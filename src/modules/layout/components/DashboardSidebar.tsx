@@ -61,14 +61,15 @@ export default function DashboardSidebar({
 
           <nav className="space-y-1.5">
             {items.map((item) => {
+              const itemHref = item.href || "/dashboard";
               const isActive =
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
+                pathname === itemHref || pathname.startsWith(`${itemHref}/`);
               const Icon = item.icon;
 
               return (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={itemHref}
                   onClick={onClose}
                   className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                     isActive

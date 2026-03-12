@@ -37,9 +37,6 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
         >
           <Menu className="h-4 w-4" />
         </button>
-
-        <img src="/wegox-logo.svg" alt="Wegox" className="h-5 w-5" />
-        <span className="text-sm font-medium text-[#3b404c]">Dashboard</span>
       </div>
 
       <div className="flex items-center gap-2">

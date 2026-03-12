@@ -3,7 +3,15 @@
 import { authService } from "@/modules/auth/services/auth.service";
 import { LoginPayload } from "@/types/auth.types";
 import { User } from "@/types/user.types";
-import { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import {
+    createContext,
+    ReactNode,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 
 interface AuthContextType {
     user: User | null;
@@ -43,12 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(TOKEN_KEY);
     }
 
-    const refreshUser = async () => {
+    const refreshUser = useCallback(async () => {
         if (!token) return;
 
         const me = await authService.getAuthenticatedUser(token);
         setUser(me);
-    }
+    }, [token]);
     useEffect(() => {
         const initAuth = async () => {
             try {
@@ -86,7 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             logout,
             refreshUser,
         }),
-        [user, token, isLoading]
+        [user, token, isLoading, refreshUser]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

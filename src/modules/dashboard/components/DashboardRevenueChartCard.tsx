@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { revenueBookingsData } from "./dashboard-mock-data";
+import { revenueBookingsData } from "../mocks/dashboard-mock-data";
 
 export default function DashboardRevenueChartCard() {
   return (

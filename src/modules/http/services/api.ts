@@ -25,9 +25,12 @@ export async function apiFetch<t>(
 
     if(!response.ok){
         const errorData = await response.json().catch(()=>null);
+        const message = Array.isArray(errorData?.message)
+            ? errorData.message.join(", ")
+            : errorData?.message;
 
         throw new Error(
-            errorData?.message || `Error ${response.status}: ${response.statusText}`
+            message || `Error ${response.status}: ${response.statusText}`
         );
     }
 

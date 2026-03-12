@@ -1,7 +1,7 @@
 import { Check, ChevronDown } from "lucide-react";
 import Avatar from "@/modules/ui/Avatar";
 import Card from "@/modules/ui/Card";
-import type { AuditLogItem } from "./dashboard-mock-data";
+import { AuditLogItem } from "../mocks/dashboard-mock-data";
 
 type RecentAuditLogsCardProps = {
   title: string;

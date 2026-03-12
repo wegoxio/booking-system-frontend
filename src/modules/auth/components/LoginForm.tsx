@@ -62,26 +62,6 @@ export default function LoginForm() {
                                 onChange={(e) => setPassword(e.target.value)}
                             />
 
-                            <div className="flex items-start">
-                                <div className="flex h-5 items-center">
-                                    <input
-                                        id="terms"
-                                        aria-describedby="terms"
-                                        type="checkbox"
-                                        className="checkbox-input"
-                                        required={true}
-                                    />
-                                </div>
-                                <div className="ml-3 text-sm">
-                                    <label htmlFor="terms" className="checkbox-label">
-                                        I accept the{" "}
-                                        <a className="link-primary" href="#">
-                                            Terms and Conditions
-                                        </a>
-                                    </label>
-                                </div>
-                            </div>
-
                             <Button type="submit" disabled={isLoading} className="bg-amber-300 p-3 w-full rounded-lg text-gray-200 transition-all hover:bg-amber-400 cursor-pointer">
                                 {isLoading ? "Entrando..." : "Entrar"}
                             </Button>

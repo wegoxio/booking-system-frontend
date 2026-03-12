@@ -2,11 +2,11 @@
 
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import DashboardRevenueChartCard from "./DashboardRevenueChartCard";
 import DashboardStatsGrid from "./DashboardStatsGrid";
+import { auditLogsPrimary, auditLogsSecondary } from "../mocks/dashboard-mock-data";
 import DashboardTenantsTableCard from "./DashboardTenantsTableCard";
 import RecentAuditLogsCard from "./RecentAuditLogsCard";
-import { auditLogsPrimary, auditLogsSecondary } from "./dashboard-mock-data";
+import DashboardRevenueChartCard from "./DashboardRevenueChartCard";
 
 export default function DashboardOverview() {
   const { user } = useAuth();
@@ -30,19 +30,9 @@ export default function DashboardOverview() {
       <div className="grid gap-3 xl:grid-cols-[1.6fr_0.85fr]">
         <DashboardRevenueChartCard />
         <RecentAuditLogsCard
-          title="Recent Audit Logs"
+          title="Logs del Sistema"
           logs={auditLogsPrimary}
           withRanges={true}
-        />
-      </div>
-
-      <div className="grid gap-3 xl:grid-cols-[1.6fr_0.85fr]">
-        <DashboardTenantsTableCard />
-        <RecentAuditLogsCard
-          title="Recent Audit Logs"
-          logs={auditLogsSecondary}
-          withViewAll={true}
-          compactSubtitle={true}
         />
       </div>
     </section>

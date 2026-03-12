@@ -2,7 +2,7 @@ import { ChevronDown } from "lucide-react";
 import Avatar from "@/modules/ui/Avatar";
 import Card from "@/modules/ui/Card";
 import StatusPill from "@/modules/ui/StatusPill";
-import { tenantRows } from "./dashboard-mock-data";
+import { tenantRows } from "../mocks/dashboard-mock-data";
 
 export default function DashboardTenantsTableCard() {
   return (

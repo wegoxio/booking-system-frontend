@@ -43,3 +43,23 @@ export type UpdateServicePayload = Partial<CreateServicePayload>;
 export type ToggleServiceStatusPayload = {
   is_active: boolean;
 };
+
+export type ServiceFormState = {
+  name: string;
+  description: string;
+  duration_minutes: number;
+  capacity: number;
+  price: number;
+  currency: string;
+  employee_ids: string[];
+  is_active: boolean;
+};
+
+export type ServicesListProps = {
+  services: Service[];
+  errorMessage: string;
+  isTogglingId: string | null;
+  onCreate: () => void;
+  onEdit: (service: Service) => void;
+  onToggleStatus: (service: Service) => void;
+};

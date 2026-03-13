@@ -6,6 +6,10 @@ import {
   tenantSettingsService,
   type TenantSettingsAssetType,
 } from "@/modules/settings/services/tenant-settings.service";
+import {
+  createThemeVariables,
+  normalizeThemeSettings,
+} from "@/modules/settings/utils/theme-colors";
 import type {
   TenantBrandingSettings,
   TenantSettings,
@@ -50,10 +54,7 @@ function mergeWithDefaults(input: unknown): TenantSettings {
 
   const parsed = input as Partial<TenantSettings>;
   return {
-    theme: {
-      ...defaultTenantSettings.theme,
-      ...(parsed.theme ?? {}),
-    },
+    theme: normalizeThemeSettings(parsed.theme),
     branding: {
       ...defaultTenantSettings.branding,
       ...(parsed.branding ?? {}),
@@ -84,24 +85,10 @@ function setFavicon(url: string) {
 
 function applyThemeVariables(theme: TenantThemeSettings) {
   const root = document.documentElement;
-  root.style.setProperty("--app-bg", theme.appBg);
-  root.style.setProperty("--shell-bg", theme.shellBg);
-  root.style.setProperty("--sidebar-bg-start", theme.sidebarBgStart);
-  root.style.setProperty("--sidebar-bg-end", theme.sidebarBgEnd);
-  root.style.setProperty("--sidebar-text", theme.sidebarText);
-  root.style.setProperty("--sidebar-active-bg", theme.sidebarActiveBg);
-  root.style.setProperty("--sidebar-active-text", theme.sidebarActiveText);
-  root.style.setProperty("--navbar-bg", theme.navbarBg);
-  root.style.setProperty("--navbar-border", theme.navbarBorder);
-  root.style.setProperty("--icon-button-bg", theme.iconButtonBg);
-  root.style.setProperty("--icon-button-border", theme.iconButtonBorder);
-  root.style.setProperty("--icon-button-text", theme.iconButtonText);
-  root.style.setProperty("--card-bg", theme.cardBg);
-  root.style.setProperty("--card-border", theme.cardBorder);
-  root.style.setProperty("--text-primary", theme.textPrimary);
-  root.style.setProperty("--text-muted", theme.textMuted);
-  root.style.setProperty("--primary-accent", theme.primaryAccent);
-  root.style.setProperty("--primary-accent-text", theme.primaryAccentText);
+  const variables = createThemeVariables(theme);
+  Object.entries(variables).forEach(([key, value]) => {
+    root.style.setProperty(key, value);
+  });
 }
 
 type PersistTarget =

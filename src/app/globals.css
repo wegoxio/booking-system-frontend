@@ -1,24 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --app-bg: #d6d6db;
+  --app-bg: #d8d7db;
   --shell-bg: #e9e9ed;
   --sidebar-bg-start: #5f6470;
   --sidebar-bg-end: #4a4f5b;
   --sidebar-text: #ffffff;
+  --sidebar-hover-bg: #4a4f5b;
   --sidebar-active-bg: #efc35f;
-  --sidebar-active-text: #353a46;
-  --navbar-bg: #ececef;
-  --navbar-border: #e5e6eb;
-  --icon-button-bg: #ffffff;
-  --icon-button-border: #d8dae1;
-  --icon-button-text: #686d79;
-  --card-bg: #fafafc;
-  --card-border: #e4e4e8;
+  --sidebar-active-text: #2f3543;
+  --navbar-bg: #ededef;
+  --navbar-border: rgba(111, 115, 128, 0.18);
+  --icon-button-bg: #efeff2;
+  --icon-button-border: rgba(111, 115, 128, 0.2);
+  --icon-button-text: #2d313b;
+  --icon-button-hover: #ececef;
+  --card-bg: #f1f1f4;
+  --card-border: rgba(111, 115, 128, 0.16);
   --text-primary: #2d313b;
   --text-muted: #6f7380;
   --primary-accent: #efc35f;
+  --primary-hover: #d6ad50;
   --primary-accent-text: #2f3543;
+  --secondary-hover: #ececef;
+  --tertiary-hover: #4a4f5b;
 }
 
 @layer base {

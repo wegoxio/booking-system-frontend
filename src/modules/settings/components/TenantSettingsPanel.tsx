@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useTenantSettings } from "@/context/TenantSettingsContext";
 import { defaultTenantSettings } from "@/modules/settings/config/default-tenant-settings";
+import { createThemeVariables } from "@/modules/settings/utils/theme-colors";
 import ConfirmActionModal from "@/modules/ui/ConfirmActionModal";
 import type {
   TenantBrandingSettings,
@@ -16,23 +17,15 @@ const themeColorFields: Array<{
   key: keyof TenantThemeSettings;
   label: string;
 }> = [
-  { key: "appBg", label: "Fondo app" },
-  { key: "shellBg", label: "Fondo shell" },
-  { key: "sidebarBgStart", label: "Sidebar inicio" },
-  { key: "sidebarBgEnd", label: "Sidebar fin" },
-  { key: "sidebarActiveBg", label: "Sidebar activo (fondo)" },
-  { key: "sidebarActiveText", label: "Sidebar activo (texto)" },
-  { key: "navbarBg", label: "Navbar fondo" },
-  { key: "navbarBorder", label: "Navbar borde" },
-  { key: "iconButtonBg", label: "Icono fondo" },
-  { key: "iconButtonBorder", label: "Icono borde" },
-  { key: "iconButtonText", label: "Icono texto" },
-  { key: "cardBg", label: "Cards fondo" },
-  { key: "cardBorder", label: "Cards borde" },
-  { key: "textPrimary", label: "Texto principal" },
-  { key: "textMuted", label: "Texto secundario" },
-  { key: "primaryAccent", label: "Color primario" },
-  { key: "primaryAccentText", label: "Texto primario" },
+  { key: "primary", label: "Color primario" },
+  { key: "secondary", label: "Color secundario" },
+  { key: "tertiary", label: "Color terciario" },
+  { key: "primaryHover", label: "Hover primario" },
+  { key: "secondaryHover", label: "Hover secundario" },
+  { key: "tertiaryHover", label: "Hover terciario" },
+  { key: "textPrimary", label: "Texto primario" },
+  { key: "textSecondary", label: "Texto secundario" },
+  { key: "textTertiary", label: "Texto terciario" },
 ];
 
 const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.webp,.svg,.ico,image/*";
@@ -186,6 +179,8 @@ export default function TenantSettingsPanel() {
     hasPendingAssetUploads,
     hasThemeChanges,
   ]);
+
+  const previewTheme = useMemo(() => createThemeVariables(themeDraft), [themeDraft]);
 
   if (!canEditTenantSettings) {
     return (
@@ -353,7 +348,7 @@ export default function TenantSettingsPanel() {
               type="button"
               onClick={handleDiscardDraft}
               disabled={!hasUnsavedChanges || isLoadingSettings || isSavingSettings || isApplyingChanges}
-              className="rounded-xl border border-[#d8dae1] bg-white px-4 py-2.5 text-sm font-medium text-[#434a59] disabled:opacity-60"
+              className="rounded-xl border border-[#d8dae1] bg-white px-4 py-2.5 text-sm font-medium text-[#434a59] transition-colors hover:bg-[var(--secondary-hover)] disabled:opacity-60"
             >
               Descartar borrador
             </button>
@@ -361,7 +356,7 @@ export default function TenantSettingsPanel() {
               type="button"
               onClick={() => setIsConfirmModalOpen(true)}
               disabled={!hasUnsavedChanges || isLoadingSettings || isSavingSettings || isApplyingChanges}
-              className="rounded-xl bg-[var(--primary-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--primary-accent-text)] disabled:opacity-60"
+              className="rounded-xl bg-[var(--primary-accent)] px-4 py-2.5 text-sm font-semibold text-[var(--primary-accent-text)] transition-colors hover:bg-[var(--primary-hover)] disabled:opacity-60"
             >
               Confirmar cambios
             </button>
@@ -382,9 +377,12 @@ export default function TenantSettingsPanel() {
           <div className="mb-4 flex items-center gap-2">
             <Paintbrush className="h-4 w-4 text-[var(--text-muted)]" />
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">
-              Paleta global (CSS variables)
+              Paleta simplificada
             </h3>
           </div>
+          <p className="mb-4 text-sm text-[var(--text-muted)]">
+            Solo defines primario, secundario, terciario, sus hovers y tres colores de texto.
+          </p>
 
           <div className="grid gap-3 sm:grid-cols-2">
             {themeColorFields.map((field) => (
@@ -536,27 +534,57 @@ export default function TenantSettingsPanel() {
             <h3 className="text-lg font-semibold text-[var(--text-primary)]">Preview rapido</h3>
             <div
               className="mt-3 rounded-2xl border border-[var(--card-border)] p-4"
-              style={{ backgroundColor: themeDraft.appBg }}
+              style={{ backgroundColor: previewTheme["--app-bg"] }}
             >
-              <div className="rounded-xl p-3" style={{ backgroundColor: themeDraft.shellBg }}>
+              <div className="rounded-xl p-3" style={{ backgroundColor: previewTheme["--shell-bg"] }}>
                 <div
                   className="rounded-lg px-3 py-2 text-sm font-semibold"
                   style={{
-                    backgroundColor: themeDraft.sidebarActiveBg,
-                    color: themeDraft.sidebarActiveText,
+                    backgroundColor: previewTheme["--primary-accent"],
+                    color: previewTheme["--primary-accent-text"],
                   }}
                 >
                   {normalizedBrandingDraft.appName || "App Name"}
                 </div>
                 <p
                   className="mt-3 text-sm"
-                  style={{ color: themeDraft.textPrimary }}
+                  style={{ color: previewTheme["--text-primary"] }}
                 >
                   {normalizedBrandingDraft.windowTitle || "Window title"}
                 </p>
-                <p className="text-xs" style={{ color: themeDraft.textMuted }}>
+                <p className="text-xs" style={{ color: previewTheme["--text-muted"] }}>
                   Vista previa local. Se aplica globalmente al confirmar.
                 </p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <div
+                    className="rounded-xl p-3 text-xs font-medium"
+                    style={{
+                      backgroundColor: previewTheme["--primary-accent"],
+                      color: previewTheme["--primary-accent-text"],
+                    }}
+                  >
+                    Primario
+                  </div>
+                  <div
+                    className="rounded-xl border p-3 text-xs font-medium"
+                    style={{
+                      backgroundColor: previewTheme["--card-bg"],
+                      borderColor: previewTheme["--card-border"],
+                      color: previewTheme["--text-primary"],
+                    }}
+                  >
+                    Secundario
+                  </div>
+                  <div
+                    className="rounded-xl p-3 text-xs font-medium"
+                    style={{
+                      backgroundColor: previewTheme["--sidebar-bg-start"],
+                      color: previewTheme["--sidebar-text"],
+                    }}
+                  >
+                    Terciario
+                  </div>
+                </div>
               </div>
             </div>
           </div>

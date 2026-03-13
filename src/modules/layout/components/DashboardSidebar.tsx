@@ -89,7 +89,7 @@ export default function DashboardSidebar({
                   className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                     isActive
                       ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]"
-                      : "text-[var(--sidebar-text)] opacity-85 hover:bg-white/10"
+                      : "text-[var(--sidebar-text)] opacity-85 hover:bg-[var(--sidebar-hover-bg)]"
                   }`}
                 >
                   <Icon

@@ -1,22 +1,13 @@
 export type TenantThemeSettings = {
-  appBg: string;
-  shellBg: string;
-  sidebarBgStart: string;
-  sidebarBgEnd: string;
-  sidebarText: string;
-  sidebarActiveBg: string;
-  sidebarActiveText: string;
-  navbarBg: string;
-  navbarBorder: string;
-  iconButtonBg: string;
-  iconButtonBorder: string;
-  iconButtonText: string;
-  cardBg: string;
-  cardBorder: string;
+  primary: string;
+  secondary: string;
+  tertiary: string;
+  primaryHover: string;
+  secondaryHover: string;
+  tertiaryHover: string;
   textPrimary: string;
-  textMuted: string;
-  primaryAccent: string;
-  primaryAccentText: string;
+  textSecondary: string;
+  textTertiary: string;
 };
 
 export type TenantBrandingSettings = {

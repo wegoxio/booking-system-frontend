@@ -18,7 +18,7 @@ function TopIconButton({
     <button
       type="button"
       aria-label={ariaLabel}
-      className="grid h-7 w-7 place-items-center rounded-full border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] transition-colors hover:brightness-[0.98]"
+      className="grid h-7 w-7 place-items-center rounded-full border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] transition-colors hover:bg-[var(--icon-button-hover)]"
     >
       {children}
     </button>
@@ -33,7 +33,7 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
           type="button"
           aria-label="Open sidebar"
           onClick={onMenuClick}
-          className="grid h-7 w-7 place-items-center rounded-md border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] lg:hidden"
+          className="grid h-7 w-7 place-items-center rounded-md border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] transition-colors hover:bg-[var(--icon-button-hover)] lg:hidden"
         >
           <Menu className="h-4 w-4" />
         </button>

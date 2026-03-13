@@ -13,11 +13,12 @@ export async function apiFetch<t>(
     options: RequestOptions = {}
 ): Promise<t>{
     const {token, headers, ...restOptions} = options;
+    const isFormData = typeof FormData !== "undefined" && restOptions.body instanceof FormData;
 
     const response = await fetch(`${API_URL}${endpoint}`, {
         ...restOptions,
         headers: {
-            "Content-Type": "application/json",
+            ...(isFormData ? {} : {"Content-Type": "application/json"}),
             ...(token ? {Authorization: `Bearer ${token}`}: {}),
             ...headers
         },
@@ -34,5 +35,14 @@ export async function apiFetch<t>(
         );
     }
 
-    return response.json()
+    if (response.status === 204) {
+        return undefined as t;
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+        return response.json();
+    }
+
+    return response.text() as t;
 }

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
 import { Bell, ChevronDown, Home, LogOut, Settings, Star } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useTenantSettings } from "@/context/TenantSettingsContext";
 import Avatar from "@/modules/ui/Avatar";
 
 export type DashboardNavItem = {
@@ -27,6 +28,9 @@ export default function DashboardSidebar({
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { settings } = useTenantSettings();
+  const logoUrl = settings.branding.logoUrl.trim() || "/wegox-logo.svg";
+  const appName = settings.branding.appName.trim() || "wegox";
 
   const handleLogout = () => {
     logout();
@@ -45,16 +49,27 @@ export default function DashboardSidebar({
       />
 
       <aside
-        className={`absolute inset-y-0 left-0 z-40 w-[250px] border-r border-white/15 bg-gradient-to-b from-[#5f6470] to-[#4a4f5b] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-transform duration-200 lg:relative lg:translate-x-0 ${
+        style={{
+          backgroundImage:
+            "linear-gradient(180deg,var(--sidebar-bg-start),var(--sidebar-bg-end))",
+        }}
+        className={`absolute inset-y-0 left-0 z-40 w-[250px] border-r border-white/15 text-[var(--sidebar-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-transform duration-200 lg:relative lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col p-4">
           <div className="mb-5 rounded-xl bg-black/20 px-4 py-3">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <img src="/wegox-logo.svg" alt="Wegox logo" className="h-6 w-6" />
-              <span className="text-[31px] font-semibold leading-none tracking-tight">
-                wegox
+              <img
+                src={logoUrl}
+                alt={`${appName} logo`}
+                className="h-6 w-6 rounded-sm object-contain"
+                onError={(event) => {
+                  event.currentTarget.src = "/wegox-logo.svg";
+                }}
+              />
+              <span className="max-w-[170px] truncate text-2xl font-semibold leading-none tracking-tight">
+                {appName}
               </span>
             </Link>
           </div>
@@ -73,13 +88,15 @@ export default function DashboardSidebar({
                   onClick={onClose}
                   className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                     isActive
-                      ? "bg-[#efc35f] text-[#353a46]"
-                      : "text-white/85 hover:bg-white/10"
+                      ? "bg-[var(--sidebar-active-bg)] text-[var(--sidebar-active-text)]"
+                      : "text-[var(--sidebar-text)] opacity-85 hover:bg-white/10"
                   }`}
                 >
                   <Icon
                     className={`h-4 w-4 ${
-                      isActive ? "text-[#424858]" : "text-white/80"
+                      isActive
+                        ? "text-[var(--sidebar-active-text)]"
+                        : "text-[var(--sidebar-text)] opacity-80"
                     }`}
                   />
                   <span className="font-medium">{item.label}</span>

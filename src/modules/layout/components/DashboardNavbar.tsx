@@ -18,7 +18,7 @@ function TopIconButton({
     <button
       type="button"
       aria-label={ariaLabel}
-      className="grid h-7 w-7 place-items-center rounded-full border border-[#d8dae1] bg-white text-[#686d79] hover:bg-[#f6f7fa]"
+      className="grid h-7 w-7 place-items-center rounded-full border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] transition-colors hover:brightness-[0.98]"
     >
       {children}
     </button>
@@ -27,13 +27,13 @@ function TopIconButton({
 
 export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
   return (
-    <header className="flex h-11 items-center justify-between rounded-xl border border-[#e5e6eb] bg-[#ececef] px-3 text-[#2d313b]">
+    <header className="flex h-11 items-center justify-between rounded-xl border border-[var(--navbar-border)] bg-[var(--navbar-bg)] px-3 text-[var(--text-primary)]">
       <div className="flex items-center gap-2">
         <button
           type="button"
           aria-label="Open sidebar"
           onClick={onMenuClick}
-          className="grid h-7 w-7 place-items-center rounded-md border border-[#d8dae1] bg-white text-[#626774] lg:hidden"
+          className="grid h-7 w-7 place-items-center rounded-md border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] lg:hidden"
         >
           <Menu className="h-4 w-4" />
         </button>

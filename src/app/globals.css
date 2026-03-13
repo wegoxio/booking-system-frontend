@@ -1,4 +1,32 @@
 @import "tailwindcss";
 
-@layer components {
+:root {
+  --app-bg: #d6d6db;
+  --shell-bg: #e9e9ed;
+  --sidebar-bg-start: #5f6470;
+  --sidebar-bg-end: #4a4f5b;
+  --sidebar-text: #ffffff;
+  --sidebar-active-bg: #efc35f;
+  --sidebar-active-text: #353a46;
+  --navbar-bg: #ececef;
+  --navbar-border: #e5e6eb;
+  --icon-button-bg: #ffffff;
+  --icon-button-border: #d8dae1;
+  --icon-button-text: #686d79;
+  --card-bg: #fafafc;
+  --card-border: #e4e4e8;
+  --text-primary: #2d313b;
+  --text-muted: #6f7380;
+  --primary-accent: #efc35f;
+  --primary-accent-text: #2f3543;
+}
+
+@layer base {
+  body {
+    background-color: var(--app-bg);
+    color: var(--text-primary);
+    transition:
+      background-color 200ms ease,
+      color 200ms ease;
+  }
 }

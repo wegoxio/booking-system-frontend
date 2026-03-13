@@ -35,8 +35,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#d6d6db]">
-        <p className="text-sm font-medium text-[#656a76]">Cargando panel...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)]">
+        <p className="text-sm font-medium text-[var(--text-muted)]">Cargando panel...</p>
       </div>
     );
   }
@@ -48,8 +48,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const navItems = getDashboardNavItems(user.role);
 
   return (
-    <div className="min-h-screen bg-[#d6d6db]">
-      <div className="mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-full overflow-hidden bg-[#e9e9ed] shadow-[0_18px_45px_rgba(31,35,48,0.18)]">
+    <div className="min-h-screen bg-[var(--app-bg)]">
+      <div className="mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-full overflow-hidden bg-[var(--shell-bg)] shadow-[0_18px_45px_rgba(31,35,48,0.18)]">
         <DashboardSidebar
           items={navItems}
           isOpen={sidebarOpen}

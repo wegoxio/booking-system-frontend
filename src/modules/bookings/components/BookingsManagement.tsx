@@ -4,12 +4,13 @@ import { useAuth } from "@/context/AuthContext";
 import BookingsTable from "@/modules/bookings/components/BookingsTable";
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
 import { employeesService } from "@/modules/employees/services/employees.service";
+import TableEditModal from "@/modules/ui/TableEditModal";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
 import TableStatsCard from "@/modules/ui/TableStatsCard";
 import type { Booking, BookingStatus } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
-import { Search } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { CheckCircle2, CircleAlert, Search, XCircle } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 const STATUS_FILTERS: Array<{ value: "" | BookingStatus; label: string }> = [
@@ -30,6 +31,15 @@ function getTodayDateInput() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+type PendingStatusChange = {
+  booking: Booking;
+  status: BookingStatus;
+};
+
+function isCancellationStatus(status: BookingStatus) {
+  return status === "CANCELLED" || status === "NO_SHOW";
+}
+
 export default function BookingsManagement() {
   const { token } = useAuth();
 
@@ -41,11 +51,14 @@ export default function BookingsManagement() {
   const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
 
   const [errorMessage, setErrorMessage] = useState("");
+  const [modalError, setModalError] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | BookingStatus>("");
   const [employeeFilter, setEmployeeFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
+  const [cancellationReason, setCancellationReason] = useState("");
 
   const activeEmployees = useMemo(
     () => employees.filter((employee) => employee.is_active),
@@ -133,6 +146,15 @@ export default function BookingsManagement() {
     if (!token) return;
     if (booking.status === status) return;
 
+    if (status === "COMPLETED" || isCancellationStatus(status)) {
+      setPendingStatusChange({ booking, status });
+      setCancellationReason(
+        isCancellationStatus(status) ? booking.cancellation_reason ?? "" : "",
+      );
+      setModalError("");
+      return;
+    }
+
     setUpdatingBookingId(booking.id);
     setErrorMessage("");
     try {
@@ -143,6 +165,58 @@ export default function BookingsManagement() {
       const message =
         error instanceof Error ? error.message : "No se pudo actualizar el estado.";
       setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setUpdatingBookingId(null);
+    }
+  };
+
+  const closeStatusModal = useCallback(() => {
+    if (updatingBookingId) return;
+    setPendingStatusChange(null);
+    setCancellationReason("");
+    setModalError("");
+  }, [updatingBookingId]);
+
+  const handleStatusModalSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!token || !pendingStatusChange) return;
+
+    if (
+      isCancellationStatus(pendingStatusChange.status) &&
+      cancellationReason.trim().length === 0
+    ) {
+      setModalError("Debes indicar un motivo para cancelar o marcar como no asistio.");
+      return;
+    }
+
+    setUpdatingBookingId(pendingStatusChange.booking.id);
+    setModalError("");
+    setErrorMessage("");
+
+    try {
+      await bookingsService.updateStatus(
+        pendingStatusChange.booking.id,
+        {
+          status: pendingStatusChange.status,
+          cancellation_reason: isCancellationStatus(pendingStatusChange.status)
+            ? cancellationReason.trim()
+            : undefined,
+        },
+        token,
+      );
+      await loadBookings();
+      toast.success(
+        pendingStatusChange.status === "COMPLETED"
+          ? "Booking marcada como completada."
+          : "Estado de booking actualizado.",
+      );
+      closeStatusModal();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "No se pudo actualizar el estado.";
+      setModalError(message);
       toast.error(message);
     } finally {
       setUpdatingBookingId(null);
@@ -249,6 +323,95 @@ export default function BookingsManagement() {
           />
         )}
       </div>
+
+      <TableEditModal
+        isOpen={pendingStatusChange !== null}
+        badgeLabel={
+          pendingStatusChange?.status === "COMPLETED"
+            ? "Cerrar booking"
+            : "Actualizar estado"
+        }
+        badgeIcon={
+          pendingStatusChange?.status === "COMPLETED" ? (
+            <CheckCircle2 className="h-3.5 w-3.5" />
+          ) : (
+            <CircleAlert className="h-3.5 w-3.5" />
+          )
+        }
+        title={
+          pendingStatusChange?.status === "COMPLETED"
+            ? "Marcar cita como completada"
+            : pendingStatusChange?.status === "NO_SHOW"
+              ? "Marcar cita como no asistio"
+              : "Cancelar cita"
+        }
+        description={
+          pendingStatusChange
+            ? `Cliente: ${pendingStatusChange.booking.customer_name}. Profesional: ${pendingStatusChange.booking.employee?.name ?? "N/A"}.`
+            : ""
+        }
+        helperText={
+          pendingStatusChange?.status === "COMPLETED"
+            ? "Confirma solo cuando el servicio ya fue realizado."
+            : "Este motivo quedara guardado y visible en la gestion de bookings."
+        }
+        errorMessage={modalError}
+        submitText={
+          updatingBookingId
+            ? "Guardando..."
+            : pendingStatusChange?.status === "COMPLETED"
+              ? "Confirmar completada"
+              : "Guardar motivo"
+        }
+        isSubmitting={updatingBookingId !== null}
+        maxWidthClassName="max-w-2xl"
+        onClose={closeStatusModal}
+        onSubmit={handleStatusModalSubmit}
+      >
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-border-soft bg-surface px-4 py-4">
+            <p className="text-sm font-medium text-fg-strong">
+              Nuevo estado:
+              <span className="ml-2 inline-flex items-center rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold text-fg-secondary">
+                {pendingStatusChange?.status === "COMPLETED"
+                  ? "Completada"
+                  : pendingStatusChange?.status === "NO_SHOW"
+                    ? "No asistio"
+                    : "Cancelada"}
+              </span>
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              {pendingStatusChange?.status === "COMPLETED"
+                ? "Esta cita dejara de estar activa y contara como atendida."
+                : "La cita dejara de bloquear agenda y el motivo quedara trazado."}
+            </p>
+          </div>
+
+          {pendingStatusChange && isCancellationStatus(pendingStatusChange.status) ? (
+            <label className="block space-y-2">
+              <span className="inline-flex items-center gap-2 text-sm font-medium text-fg-label">
+                <XCircle className="h-4 w-4 text-danger" />
+                Motivo
+              </span>
+              <textarea
+                value={cancellationReason}
+                onChange={(event) => setCancellationReason(event.target.value)}
+                rows={5}
+                maxLength={500}
+                className="w-full rounded-3xl border border-border bg-surface px-4 py-3 text-sm text-fg outline-none transition focus:border-accent"
+                placeholder={
+                  pendingStatusChange.status === "NO_SHOW"
+                    ? "Ej: el cliente no se presento a la cita."
+                    : "Ej: el cliente canceló, hubo un problema operativo, reagendado, etc."
+                }
+              />
+              <p className="text-xs text-muted">
+                {cancellationReason.trim().length}/500 caracteres
+              </p>
+            </label>
+          ) : null}
+        </div>
+      </TableEditModal>
     </section>
   );
 }

@@ -632,7 +632,7 @@ export default function TenantPublicBookingFlow({
                           type="button"
                           disabled={selectedServiceIds.length === 0}
                           onClick={goNext}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent disabled:opacity-60"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
                         >
                           Continuar
                           <ChevronRight className="h-4 w-4" />
@@ -691,7 +691,7 @@ export default function TenantPublicBookingFlow({
                           type="button"
                           disabled={!selectedEmployeeId}
                           onClick={goNext}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent disabled:opacity-60"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
                         >
                           Continuar
                           <ChevronRight className="h-4 w-4" />
@@ -756,7 +756,7 @@ export default function TenantPublicBookingFlow({
                           type="button"
                           disabled={!selectedSlotStart}
                           onClick={goNext}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent disabled:opacity-60"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
                         >
                           Continuar
                           <ChevronRight className="h-4 w-4" />
@@ -847,7 +847,7 @@ export default function TenantPublicBookingFlow({
                           type="button"
                           onClick={() => void handleCreateBooking()}
                           disabled={isSubmitting}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent disabled:opacity-60"
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
                         >
                           <UserRound className="h-4 w-4" />
                           {isSubmitting ? "Agendando..." : "Confirmar reserva"}

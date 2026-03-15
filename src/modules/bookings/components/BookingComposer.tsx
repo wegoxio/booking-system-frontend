@@ -401,7 +401,7 @@ export default function BookingComposer({
             type="button"
             onClick={onSubmit}
             disabled={!isReadyToSubmit || isSubmitting}
-            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
           >
             <UserRound className="h-4 w-4" />
             {isSubmitting ? "Agendando..." : "Agendar cita"}

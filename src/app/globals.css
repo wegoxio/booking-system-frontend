@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --app-bg: #d8d7db;
-  --shell-bg: #e9e9ed;
+  --app-bg: #dddce0;
+  --shell-bg: #f1f1f4;
   --sidebar-bg-start: #5f6470;
   --sidebar-text: #ffffff;
   --navbar-bg: #ededef;
-  --navbar-border: rgba(111, 115, 128, 0.18);
-  --icon-button-bg: #efeff2;
-  --icon-button-border: rgba(111, 115, 128, 0.2);
-  --card-bg: #f1f1f4;
-  --card-border: rgba(111, 115, 128, 0.16);
-  --text-primary: #2d313b;
-  --text-muted: #6f7380;
+  --navbar-border: rgba(111, 115, 128, 0.22);
+  --icon-button-bg: #f2f2f5;
+  --icon-button-border: rgba(111, 115, 128, 0.24);
+  --card-bg: #f4f4f7;
+  --card-border: rgba(111, 115, 128, 0.18);
+  --text-primary: #2f3543;
+  --text-muted: #707687;
   --primary-accent: #efc35f;
-  --primary-hover: #d6ad50;
+  --primary-hover: #d2ac54;
   --primary-accent-text: #2f3543;
   --secondary-hover: #ececef;
-  --tertiary-hover: #4a4f5b;
+  --tertiary-hover: #4d535d;
 
   /* Surfaces */
   --surface: #ffffff;
@@ -44,20 +44,20 @@
   --border-info: #dce8fb;
 
   /* Text hierarchy */
-  --text-strong: #202534;
-  --text-label: #3f4655;
+  --text-strong: #252c3a;
+  --text-label: #4f586c;
   --text-body: #2f3543;
-  --text-secondary: #52607a;
-  --text-icon: #65728a;
-  --text-placeholder: #8a90a2;
-  --text-soft: #98a0b3;
+  --text-secondary: #4f586c;
+  --text-icon: #4f586c;
+  --text-placeholder: #80889a;
+  --text-soft: #707687;
 
   /* Semantic text */
   --warning: #9c6a00;
   --success: #1f7a4d;
   --danger: #ab3d3d;
   --info: #295693;
-  --neutral: #5a6171;
+  --neutral: #4f586c;
 
   /* Overlay / inverse */
   --overlay: rgba(15, 23, 42, 0.46);
@@ -104,7 +104,7 @@
   --sidebar-hover-bg: var(--tertiary-hover);
   --sidebar-active-bg: var(--primary-accent);
   --sidebar-active-text: var(--primary-accent-text);
-  --icon-button-text: var(--text-primary);
+  --icon-button-text: var(--text-secondary);
   --icon-button-hover: var(--secondary-hover);
 }
 
@@ -130,8 +130,8 @@
   --color-card: var(--card-bg);
   --color-card-border: var(--card-border);
 
-  --color-primary: var(--text-primary);
-  --color-muted: var(--text-muted);
+  --color-primary: var(--text-body);
+  --color-muted: var(--text-secondary);
 
   --color-accent: var(--primary-accent);
   --color-accent-hover: var(--primary-hover);
@@ -164,11 +164,11 @@
 
   --color-fg: var(--text-body);
   --color-fg-strong: var(--text-strong);
-  --color-fg-label: var(--text-label);
+  --color-fg-label: var(--text-secondary);
   --color-fg-secondary: var(--text-secondary);
-  --color-fg-icon: var(--text-icon);
-  --color-fg-placeholder: var(--text-placeholder);
-  --color-fg-soft: var(--text-soft);
+  --color-fg-icon: var(--text-secondary);
+  --color-fg-placeholder: var(--text-muted);
+  --color-fg-soft: var(--text-muted);
 
   --color-warning: var(--warning);
   --color-success: var(--success);

@@ -82,7 +82,7 @@ export function validateEmployeeCreateForm(form: EmployeeFormState): string | nu
         return "El nombre debe tener entre 1 y 120 caracteres.";
     }
 
-    if (!/^\\S+@\\S+\\.\\S+$/.test(normalizedEmail)) {
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
         return "Debes ingresar un correo valido.";
     }
 

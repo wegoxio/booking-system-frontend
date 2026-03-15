@@ -25,6 +25,15 @@ type BookingsTableProps = {
   onStatusChange: (booking: Booking, status: BookingStatus) => void;
 };
 
+const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
+  PENDING: ["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW"],
+  CONFIRMED: ["CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW"],
+  IN_PROGRESS: ["IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW"],
+  COMPLETED: ["COMPLETED"],
+  CANCELLED: ["CANCELLED"],
+  NO_SHOW: ["NO_SHOW"],
+};
+
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("es-ES", {
     dateStyle: "medium",
@@ -123,16 +132,24 @@ export default function BookingsTable({
                 >
                   {BOOKING_STATUS_LABELS[booking.status]}
                 </span>
+                {booking.cancellation_reason ? (
+                  <p className="mt-2 max-w-[220px] text-xs text-muted">
+                    Motivo: {booking.cancellation_reason}
+                  </p>
+                ) : null}
               </td>
 
               <td className="rounded-r-3xl border-y border-r border-border-soft bg-surface px-4 py-4">
                 <select
                   value={booking.status}
-                  disabled={updatingBookingId === booking.id}
+                  disabled={
+                    updatingBookingId === booking.id ||
+                    BOOKING_STATUS_TRANSITIONS[booking.status].length === 1
+                  }
                   onChange={(event) => onStatusChange(booking, event.target.value as BookingStatus)}
                   className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover disabled:opacity-60"
                 >
-                  {(Object.keys(BOOKING_STATUS_LABELS) as BookingStatus[]).map((status) => (
+                  {BOOKING_STATUS_TRANSITIONS[booking.status].map((status) => (
                     <option key={status} value={status}>
                       {BOOKING_STATUS_LABELS[status]}
                     </option>

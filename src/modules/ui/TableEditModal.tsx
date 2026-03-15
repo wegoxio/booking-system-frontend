@@ -177,7 +177,7 @@ export default function TableEditModal({
                 <button
                   type="submit"
                   disabled={view.isSubmitting}
-                  className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent transition hover:brightness-[0.98] disabled:opacity-60"
+                  className="rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent transition hover:brightness-[0.98] disabled:opacity-60"
                 >
                   {view.submitText}
                 </button>

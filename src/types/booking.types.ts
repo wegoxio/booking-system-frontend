@@ -34,6 +34,11 @@ export type Booking = {
   start_at_utc: string;
   end_at_utc: string;
   status: BookingStatus;
+  completed_at_utc: string | null;
+  completed_by_user_id: string | null;
+  cancelled_at_utc: string | null;
+  cancelled_by_user_id: string | null;
+  cancellation_reason: string | null;
   total_duration_minutes: number;
   total_price: string;
   currency: string;
@@ -183,4 +188,5 @@ export type CreateBookingPayload = {
 
 export type UpdateBookingStatusPayload = {
   status: BookingStatus;
+  cancellation_reason?: string;
 };

@@ -42,7 +42,7 @@ export default function TableHeader({
                 <button
                     type="button"
                     onClick={buttonOnOpen}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent transition hover:brightness-[0.98]"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent transition hover:brightness-[0.98]"
                 >
                     <Plus className="h-4 w-4" />
                     {buttonLabel}

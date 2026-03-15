@@ -943,7 +943,7 @@ export default function BookingsSchedulePanel({
               type="button"
               onClick={() => void handleSaveSchedule()}
               disabled={isSavingSchedule}
-              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-fg shadow-theme-accent disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
             >
               {isSavingSchedule ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />

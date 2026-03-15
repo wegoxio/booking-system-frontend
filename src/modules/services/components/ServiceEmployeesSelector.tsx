@@ -106,7 +106,7 @@ export function ServiceEmployeesSelector({
                     <div
                       className={`flex h-6 w-6 items-center justify-center rounded-full border transition ${
                         checked
-                          ? "border-border-warning bg-accent text-fg"
+                          ? "border-border-warning bg-accent text-accent-text"
                           : "border-border-soft bg-surface text-transparent group-hover:text-fg-soft"
                       }`}
                     >

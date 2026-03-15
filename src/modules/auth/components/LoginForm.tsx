@@ -126,16 +126,6 @@ export default function LoginForm() {
               })}
             </div>
           </div>
-
-          <div className="relative z-10 rounded-3xl border border-inverse-15 bg-inverse-10 p-5">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-inverse-20 bg-inverse-10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-inverse-70">
-              <Sparkles className="h-3.5 w-3.5" />
-              Hoy
-            </div>
-            <p className="text-sm text-inverse-80">Reuniones confirmadas</p>
-            <p className="mt-2 text-3xl font-semibold">18</p>
-            <p className="mt-2 text-xs text-inverse-75">+12% vs semana anterior</p>
-          </div>
         </aside>
 
         <div className="flex flex-1 items-center justify-center bg-gradient-to-b from-surface-panel to-surface-subtle p-6 sm:p-10">

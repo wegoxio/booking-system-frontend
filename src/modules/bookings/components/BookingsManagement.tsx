@@ -1,0 +1,245 @@
+"use client";
+
+import { useAuth } from "@/context/AuthContext";
+import BookingsTable from "@/modules/bookings/components/BookingsTable";
+import { bookingsService } from "@/modules/bookings/services/bookings.service";
+import { employeesService } from "@/modules/employees/services/employees.service";
+import TableSkeleton from "@/modules/ui/TableSkeleton";
+import TableStatsCard from "@/modules/ui/TableStatsCard";
+import type { Booking, BookingStatus } from "@/types/booking.types";
+import type { Employee } from "@/types/employee.types";
+import { Search } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+const STATUS_FILTERS: Array<{ value: "" | BookingStatus; label: string }> = [
+  { value: "", label: "Todos los estados" },
+  { value: "PENDING", label: "Pendiente" },
+  { value: "CONFIRMED", label: "Confirmada" },
+  { value: "IN_PROGRESS", label: "En progreso" },
+  { value: "COMPLETED", label: "Completada" },
+  { value: "CANCELLED", label: "Cancelada" },
+  { value: "NO_SHOW", label: "No asistio" },
+];
+
+function getTodayDateInput() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export default function BookingsManagement() {
+  const { token } = useAuth();
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+
+  const [isLoadingMeta, setIsLoadingMeta] = useState(true);
+  const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
+
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"" | BookingStatus>("");
+  const [employeeFilter, setEmployeeFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+
+  const activeEmployees = useMemo(
+    () => employees.filter((employee) => employee.is_active),
+    [employees],
+  );
+
+  const loadMeta = useCallback(async () => {
+    if (!token) return;
+    setIsLoadingMeta(true);
+    setErrorMessage("");
+    try {
+      const employeesData = await employeesService.findAll(token);
+      setEmployees(employeesData);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "No se pudieron cargar empleados.",
+      );
+    } finally {
+      setIsLoadingMeta(false);
+    }
+  }, [token]);
+
+  const loadBookings = useCallback(async () => {
+    if (!token) return;
+    setIsLoadingBookings(true);
+    setErrorMessage("");
+
+    try {
+      const data = await bookingsService.findAll(
+        {
+          status: statusFilter || undefined,
+          employee_id: employeeFilter || undefined,
+          date: dateFilter || undefined,
+        },
+        token,
+      );
+      setBookings(data);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "No se pudieron cargar bookings.");
+    } finally {
+      setIsLoadingBookings(false);
+    }
+  }, [dateFilter, employeeFilter, statusFilter, token]);
+
+  useEffect(() => {
+    void loadMeta();
+  }, [loadMeta]);
+
+  useEffect(() => {
+    void loadBookings();
+  }, [loadBookings]);
+
+  const filteredBookings = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return bookings;
+
+    return bookings.filter((booking) => {
+      const servicesText = booking.items
+        .map((item) => item.service_name_snapshot)
+        .join(" ");
+      const haystack =
+        `${booking.customer_name} ${booking.customer_email ?? ""} ${booking.customer_phone ?? ""} ${booking.employee?.name ?? ""} ${servicesText}`.toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [bookings, searchQuery]);
+
+  const bookingsTodayCount = useMemo(() => {
+    const today = getTodayDateInput();
+    return bookings.filter((booking) => booking.start_at_utc.slice(0, 10) === today).length;
+  }, [bookings]);
+
+  const pendingBookingsCount = useMemo(
+    () =>
+      bookings.filter((booking) =>
+        ["PENDING", "CONFIRMED", "IN_PROGRESS"].includes(booking.status),
+      ).length,
+    [bookings],
+  );
+
+  const handleBookingStatusChange = async (booking: Booking, status: BookingStatus) => {
+    if (!token) return;
+    if (booking.status === status) return;
+
+    setUpdatingBookingId(booking.id);
+    setErrorMessage("");
+    try {
+      await bookingsService.updateStatus(booking.id, { status }, token);
+      await loadBookings();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "No se pudo actualizar el estado.");
+    } finally {
+      setUpdatingBookingId(null);
+    }
+  };
+
+  return (
+    <section className="space-y-4">
+      <div className="rounded-[28px] border border-card-border bg-gradient-to-br from-surface-warm to-surface-soft p-6 shadow-theme-soft">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
+              Bookings
+            </h2>
+            <p className="mt-4 max-w-3xl text-sm text-muted">
+              Agenda citas por profesional con slots reales segun servicios y disponibilidad.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <TableStatsCard label="Bookings" value={bookings.length} />
+            <TableStatsCard label="Hoy" value={bookingsTodayCount} />
+            <TableStatsCard label="Activos" value={pendingBookingsCount} />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-fg-strong">Citas agendadas</h3>
+            <p className="text-sm text-muted">
+              Controla estados, profesionales y agenda diaria.
+            </p>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="relative min-w-60">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-placeholder" />
+              <input
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="w-full rounded-2xl border border-border bg-surface py-2.5 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-accent"
+                placeholder="Buscar booking..."
+              />
+            </label>
+
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as "" | BookingStatus)}
+              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
+            >
+              {STATUS_FILTERS.map((status) => (
+                <option key={status.value || "all"} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={employeeFilter}
+              onChange={(event) => setEmployeeFilter(event.target.value)}
+              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
+            >
+              <option value="">Todos los profesionales</option>
+              {activeEmployees.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.name}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(event) => setDateFilter(event.target.value)}
+              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
+            />
+          </div>
+        </div>
+
+        {errorMessage ? <p className="mt-4 text-sm text-danger">{errorMessage}</p> : null}
+
+        {isLoadingMeta || isLoadingBookings ? (
+          <TableSkeleton />
+        ) : filteredBookings.length === 0 ? (
+          <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
+            <p className="text-base font-medium text-fg">
+              {bookings.length === 0
+                ? "No hay bookings registrados todavia."
+                : "No hay resultados para los filtros actuales."}
+            </p>
+            <p className="mt-2 text-sm text-muted">
+              Agenda una cita o ajusta filtros para visualizar la informacion.
+            </p>
+          </div>
+        ) : (
+          <BookingsTable
+            bookings={filteredBookings}
+            updatingBookingId={updatingBookingId}
+            onStatusChange={(booking, status) => {
+              void handleBookingStatusChange(booking, status);
+            }}
+          />
+        )}
+      </div>
+    </section>
+  );
+}

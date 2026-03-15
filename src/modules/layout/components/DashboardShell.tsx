@@ -35,8 +35,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--app-bg)]">
-        <p className="text-sm font-medium text-[var(--text-muted)]">Cargando panel...</p>
+      <div className="flex min-h-screen items-center justify-center bg-app">
+        <p className="text-sm font-medium text-muted">Cargando panel...</p>
       </div>
     );
   }
@@ -48,8 +48,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const navItems = getDashboardNavItems(user.role);
 
   return (
-    <div className="min-h-screen bg-[var(--app-bg)]">
-      <div className="mx-auto flex min-h-[calc(100vh-1.5rem)] max-w-full overflow-hidden bg-[var(--shell-bg)] shadow-[0_18px_45px_rgba(31,35,48,0.18)]">
+    <div className="min-h-screen bg-app">
+      <div className="mx-auto flex h-screen max-w-full overflow-hidden bg-shell shadow-theme-shell">
         <DashboardSidebar
           items={navItems}
           isOpen={sidebarOpen}
@@ -58,7 +58,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
         <div className="relative flex min-w-0 flex-1 flex-col p-3">
           <DashboardNavbar onMenuClick={() => setSidebarOpen(true)} />
-          <main className="mt-3 min-h-0 flex-1">{children}</main>
+          <main className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">{children}</main>
         </div>
       </div>
     </div>

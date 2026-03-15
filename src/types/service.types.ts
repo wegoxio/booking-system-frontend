@@ -57,9 +57,7 @@ export type ServiceFormState = {
 
 export type ServicesListProps = {
   services: Service[];
-  errorMessage: string;
   isTogglingId: string | null;
-  onCreate: () => void;
   onEdit: (service: Service) => void;
   onToggleStatus: (service: Service) => void;
 };

@@ -25,3 +25,12 @@ export type CreateTenantAdminPayload = {
 export type UpdateTenantAdminPayload = Partial<CreateTenantAdminPayload> & {
   is_active?: boolean;
 };
+
+
+export type TenantAdminFormState = {
+  name: string;
+  email: string;
+  password: string;
+  tenant_id: string;
+  is_active: boolean;
+};

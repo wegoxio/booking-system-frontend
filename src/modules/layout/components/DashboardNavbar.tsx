@@ -1,39 +1,21 @@
 "use client";
 
 import { Bell, CircleHelp, Menu, Search, SlidersHorizontal } from "lucide-react";
-import type { ReactNode } from "react";
+import TopIconButton from "./TopIconButton";
 
 type DashboardNavbarProps = {
   onMenuClick: () => void;
 };
 
-function TopIconButton({
-  children,
-  ariaLabel,
-}: {
-  children: ReactNode;
-  ariaLabel: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={ariaLabel}
-      className="grid h-7 w-7 place-items-center rounded-full border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] transition-colors hover:bg-[var(--icon-button-hover)]"
-    >
-      {children}
-    </button>
-  );
-}
-
 export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
   return (
-    <header className="flex h-11 items-center justify-between rounded-xl border border-[var(--navbar-border)] bg-[var(--navbar-bg)] px-3 text-[var(--text-primary)]">
+    <header className="flex h-11 items-center justify-between rounded-xl border border-navbar-border bg-navbar px-3 text-primary">
       <div className="flex items-center gap-2">
         <button
           type="button"
           aria-label="Open sidebar"
           onClick={onMenuClick}
-          className="grid h-7 w-7 place-items-center rounded-md border border-[var(--icon-button-border)] bg-[var(--icon-button-bg)] text-[var(--icon-button-text)] transition-colors hover:bg-[var(--icon-button-hover)] lg:hidden"
+          className="grid h-7 w-7 place-items-center rounded-md border border-icon-button-border bg-icon-button text-icon-button-text transition-colors hover:bg-icon-button-hover lg:hidden"
         >
           <Menu className="h-4 w-4" />
         </button>

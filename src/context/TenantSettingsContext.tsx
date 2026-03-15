@@ -8,12 +8,16 @@ import {
 } from "@/modules/settings/services/tenant-settings.service";
 import {
   createThemeVariables,
+  normalizeThemeMode,
+  normalizeThemeOverrides,
   normalizeThemeSettings,
 } from "@/modules/settings/utils/theme-colors";
 import type {
   TenantBrandingSettings,
   TenantSettings,
   TenantSettingsRecord,
+  TenantThemeMode,
+  TenantThemeOverrides,
   TenantThemeSettings,
   UpdateTenantSettingsPayload,
 } from "@/types/tenant-settings.types";
@@ -55,6 +59,8 @@ function mergeWithDefaults(input: unknown): TenantSettings {
   const parsed = input as Partial<TenantSettings>;
   return {
     theme: normalizeThemeSettings(parsed.theme),
+    themeMode: normalizeThemeMode(parsed.themeMode),
+    themeOverrides: normalizeThemeOverrides(parsed.themeOverrides),
     branding: {
       ...defaultTenantSettings.branding,
       ...(parsed.branding ?? {}),
@@ -65,6 +71,8 @@ function mergeWithDefaults(input: unknown): TenantSettings {
 function toTenantSettings(record: TenantSettingsRecord): TenantSettings {
   return mergeWithDefaults({
     theme: record.theme,
+    themeMode: record.themeMode,
+    themeOverrides: record.themeOverrides,
     branding: record.branding,
   });
 }
@@ -83,9 +91,13 @@ function setFavicon(url: string) {
   faviconElement.href = nextUrl;
 }
 
-function applyThemeVariables(theme: TenantThemeSettings) {
+function applyThemeVariables(
+  theme: TenantThemeSettings,
+  themeMode: TenantThemeMode,
+  themeOverrides: TenantThemeOverrides,
+) {
   const root = document.documentElement;
-  const variables = createThemeVariables(theme);
+  const variables = createThemeVariables(theme, themeMode, themeOverrides);
   Object.entries(variables).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
@@ -111,7 +123,7 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
     user?.role === "TENANT_ADMIN" || user?.role === "SUPER_ADMIN";
 
   useEffect(() => {
-    applyThemeVariables(settings.theme);
+    applyThemeVariables(settings.theme, settings.themeMode, settings.themeOverrides);
     document.title = settings.branding.windowTitle.trim() || defaultTenantSettings.branding.windowTitle;
     setFavicon(settings.branding.faviconUrl);
   }, [settings]);
@@ -289,6 +301,8 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
     await persistPatch(
       {
         theme: { ...defaultTenantSettings.theme },
+        themeMode: defaultTenantSettings.themeMode,
+        themeOverrides: { ...defaultTenantSettings.themeOverrides },
         branding: { ...defaultTenantSettings.branding },
       },
       optimisticSettings,
@@ -302,6 +316,8 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
           ...settings.theme,
           ...(payload.theme ?? {}),
         },
+        themeMode: payload.themeMode ?? settings.themeMode,
+        themeOverrides: payload.themeOverrides ?? settings.themeOverrides,
         branding: {
           ...settings.branding,
           ...(payload.branding ?? {}),

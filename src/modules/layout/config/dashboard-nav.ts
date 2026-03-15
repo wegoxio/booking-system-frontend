@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarClock,
   LayoutDashboard,
   ReceiptText,
   Settings,
@@ -23,6 +24,7 @@ const tenantAdminItems: DashboardNavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/services", label: "Services", icon: BriefcaseBusiness },
   { href: "/employees", label: "Employees", icon: Users },
+  { href: "/bookings", label: "Bookings", icon: CalendarClock },
   { href: "/audit-logs", label: "Audit Logs", icon: ReceiptText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -39,6 +41,7 @@ const allowedPathsByRole: Record<Role, string[]> = {
     "/dashboard",
     "/services",
     "/employees",
+    "/bookings",
     "/audit-logs",
     "/settings",
   ],

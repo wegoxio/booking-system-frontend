@@ -12,6 +12,8 @@ export const defaultTenantSettings: TenantSettings = {
     textSecondary: "#2d313b",
     textTertiary: "#6f7380",
   },
+  themeMode: "AUTO",
+  themeOverrides: {},
   branding: {
     appName: "wegox",
     windowTitle: "Wegox Booking System",

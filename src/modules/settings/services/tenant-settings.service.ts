@@ -13,6 +13,17 @@ function createAssetFormData(file: File) {
 }
 
 export const tenantSettingsService = {
+  findPublicByBusinessSlug: async (
+    businessSlug: string,
+  ): Promise<TenantSettingsRecord> => {
+    return apiFetch<TenantSettingsRecord>(
+      `/public/businesses/${encodeURIComponent(businessSlug)}/settings`,
+      {
+        method: "GET",
+      },
+    );
+  },
+
   findPlatform: async (token: string): Promise<TenantSettingsRecord> => {
     return apiFetch<TenantSettingsRecord>("/tenant-settings/platform/me", {
       method: "GET",

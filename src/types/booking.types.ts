@@ -1,0 +1,146 @@
+import type { Employee } from "./employee.types";
+
+export type BookingStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "NO_SHOW";
+
+export type BookingSource = "ADMIN" | "WEB" | "API";
+
+export type BookingItem = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  booking_id: string;
+  service_id: string;
+  service_name_snapshot: string;
+  duration_minutes_snapshot: number;
+  buffer_before_minutes_snapshot: number;
+  buffer_after_minutes_snapshot: number;
+  price_snapshot: string;
+  currency_snapshot: string;
+  sort_order: number;
+};
+
+export type Booking = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  tenant_id: string;
+  employee_id: string;
+  start_at_utc: string;
+  end_at_utc: string;
+  status: BookingStatus;
+  total_duration_minutes: number;
+  total_price: string;
+  currency: string;
+  customer_name: string;
+  customer_email: string | null;
+  customer_phone: string | null;
+  notes: string | null;
+  source: BookingSource;
+  created_by_user_id: string | null;
+  employee: Employee;
+  items: BookingItem[];
+};
+
+export type BookingSlot = {
+  start_at_utc: string;
+  end_at_utc: string;
+};
+
+export type AvailabilityResponse = {
+  employee_id: string;
+  date: string;
+  timezone: string;
+  slot_interval_minutes: number;
+  required_duration_minutes: number;
+  service_ids: string[];
+  slots: BookingSlot[];
+};
+
+export type ScheduleIntervalPayload = {
+  day_of_week: number;
+  start_time_local: string;
+  end_time_local: string;
+};
+
+export type SetEmployeeSchedulePayload = {
+  schedule_timezone?: string;
+  working_hours: ScheduleIntervalPayload[];
+  breaks?: ScheduleIntervalPayload[];
+};
+
+export type EmployeeScheduleRuleRecord = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  tenant_id: string;
+  employee_id: string;
+  day_of_week: number;
+  start_time_local: string;
+  end_time_local: string;
+  is_active: boolean;
+};
+
+export type EmployeeTimeOffRecord = {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  tenant_id: string;
+  employee_id: string;
+  start_at_utc: string;
+  end_at_utc: string;
+  reason: string | null;
+  is_active: boolean;
+};
+
+export type EmployeeScheduleResponse = {
+  employee_id: string;
+  schedule_timezone: string;
+  slot_interval_minutes: number;
+  working_hours: EmployeeScheduleRuleRecord[];
+  breaks: EmployeeScheduleRuleRecord[];
+  active_time_off: EmployeeTimeOffRecord[];
+};
+
+export type CreateEmployeeTimeOffPayload = {
+  start_at_utc: string;
+  end_at_utc: string;
+  reason?: string;
+};
+
+export type EligibleEmployeesQuery = {
+  service_ids: string[];
+};
+
+export type AvailabilityQuery = {
+  employee_id: string;
+  service_ids: string[];
+  date: string;
+  timezone?: string;
+};
+
+export type ListBookingsQuery = {
+  employee_id?: string;
+  date?: string;
+  status?: BookingStatus;
+};
+
+export type CreateBookingPayload = {
+  employee_id: string;
+  service_ids: string[];
+  start_at_utc: string;
+  customer_name: string;
+  customer_email?: string;
+  customer_phone?: string;
+  notes?: string;
+  source?: BookingSource;
+};
+
+export type UpdateBookingStatusPayload = {
+  status: BookingStatus;
+};

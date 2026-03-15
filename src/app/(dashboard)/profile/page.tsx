@@ -3,26 +3,40 @@
 import { useAuth } from "@/context/AuthContext";
 
 export default function ProfilePage() {
-    const { user, token, isAuthenticated, logout, isLoading } = useAuth();
+  const { user, token, isAuthenticated, logout, isLoading } = useAuth();
 
-    if (isLoading) {
-        return <p>Cargando...</p>;
-    }
+  if (isLoading) {
+    return <p>Cargando...</p>;
+  }
 
-    if (!isAuthenticated) {
-        return <p>No estás autenticado.</p>;
-    }
+  if (!isAuthenticated) {
+    return <p>No estas autenticado.</p>;
+  }
 
-    return (
-        <main style={{ padding: 24 }}>
-            <h1>Perfil</h1>
+  return (
+    <main style={{ padding: 24 }}>
+      <h1>Perfil</h1>
 
-            <p><strong>ID:</strong> {user?.id}</p>
-            <p><strong>Nombre:</strong> {user?.name}</p>
-            <p><strong>Email:</strong> {user?.email}</p>
-            <p><strong>Token:</strong> {token}</p>
+      <p>
+        <strong>ID:</strong> {user?.id}
+      </p>
+      <p>
+        <strong>Nombre:</strong> {user?.name}
+      </p>
+      <p>
+        <strong>Email:</strong> {user?.email}
+      </p>
+      <p>
+        <strong>Token:</strong> {token}
+      </p>
 
-            <button onClick={logout}>Cerrar sesión</button>
-        </main>
-    );
+      <button
+        onClick={() => {
+          void logout();
+        }}
+      >
+        Cerrar sesion
+      </button>
+    </main>
+  );
 }

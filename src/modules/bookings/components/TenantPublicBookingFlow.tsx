@@ -1,0 +1,914 @@
+﻿"use client";
+
+import { bookingsService } from "@/modules/bookings/services/bookings.service";
+import { defaultTenantSettings } from "@/modules/settings/config/default-tenant-settings";
+import { tenantSettingsService } from "@/modules/settings/services/tenant-settings.service";
+import {
+  createThemeVariables,
+  normalizeThemeMode,
+  normalizeThemeOverrides,
+  normalizeThemeSettings,
+} from "@/modules/settings/utils/theme-colors";
+import Avatar from "@/modules/ui/Avatar";
+import CalendarDatePicker from "@/modules/ui/CalendarDatePicker";
+import TurnstileWidget from "@/modules/ui/TurnstileWidget";
+import type {
+  BookingSlot,
+  PublicBookingConfirmation,
+  PublicBookingEmployee,
+  PublicBookingService,
+} from "@/types/booking.types";
+import type { TenantSettingsRecord } from "@/types/tenant-settings.types";
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Scissors,
+  UserRound,
+} from "lucide-react";
+import type { CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+
+type BookingStep = "services" | "employee" | "datetime" | "customer" | "done";
+
+type CustomerFormState = {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  notes: string;
+};
+
+type TenantPublicBookingFlowProps = {
+  tenantSlug: string;
+};
+
+const STEP_ORDER: BookingStep[] = ["services", "employee", "datetime", "customer", "done"];
+
+const INITIAL_CUSTOMER_FORM: CustomerFormState = {
+  customer_name: "",
+  customer_email: "",
+  customer_phone: "",
+  notes: "",
+};
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+const TURNSTILE_BOOKING_ACTION =
+  process.env.NEXT_PUBLIC_TURNSTILE_BOOKING_ACTION?.trim() || "booking_create";
+
+function getTodayDateInput() {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatSlotTime(iso: string, timeZone?: string | null) {
+  return new Date(iso).toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+    ...(timeZone ? { timeZone } : {}),
+  });
+}
+
+function formatSlotDate(iso: string, timeZone?: string | null) {
+  return new Date(iso).toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    ...(timeZone ? { timeZone } : {}),
+  });
+}
+
+function formatDuration(minutes: number | null) {
+  if (!minutes) return "--";
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  if (hours === 0) return `${remaining} min`;
+  if (remaining === 0) return `${hours}h`;
+  return `${hours}h ${remaining}m`;
+}
+
+function toBusinessNameFromSlug(slug: string) {
+  const normalized = slug.trim();
+  if (!normalized) return "Comercio";
+  return normalized
+    .split("-")
+    .filter(Boolean)
+    .map((word) => `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`)
+    .join(" ");
+}
+
+function getStepTitle(step: BookingStep) {
+  switch (step) {
+    case "services":
+      return "Paso 1: Selecciona servicios";
+    case "employee":
+      return "Paso 2: Selecciona profesional";
+    case "datetime":
+      return "Paso 3: Selecciona fecha y hora";
+    case "customer":
+      return "Paso 4: Datos del cliente";
+    case "done":
+      return "Reserva confirmada";
+  }
+}
+
+function getFaviconElement() {
+  if (typeof document === "undefined") return null;
+  let faviconElement = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
+  if (!faviconElement) {
+    faviconElement = document.createElement("link");
+    faviconElement.rel = "icon";
+    document.head.appendChild(faviconElement);
+  }
+  return faviconElement;
+}
+
+function readFaviconHref() {
+  if (typeof document === "undefined") return defaultTenantSettings.branding.faviconUrl;
+  const favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
+  return favicon?.href ?? defaultTenantSettings.branding.faviconUrl;
+}
+
+function setFaviconHref(url: string) {
+  const faviconElement = getFaviconElement();
+  if (!faviconElement) return;
+  faviconElement.href = url.trim() || defaultTenantSettings.branding.faviconUrl;
+}
+
+export default function TenantPublicBookingFlow({
+  tenantSlug,
+}: TenantPublicBookingFlowProps) {
+  const isTurnstileEnabled = TURNSTILE_SITE_KEY.length > 0;
+  const [services, setServices] = useState<PublicBookingService[]>([]);
+  const [businessSettings, setBusinessSettings] = useState<TenantSettingsRecord | null>(null);
+  const [eligibleEmployees, setEligibleEmployees] = useState<PublicBookingEmployee[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [selectedDate, setSelectedDate] = useState(getTodayDateInput());
+  const [slots, setSlots] = useState<BookingSlot[]>([]);
+  const [selectedSlotStart, setSelectedSlotStart] = useState<string | null>(null);
+  const [requiredDurationMinutes, setRequiredDurationMinutes] = useState<number | null>(null);
+  const [availabilityTimezone, setAvailabilityTimezone] = useState<string | null>(null);
+  const [customerForm, setCustomerForm] = useState<CustomerFormState>(INITIAL_CUSTOMER_FORM);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
+  const [currentStep, setCurrentStep] = useState<BookingStep>("services");
+  const [createdBooking, setCreatedBooking] = useState<PublicBookingConfirmation | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const [isLoadingMeta, setIsLoadingMeta] = useState(true);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const businessName = useMemo(() => {
+    const byBusiness = businessSettings?.business?.name?.trim();
+    if (byBusiness) return byBusiness;
+    const byBranding = businessSettings?.branding?.appName?.trim();
+    if (byBranding) return byBranding;
+    return toBusinessNameFromSlug(tenantSlug);
+  }, [businessSettings, tenantSlug]);
+
+  const businessSlug = useMemo(
+    () => businessSettings?.business?.slug?.trim() || tenantSlug,
+    [businessSettings, tenantSlug],
+  );
+
+  const branding = useMemo(() => {
+    const source = businessSettings?.branding;
+    return {
+      appName: source?.appName?.trim() || businessName,
+      windowTitle: source?.windowTitle?.trim() || `${businessName} | Reserva online`,
+      logoUrl: source?.logoUrl?.trim() || defaultTenantSettings.branding.logoUrl,
+      faviconUrl: source?.faviconUrl?.trim() || defaultTenantSettings.branding.faviconUrl,
+    };
+  }, [businessName, businessSettings]);
+
+  const themeSettings = useMemo(
+    () => normalizeThemeSettings(businessSettings?.theme ?? defaultTenantSettings.theme),
+    [businessSettings],
+  );
+
+  const themeMode = useMemo(
+    () => normalizeThemeMode(businessSettings?.themeMode ?? defaultTenantSettings.themeMode),
+    [businessSettings],
+  );
+
+  const themeOverrides = useMemo(
+    () =>
+      normalizeThemeOverrides(
+        businessSettings?.themeOverrides ?? defaultTenantSettings.themeOverrides,
+      ),
+    [businessSettings],
+  );
+
+  const themeVariables = useMemo(
+    () => createThemeVariables(themeSettings, themeMode, themeOverrides),
+    [themeMode, themeOverrides, themeSettings],
+  );
+
+  const themeStyle = useMemo(() => themeVariables as CSSProperties, [themeVariables]);
+
+  const activeServices = useMemo(
+    () => services.filter((service) => service.is_active),
+    [services],
+  );
+
+  const selectedServices = useMemo(
+    () => activeServices.filter((service) => selectedServiceIds.includes(service.id)),
+    [activeServices, selectedServiceIds],
+  );
+
+  const selectedEmployee = useMemo(
+    () => eligibleEmployees.find((employee) => employee.id === selectedEmployeeId) ?? null,
+    [eligibleEmployees, selectedEmployeeId],
+  );
+
+  const selectedSlot = useMemo(
+    () => slots.find((slot) => slot.start_at_utc === selectedSlotStart) ?? null,
+    [slots, selectedSlotStart],
+  );
+
+  const totalPrice = useMemo(
+    () => selectedServices.reduce((sum, service) => sum + Number(service.price), 0),
+    [selectedServices],
+  );
+
+  const loadMeta = useCallback(async () => {
+    setIsLoadingMeta(true);
+    setErrorMessage("");
+
+    const [servicesResult, settingsResult] = await Promise.allSettled([
+      bookingsService.findPublicServices(tenantSlug),
+      tenantSettingsService.findPublicByBusinessSlug(tenantSlug),
+    ]);
+
+    if (servicesResult.status === "fulfilled") {
+      setServices(servicesResult.value);
+    } else {
+      setServices([]);
+      setErrorMessage(
+        servicesResult.reason instanceof Error
+          ? servicesResult.reason.message
+          : "No se pudieron cargar servicios.",
+      );
+    }
+
+    if (settingsResult.status === "fulfilled") {
+      setBusinessSettings(settingsResult.value);
+    } else {
+      setBusinessSettings(null);
+    }
+
+    setIsLoadingMeta(false);
+  }, [tenantSlug]);
+
+  const refreshAvailability = useCallback(async () => {
+    if (!selectedEmployeeId || selectedServiceIds.length === 0 || !selectedDate) {
+      setSlots([]);
+      setSelectedSlotStart(null);
+      setRequiredDurationMinutes(null);
+      return;
+    }
+
+    setIsLoadingSlots(true);
+    setErrorMessage("");
+    try {
+      const availability = await bookingsService.getPublicAvailability(tenantSlug, {
+        employee_id: selectedEmployeeId,
+        service_ids: selectedServiceIds,
+        date: selectedDate,
+      });
+      setSlots(availability.slots);
+      setRequiredDurationMinutes(availability.required_duration_minutes);
+      setAvailabilityTimezone(availability.timezone);
+      setSelectedSlotStart((prev) =>
+        prev && availability.slots.some((slot) => slot.start_at_utc === prev) ? prev : null,
+      );
+    } catch (error) {
+      setSlots([]);
+      setSelectedSlotStart(null);
+      setRequiredDurationMinutes(null);
+      setErrorMessage(
+        error instanceof Error ? error.message : "No se pudo calcular disponibilidad.",
+      );
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  }, [selectedDate, selectedEmployeeId, selectedServiceIds, tenantSlug]);
+
+  useEffect(() => {
+    void loadMeta();
+  }, [loadMeta]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const previousTitle = document.title;
+    const previousFavicon = readFaviconHref();
+
+    document.title = branding.windowTitle;
+    setFaviconHref(branding.faviconUrl);
+
+    return () => {
+      document.title = previousTitle;
+      setFaviconHref(previousFavicon);
+    };
+  }, [branding.faviconUrl, branding.windowTitle]);
+
+  useEffect(() => {
+    if (selectedServiceIds.length === 0) {
+      setEligibleEmployees([]);
+      setSelectedEmployeeId("");
+      setSlots([]);
+      setSelectedSlotStart(null);
+      setRequiredDurationMinutes(null);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsLoadingEmployees(true);
+    setErrorMessage("");
+
+    (async () => {
+      try {
+        const data = await bookingsService.findPublicEligibleEmployees(
+          tenantSlug,
+          selectedServiceIds,
+        );
+        if (isCancelled) return;
+        setEligibleEmployees(data);
+        if (!data.some((employee) => employee.id === selectedEmployeeId)) {
+          setSelectedEmployeeId("");
+          setSlots([]);
+          setSelectedSlotStart(null);
+          setRequiredDurationMinutes(null);
+        }
+      } catch (error) {
+        if (isCancelled) return;
+        setEligibleEmployees([]);
+        setSelectedEmployeeId("");
+        setSlots([]);
+        setSelectedSlotStart(null);
+        setRequiredDurationMinutes(null);
+        setErrorMessage(
+          error instanceof Error ? error.message : "No se pudieron cargar profesionales.",
+        );
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingEmployees(false);
+        }
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedServiceIds, selectedEmployeeId, tenantSlug]);
+
+  useEffect(() => {
+    void refreshAvailability();
+  }, [refreshAvailability]);
+
+  const handleToggleService = (serviceId: string) => {
+    setSelectedServiceIds((prev) =>
+      prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId],
+    );
+    setSelectedSlotStart(null);
+    if (currentStep !== "services") {
+      setCurrentStep("services");
+    }
+  };
+
+  const goNext = () => {
+    const currentIndex = STEP_ORDER.indexOf(currentStep);
+    const nextStep = STEP_ORDER[currentIndex + 1];
+    if (nextStep && nextStep !== "done") {
+      setCurrentStep(nextStep);
+    }
+  };
+
+  const goBack = () => {
+    const currentIndex = STEP_ORDER.indexOf(currentStep);
+    const prevStep = STEP_ORDER[currentIndex - 1];
+    if (prevStep && prevStep !== "done") {
+      setCurrentStep(prevStep);
+    }
+  };
+
+  const resetFlow = () => {
+    setSelectedServiceIds([]);
+    setEligibleEmployees([]);
+    setSelectedEmployeeId("");
+    setSelectedDate(getTodayDateInput());
+    setSlots([]);
+    setSelectedSlotStart(null);
+    setRequiredDurationMinutes(null);
+    setAvailabilityTimezone(null);
+    setCustomerForm(INITIAL_CUSTOMER_FORM);
+    setCaptchaToken(null);
+    setCaptchaRefreshKey((prev) => prev + 1);
+    setCreatedBooking(null);
+    setErrorMessage("");
+    setCurrentStep("services");
+  };
+
+  const handleCreateBooking = async () => {
+    if (!selectedEmployeeId || selectedServiceIds.length === 0 || !selectedSlotStart) {
+      setErrorMessage("Completa los pasos antes de confirmar.");
+      return;
+    }
+    if (customerForm.customer_name.trim().length === 0) {
+      setErrorMessage("El nombre del cliente es obligatorio.");
+      return;
+    }
+    if (
+      customerForm.customer_email.trim().length > 0 &&
+      !/^\S+@\S+\.\S+$/.test(customerForm.customer_email.trim())
+    ) {
+      setErrorMessage("El email del cliente no es valido.");
+      return;
+    }
+    if (isTurnstileEnabled && !captchaToken) {
+      setErrorMessage("Completa la verificacion de seguridad para confirmar.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+    try {
+      const booking = await bookingsService.createPublic(tenantSlug, {
+        employee_id: selectedEmployeeId,
+        service_ids: selectedServiceIds,
+        start_at_utc: selectedSlotStart,
+        customer_name: customerForm.customer_name.trim(),
+        customer_email: customerForm.customer_email.trim() || undefined,
+        customer_phone: customerForm.customer_phone.trim() || undefined,
+        notes: customerForm.notes.trim() || undefined,
+        source: "WEB",
+        captcha_token: isTurnstileEnabled ? captchaToken ?? undefined : undefined,
+      });
+      setCreatedBooking(booking);
+      setCurrentStep("done");
+      toast.success("Reserva confirmada correctamente.");
+    } catch (error) {
+      if (isTurnstileEnabled) {
+        setCaptchaRefreshKey((prev) => prev + 1);
+      }
+      setErrorMessage(error instanceof Error ? error.message : "No se pudo crear la reserva.");
+      toast.error(error instanceof Error ? error.message : "No se pudo crear la reserva.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const stepNumber = STEP_ORDER.indexOf(currentStep) + 1;
+
+  return (
+    <div style={themeStyle} className="min-h-screen bg-app py-6">
+      <section className="mx-auto max-w-6xl space-y-4 px-4">
+        <header className="rounded-[28px] border border-card-border bg-gradient-to-br from-surface-warm via-surface to-surface-soft p-6 shadow-theme-soft">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-card-border bg-surface shadow-theme-soft-sm">
+                <img
+                  src={branding.logoUrl}
+                  alt={`${businessName} logo`}
+                  className="h-10 w-10 rounded-md object-contain"
+                  onError={(event) => {
+                    event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+                  Reserva online
+                </p>
+                <h1 className="mt-1 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
+                  {businessName}
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-muted">
+                  Selecciona servicios, profesional y horario disponible para completar tu cita.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-card-border bg-surface-soft px-4 py-3 md:min-w-64">
+              <p className="text-xs uppercase tracking-[0.14em] text-muted">Comercio</p>
+              <p className="mt-1 text-sm font-semibold text-fg-strong">{businessName}</p>
+              <p className="mt-1 text-xs text-muted">/{`book/${businessSlug}`}</p>
+            </div>
+          </div>
+        </header>
+
+        <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
+          <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
+            <aside className="rounded-3xl border border-border-soft bg-surface p-4">
+              <div className="rounded-2xl border border-border-soft bg-surface-soft p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Negocio
+                </p>
+                <div className="mt-2 flex items-center gap-2.5">
+                  <img
+                    src={branding.logoUrl}
+                    alt={`${businessName} logo`}
+                    className="h-8 w-8 rounded-md border border-border-soft bg-surface object-contain p-1"
+                    onError={(event) => {
+                      event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
+                    }}
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-fg-strong">{businessName}</p>
+                    <p className="truncate text-xs text-muted">{businessSlug}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                Resumen
+              </p>
+
+              <div className="mt-3 space-y-3">
+                <div>
+                  <p className="text-xs text-muted">Servicios</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    {selectedServices.length === 0 ? (
+                      <span className="text-xs text-muted">Sin seleccionar</span>
+                    ) : (
+                      selectedServices.map((service) => (
+                        <span
+                          key={service.id}
+                          className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-1 text-[11px] text-fg-secondary"
+                        >
+                          <Scissors className="h-3 w-3" />
+                          {service.name}
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted">Profesional</p>
+                  <p className="mt-1 text-sm font-medium text-fg">
+                    {selectedEmployee?.name ?? "Pendiente"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted">Fecha / Hora</p>
+                  <p className="mt-1 text-sm font-medium text-fg">
+                    {selectedSlot
+                      ? `${formatSlotDate(selectedSlot.start_at_utc, availabilityTimezone)} - ${formatSlotTime(selectedSlot.start_at_utc, availabilityTimezone)}`
+                      : "Pendiente"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted">Duracion</p>
+                  <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-fg">
+                    <Clock3 className="h-4 w-4 text-fg-icon" />
+                    {formatDuration(requiredDurationMinutes)}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted">Total estimado</p>
+                  <p className="mt-1 text-sm font-semibold text-fg-strong">
+                    {totalPrice.toFixed(2)} {selectedServices[0]?.currency ?? "USD"}
+                  </p>
+                </div>
+              </div>
+            </aside>
+
+            <div className="rounded-3xl border border-border-soft bg-surface p-4">
+              <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <h3 className="text-lg font-semibold text-fg-strong">{getStepTitle(currentStep)}</h3>
+                {currentStep !== "done" ? (
+                  <span className="rounded-full bg-surface-warning-soft px-3 py-1 text-xs font-medium text-warning">
+                    Paso {stepNumber}/4
+                  </span>
+                ) : null}
+              </div>
+
+              {errorMessage ? <p className="mb-4 text-sm text-danger">{errorMessage}</p> : null}
+
+              {isLoadingMeta ? (
+                <p className="text-sm text-muted">Cargando servicios...</p>
+              ) : activeServices.length === 0 ? (
+                <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-3 text-sm text-muted">
+                  Este negocio no tiene servicios publicos disponibles.
+                </p>
+              ) : (
+                <div key={currentStep} className="booking-step-enter space-y-4">
+                  {currentStep === "services" ? (
+                    <>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {activeServices.map((service) => {
+                          const isSelected = selectedServiceIds.includes(service.id);
+                          return (
+                            <button
+                              key={service.id}
+                              type="button"
+                              onClick={() => handleToggleService(service.id)}
+                              className={`rounded-2xl border px-3 py-3 text-left transition ${
+                                isSelected
+                                  ? "border-accent bg-surface-warning-soft"
+                                  : "border-border-soft bg-surface hover:border-border"
+                              }`}
+                            >
+                              <p className="text-sm font-semibold text-fg-strong">{service.name}</p>
+                              <p className="mt-1 text-xs text-muted">
+                                {service.duration_minutes} min - {service.price} {service.currency}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          disabled={selectedServiceIds.length === 0}
+                          onClick={goNext}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
+                        >
+                          Continuar
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {currentStep === "employee" ? (
+                    <>
+                      {isLoadingEmployees ? (
+                        <p className="text-sm text-muted">Buscando profesionales...</p>
+                      ) : eligibleEmployees.length === 0 ? (
+                        <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-3 text-sm text-muted">
+                          No hay profesionales disponibles para esta seleccion.
+                        </p>
+                      ) : (
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {eligibleEmployees.map((employee) => {
+                            const isSelected = selectedEmployeeId === employee.id;
+                            return (
+                              <button
+                                key={employee.id}
+                                type="button"
+                                onClick={() => setSelectedEmployeeId(employee.id)}
+                                className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                                  isSelected
+                                    ? "border-accent bg-surface-warning-soft"
+                                    : "border-border-soft bg-surface hover:border-border"
+                                }`}
+                              >
+                                <Avatar name={employee.name} />
+                                <span className="min-w-0">
+                                  <span className="block truncate text-sm font-medium text-fg-strong">
+                                    {employee.name}
+                                  </span>
+                                  <span className="block truncate text-xs text-muted">
+                                    Profesional disponible
+                                  </span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={goBack}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-neutral"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Atras
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!selectedEmployeeId}
+                          onClick={goNext}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
+                        >
+                          Continuar
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {currentStep === "datetime" ? (
+                    <>
+                      <div className="rounded-2xl border border-border-soft bg-surface-soft p-3">
+                        <label className="mb-2 block text-xs font-medium text-fg-label">Fecha</label>
+                        <CalendarDatePicker
+                          value={selectedDate}
+                          onChange={setSelectedDate}
+                          minDate={getTodayDateInput()}
+                          placeholder="Seleccionar fecha"
+                        />
+                      </div>
+
+                      <div>
+                        <p className="mb-2 text-xs font-medium text-fg-label">Slots disponibles</p>
+                        {isLoadingSlots ? (
+                          <p className="text-sm text-muted">Calculando disponibilidad...</p>
+                        ) : slots.length === 0 ? (
+                          <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-3 text-sm text-muted">
+                            No hay disponibilidad para la fecha seleccionada.
+                          </p>
+                        ) : (
+                          <div className="grid max-h-72 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
+                            {slots.map((slot) => {
+                              const isSelected = slot.start_at_utc === selectedSlotStart;
+                              return (
+                                <button
+                                  key={slot.start_at_utc}
+                                  type="button"
+                                  onClick={() => setSelectedSlotStart(slot.start_at_utc)}
+                                  className={`rounded-xl border px-2.5 py-2 text-xs font-medium transition ${
+                                    isSelected
+                                      ? "border-accent bg-accent text-accent-text"
+                                      : "border-border-soft bg-surface text-fg-secondary hover:bg-surface-muted"
+                                  }`}
+                                >
+                                  {formatSlotTime(slot.start_at_utc, availabilityTimezone)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={goBack}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-neutral"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Atras
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!selectedSlotStart}
+                          onClick={goNext}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
+                        >
+                          Continuar
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {currentStep === "customer" ? (
+                    <>
+                      <div className="grid gap-3 md:grid-cols-2">
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-fg-label">Nombre</span>
+                          <input
+                            value={customerForm.customer_name}
+                            onChange={(event) =>
+                              setCustomerForm((prev) => ({ ...prev, customer_name: event.target.value }))
+                            }
+                            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-fg"
+                            placeholder="Ej: Carlos Ruiz"
+                          />
+                        </label>
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-fg-label">Email</span>
+                          <input
+                            value={customerForm.customer_email}
+                            onChange={(event) =>
+                              setCustomerForm((prev) => ({
+                                ...prev,
+                                customer_email: event.target.value,
+                              }))
+                            }
+                            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-fg"
+                            placeholder="cliente@correo.com"
+                          />
+                        </label>
+                        <label className="space-y-1.5">
+                          <span className="text-xs font-medium text-fg-label">Telefono</span>
+                          <input
+                            value={customerForm.customer_phone}
+                            onChange={(event) =>
+                              setCustomerForm((prev) => ({
+                                ...prev,
+                                customer_phone: event.target.value,
+                              }))
+                            }
+                            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-fg"
+                            placeholder="+34 600 000 000"
+                          />
+                        </label>
+                        <label className="space-y-1.5 md:col-span-2">
+                          <span className="text-xs font-medium text-fg-label">Notas</span>
+                          <textarea
+                            value={customerForm.notes}
+                            onChange={(event) =>
+                              setCustomerForm((prev) => ({ ...prev, notes: event.target.value }))
+                            }
+                            className="h-20 w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm text-fg"
+                            placeholder="Detalles adicionales..."
+                          />
+                        </label>
+                      </div>
+
+                      {isTurnstileEnabled ? (
+                        <div className="rounded-2xl border border-border-soft bg-surface-soft p-3">
+                          <p className="mb-2 text-xs font-medium text-fg-label">
+                            Verificacion de seguridad
+                          </p>
+                          <TurnstileWidget
+                            siteKey={TURNSTILE_SITE_KEY}
+                            action={TURNSTILE_BOOKING_ACTION}
+                            refreshKey={captchaRefreshKey}
+                            onTokenChange={setCaptchaToken}
+                          />
+                        </div>
+                      ) : null}
+
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={goBack}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-neutral"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                          Atras
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleCreateBooking()}
+                          disabled={isSubmitting}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
+                        >
+                          <UserRound className="h-4 w-4" />
+                          {isSubmitting ? "Agendando..." : "Confirmar reserva"}
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+
+                  {currentStep === "done" ? (
+                    <div className="rounded-2xl border border-border-success bg-surface-success p-4">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" />
+                        <div>
+                          <p className="font-semibold text-success">Reserva confirmada</p>
+                          <p className="mt-1 text-sm text-fg-secondary">
+                            {createdBooking
+                              ? `${createdBooking.customer_name} con ${createdBooking.employee?.name ?? "profesional"}`
+                              : "Reserva creada"}
+                          </p>
+                          {createdBooking ? (
+                            <p className="mt-1 text-sm text-fg-secondary">
+                              {formatSlotDate(createdBooking.start_at_utc)} -{" "}
+                              {formatSlotTime(createdBooking.start_at_utc)}
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="mt-4 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={resetFlow}
+                          className="rounded-xl border border-border-strong bg-surface px-4 py-2 text-sm font-medium text-neutral"
+                        >
+                          Crear otra reserva
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <style jsx global>{`
+          .booking-step-enter {
+            animation: booking-step-enter 220ms ease;
+          }
+
+          @keyframes booking-step-enter {
+            from {
+              opacity: 0;
+              transform: translateY(8px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
+      </section>
+    </div>
+  );
+}

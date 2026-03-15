@@ -6,8 +6,8 @@ type StatusPillProps = {
 };
 
 const STYLES: Record<StatusPillVariant, string> = {
-  active: "bg-emerald-100 text-emerald-700",
-  inactive: "bg-amber-100 text-amber-700",
+  active: "bg-surface-success text-success",
+  inactive: "bg-surface-warning text-warning",
 };
 
 export default function StatusPill({ label, variant }: StatusPillProps) {

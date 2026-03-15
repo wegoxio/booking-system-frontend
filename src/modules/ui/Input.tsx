@@ -17,13 +17,13 @@ export default function Input({
 
   return (
     <div className={containerClassName}>
-      <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-gray-900">
+      <label htmlFor={inputId} className="mb-2 block text-sm font-medium text-fg-strong">
         {label}
       </label>
       <input
         id={inputId}
         name={name}
-        className={`bg-gray-50 border border-gray-300 rounded-lg text-gray-600 w-full p-2.5 ${className}`.trim()}
+        className={`bg-surface-soft border border-border rounded-lg text-neutral w-full p-2.5 ${className}`.trim()}
         {...props}
       />
     </div>

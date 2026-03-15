@@ -22,32 +22,32 @@ export function ServiceEmployeesSelector({
   onEmployeeToggle,
 }: ServiceEmployeesSelectorProps) {
   return (
-    <div className="space-y-3 rounded-[28px] border border-[#e2e6ee] bg-white/80 p-4">
+    <div className="space-y-3 rounded-[28px] border border-border bg-inverse-80 p-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-[#3f4655]">Employees asignados</p>
-          <p className="text-xs text-[#7a8192]">
+          <p className="text-sm font-medium text-fg-label">Employees asignados</p>
+          <p className="text-xs text-muted">
             Selecciona al menos una persona para habilitar reservas.
           </p>
         </div>
-        <div className="inline-flex items-center gap-2 self-start rounded-full bg-[#eef2f8] px-3 py-1 text-xs font-medium text-[#4f5b73]">
+        <div className="inline-flex items-center gap-2 self-start rounded-full bg-surface-subtle px-3 py-1 text-xs font-medium text-fg-secondary">
           <Users2 className="h-3.5 w-3.5" />
           {selectedEmployees.length} seleccionados
         </div>
       </div>
 
       {employees.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-[#d9dce4] bg-white px-4 py-6 text-sm text-[#6f7380]">
+        <p className="rounded-2xl border border-dashed border-border bg-surface px-4 py-6 text-sm text-muted">
           No hay employees activos. Crea employees en el modulo correspondiente.
         </p>
       ) : (
         <>
           <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a90a2]" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-placeholder" />
             <input
               value={employeeSearch}
               onChange={(event) => onEmployeeSearchChange(event.target.value)}
-              className="w-full rounded-2xl border border-[#edf0f5] bg-[#f9fafc] py-2.5 pl-9 pr-3 text-sm text-[#2f3543] outline-none transition focus:border-[#efc35f] focus:bg-white"
+              className="w-full rounded-2xl border border-border-soft bg-surface-soft py-2.5 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-accent focus:bg-surface"
               placeholder="Buscar por nombre, email o telefono"
             />
           </label>
@@ -57,7 +57,7 @@ export function ServiceEmployeesSelector({
               {selectedEmployees.map((employee) => (
                 <div
                   key={employee.id}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#f2e2b4] bg-[#fff8e8] px-2.5 py-1.5 text-xs text-[#6f5a1a]"
+                  className="inline-flex items-center gap-2 rounded-full border border-border-warning bg-surface-warning-soft px-2.5 py-1.5 text-xs text-warning"
                 >
                   <Avatar name={employee.name} />
                   <span className="font-medium">{employee.name}</span>
@@ -68,7 +68,7 @@ export function ServiceEmployeesSelector({
 
           <div className="grid gap-2">
             {filteredEmployees.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#d9dce4] px-4 py-6 text-center text-sm text-[#7a8192]">
+              <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
                 No hay resultados para tu busqueda.
               </div>
             ) : (
@@ -80,8 +80,8 @@ export function ServiceEmployeesSelector({
                     key={employee.id}
                     className={`group flex cursor-pointer items-center gap-3 rounded-[22px] border px-3 py-3 transition ${
                       checked
-                        ? "border-[#efc35f] bg-[#fff8e6] shadow-[0_10px_24px_rgba(239,195,95,0.18)]"
-                        : "border-[#edf0f5] bg-[#fbfcfe] hover:border-[#d7ddea] hover:bg-white"
+                        ? "border-accent bg-surface-warning-soft shadow-theme-accent-sm"
+                        : "border-border-soft bg-surface-panel-strong hover:border-border-soft hover:bg-surface"
                     }`}
                   >
                     <input
@@ -93,21 +93,21 @@ export function ServiceEmployeesSelector({
                     <Avatar name={employee.name} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-[#2f3543]">{employee.name}</span>
-                        <span className="rounded-full bg-[#eef2f8] px-2 py-0.5 text-[11px] font-medium text-[#5a6780]">
+                        <span className="font-medium text-fg">{employee.name}</span>
+                        <span className="rounded-full bg-surface-subtle px-2 py-0.5 text-[11px] font-medium text-fg-secondary">
                           Disponible
                         </span>
                       </div>
-                      <p className="truncate text-sm text-[#7a8192]">{employee.email}</p>
-                      <p className="mt-0.5 text-xs text-[#98a0b3]">
+                      <p className="truncate text-sm text-muted">{employee.email}</p>
+                      <p className="mt-0.5 text-xs text-fg-soft">
                         {employee.phone || "Sin telefono registrado"}
                       </p>
                     </div>
                     <div
                       className={`flex h-6 w-6 items-center justify-center rounded-full border transition ${
                         checked
-                          ? "border-[#d8a63d] bg-[#efc35f] text-[#2f3543]"
-                          : "border-[#d8dde8] bg-white text-transparent group-hover:text-[#c1c7d5]"
+                          ? "border-border-warning bg-accent text-accent-text"
+                          : "border-border-soft bg-surface text-transparent group-hover:text-fg-soft"
                       }`}
                     >
                       <Check className="h-3.5 w-3.5" />

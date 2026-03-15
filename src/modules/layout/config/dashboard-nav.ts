@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarClock,
   LayoutDashboard,
   ReceiptText,
   Settings,
@@ -13,34 +14,36 @@ type Role = User["role"];
 
 const superAdminItems: DashboardNavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/tenants", label: "Tenants", icon: Building2 },
-  { href: "/dashboard/users", label: "Users", icon: Users },
-  { href: "/dashboard/audit-logs", label: "Audit Logs", icon: ReceiptText },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/tenants", label: "Tenants", icon: Building2 },
+  { href: "/users", label: "Tenant Admins", icon: Users },
+  { href: "/audit-logs", label: "Audit Logs", icon: ReceiptText },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const tenantAdminItems: DashboardNavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/services", label: "Services", icon: BriefcaseBusiness },
-  { href: "/dashboard/employees", label: "Employees", icon: Users },
-  { href: "/dashboard/audit-logs", label: "Audit Logs", icon: ReceiptText },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/services", label: "Services", icon: BriefcaseBusiness },
+  { href: "/employees", label: "Employees", icon: Users },
+  { href: "/bookings", label: "Bookings", icon: CalendarClock },
+  { href: "/audit-logs", label: "Audit Logs", icon: ReceiptText },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const allowedPathsByRole: Record<Role, string[]> = {
   SUPER_ADMIN: [
     "/dashboard",
-    "/dashboard/tenants",
-    "/dashboard/users",
-    "/dashboard/audit-logs",
-    "/dashboard/settings",
+    "/tenants",
+    "/users",
+    "/audit-logs",
+    "/settings",
   ],
   TENANT_ADMIN: [
     "/dashboard",
-    "/dashboard/services",
-    "/dashboard/employees",
-    "/dashboard/audit-logs",
-    "/dashboard/settings",
+    "/services",
+    "/employees",
+    "/bookings",
+    "/audit-logs",
+    "/settings",
   ],
 };
 

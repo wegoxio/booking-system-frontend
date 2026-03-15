@@ -32,8 +32,8 @@ export default function DashboardSidebar({
   const logoUrl = settings.branding.logoUrl.trim() || "/wegox-logo.svg";
   const appName = settings.branding.appName.trim() || "wegox";
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
 

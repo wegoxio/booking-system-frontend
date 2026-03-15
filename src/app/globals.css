@@ -222,6 +222,37 @@
       background-color 200ms ease,
       color 200ms ease;
   }
+
+  button {
+    transition:
+      background-color 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      opacity 160ms ease,
+      filter 160ms ease;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:not(:disabled):hover {
+    filter: brightness(0.985);
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+  }
+
+  select:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="color"],
+  summary {
+    cursor: pointer;
+  }
 }
 
 .sidebar-gradient {

@@ -21,6 +21,7 @@ import SectionHeader from "@/modules/ui/SectionHeader";
 import TableHeader from "@/modules/ui/TableHeader";
 import TenantsAdminsTable from "./TenantAdminsTable";
 import { wait } from "@/utils/delay";
+import { toast } from "react-hot-toast";
 
 const emptyForm: TenantAdminFormState = {
   name: "",
@@ -82,6 +83,7 @@ export default function TenantAdminsManagement() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo cargar informacion.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -159,11 +161,13 @@ export default function TenantAdminsManagement() {
     try {
       await tenantAdminsService.remove(tenantAdminToDelete.id, token);
       await loadData();
+      toast.success("Tenant admin eliminado correctamente.");
       setTenantAdminToDelete(null);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "No se pudo eliminar tenant admin.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsDeleting(false);
     }
@@ -177,6 +181,7 @@ export default function TenantAdminsManagement() {
     const validationError = validateTenantAdminCreateForm(form, isEditing);
     if (validationError) {
       setFormError(validationError);
+      toast.error(validationError);
       return;
     }
 
@@ -201,12 +206,14 @@ export default function TenantAdminsManagement() {
         }
 
         await tenantAdminsService.update(editingId, payload, token);
+        toast.success("Tenant admin actualizado correctamente.");
       } else {
         const payload: CreateTenantAdminPayload = {
           ...basePayload,
           password: form.password.trim(),
         };
         await tenantAdminsService.create(payload, token);
+        toast.success("Tenant admin creado correctamente.");
       }
 
       await loadData();
@@ -215,6 +222,7 @@ export default function TenantAdminsManagement() {
       const message =
         error instanceof Error ? error.message : "No se pudo guardar tenant admin.";
       setFormError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }

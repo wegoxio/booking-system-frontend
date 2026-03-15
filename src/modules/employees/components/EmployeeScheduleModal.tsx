@@ -1,6 +1,7 @@
 "use client";
 
 import BookingsSchedulePanel from "@/modules/bookings/components/BookingsSchedulePanel";
+import { useModalPresence } from "@/hooks/useModalPresence";
 import type { Employee } from "@/types/employee.types";
 import { CalendarClock, X } from "lucide-react";
 import { useEffect } from "react";
@@ -22,29 +23,41 @@ export default function EmployeeScheduleModal({
   onSelectEmployee,
   onClose,
 }: EmployeeScheduleModalProps): React.ReactNode {
+  const { shouldRender, isVisible } = useModalPresence(isOpen, 0);
+
   useEffect(() => {
-    if (!isOpen) return;
+    if (!shouldRender) return;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [isOpen]);
+  }, [shouldRender]);
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   const selectedEmployee = employees.find((employee) => employee.id === selectedEmployeeId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+        isVisible ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
       <button
         type="button"
         aria-label="Cerrar modal"
-        className="absolute inset-0 bg-overlay backdrop-blur-[6px]"
+        className={`absolute inset-0 bg-overlay backdrop-blur-[6px] ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
         onClick={onClose}
       />
 
-      <div className="relative z-10 flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-inverse-60 bg-gradient-to-b from-surface-warm to-surface-soft shadow-theme-modal-lg">
+      <div
+        className={`relative z-10 flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-inverse-60 bg-gradient-to-b from-surface-warm to-surface-soft shadow-theme-modal-lg ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
+      >
         <div className="flex items-start justify-between gap-4 border-b border-border-soft px-6 py-5">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-border-warning bg-surface-warning px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-warning">
@@ -64,7 +77,7 @@ export default function EmployeeScheduleModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-neutral"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-neutral transition-colors hover:bg-secondary-hover"
           >
             <X className="h-4 w-4" />
           </button>
@@ -82,4 +95,3 @@ export default function EmployeeScheduleModal({
     </div>
   );
 }
-

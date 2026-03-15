@@ -4,13 +4,17 @@ import { useAuth } from "@/context/AuthContext";
 import { useTenantSettings } from "@/context/TenantSettingsContext";
 import { defaultTenantSettings } from "@/modules/settings/config/default-tenant-settings";
 import {
+  getTenantAssetMaxSizeLabel,
+  TENANT_SETTINGS_IMAGE_ACCEPT,
+  validateTenantSettingsAssetFile,
+} from "@/modules/settings/services/tenant-settings.service";
+import {
   createThemeVariables,
   normalizeThemeOverrides,
   THEME_OVERRIDE_TOKENS,
 } from "@/modules/settings/utils/theme-colors";
 import ConfirmActionModal from "@/modules/ui/ConfirmActionModal";
 import type {
-  TenantThemeMode,
   TenantThemeOverrides,
   TenantThemeSettings,
   UpdateTenantSettingsPayload,
@@ -29,10 +33,12 @@ import {
   type ChangeEvent,
   type CSSProperties,
   type ReactNode,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { toast } from "react-hot-toast";
 import {
   Area,
   CartesianGrid,
@@ -56,11 +62,12 @@ const baseFields: Array<{ key: keyof TenantThemeSettings; label: string }> = [
 ];
 
 const groups = ["layout", "surface", "text", "status", "border", "chart"] as const;
-const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.webp,.svg,.ico,image/*";
 const HEX_6 = /^#([0-9a-fA-F]{6})$/;
 const HEX_3 = /^#([0-9a-fA-F]{3})$/;
 const brandPaletteFields = baseFields.slice(0, 6);
 const textPaletteFields = baseFields.slice(6);
+const LOGO_MAX_SIZE_LABEL = getTenantAssetMaxSizeLabel("logo");
+const FAVICON_MAX_SIZE_LABEL = getTenantAssetMaxSizeLabel("favicon");
 const settingsDemoChartData = [
   { label: "Ene", revenue: 540, bookings: 430, reversed: 210 },
   { label: "Feb", revenue: 690, bookings: 510, reversed: 260 },
@@ -104,6 +111,7 @@ function CollapsibleCard({
         <button
           type="button"
           onClick={onToggle}
+          aria-expanded={isOpen}
           className="flex min-w-0 flex-1 items-start gap-2 text-left"
         >
           {icon ? <span className="mt-0.5 text-fg-icon">{icon}</span> : null}
@@ -112,12 +120,16 @@ function CollapsibleCard({
             {description ? <span className="mt-0.5 block text-xs text-muted">{description}</span> : null}
           </span>
           <ChevronDown
-            className={`ml-auto mt-0.5 h-4 w-4 shrink-0 text-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`ml-auto mt-0.5 h-4 w-4 shrink-0 text-muted transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
           />
         </button>
         {actions ? <div className="shrink-0">{actions}</div> : null}
       </div>
-      {isOpen ? <div className="mt-3">{children}</div> : null}
+      <div
+        className={`grid transition-[grid-template-rows,opacity,margin-top] duration-300 ease-out ${isOpen ? "mt-3 grid-rows-[1fr] opacity-100" : "mt-0 grid-rows-[0fr] opacity-0"}`}
+      >
+        <div className="min-h-0 overflow-hidden">{children}</div>
+      </div>
     </div>
   );
 }
@@ -144,7 +156,6 @@ export default function TenantSettingsPanel() {
     useTenantSettings();
 
   const [themeDraft, setThemeDraft] = useState(settings.theme);
-  const [themeModeDraft, setThemeModeDraft] = useState<TenantThemeMode>(settings.themeMode);
   const [overridesDraft, setOverridesDraft] = useState<TenantThemeOverrides>(settings.themeOverrides);
   const [overrideGroup, setOverrideGroup] = useState<(typeof groups)[number]>("surface");
   const [overrideTier, setOverrideTier] = useState<"core" | "all">("core");
@@ -175,8 +186,8 @@ export default function TenantSettingsPanel() {
   const normalizedOverrides = useMemo(() => normalizeThemeOverrides(overridesDraft), [overridesDraft]);
   const savedOverrides = useMemo(() => normalizeThemeOverrides(settings.themeOverrides), [settings.themeOverrides]);
   const previewTheme = useMemo(
-    () => createThemeVariables(themeDraft, themeModeDraft, normalizedOverrides),
-    [themeDraft, themeModeDraft, normalizedOverrides],
+    () => createThemeVariables(themeDraft, "ADVANCED", normalizedOverrides),
+    [themeDraft, normalizedOverrides],
   );
   const previewScopeStyle = useMemo(() => previewTheme as CSSProperties, [previewTheme]);
   const overrideTokens = useMemo(
@@ -188,7 +199,6 @@ export default function TenantSettingsPanel() {
   );
 
   const hasThemeChanges = baseFields.some(({ key }) => themeDraft[key] !== settings.theme[key]);
-  const hasModeChanges = themeModeDraft !== settings.themeMode;
   const hasOverridesChanges = !equalOverrides(normalizedOverrides, savedOverrides);
   const hasBrandingChanges =
     (brandingDraft.appName.trim() || defaultTenantSettings.branding.appName) !== settings.branding.appName ||
@@ -198,11 +208,10 @@ export default function TenantSettingsPanel() {
     (useDefaultFavicon && settings.branding.faviconUrl !== defaultTenantSettings.branding.faviconUrl);
   const hasAssetUploads = !!pendingLogoFile || !!pendingFaviconFile;
   const hasChanges =
-    hasThemeChanges || hasModeChanges || hasOverridesChanges || hasBrandingChanges || hasDefaultAssetChanges || hasAssetUploads;
+    hasThemeChanges || hasOverridesChanges || hasBrandingChanges || hasDefaultAssetChanges || hasAssetUploads;
 
   const pendingText = [
     hasThemeChanges && "paleta",
-    hasModeChanges && "modo",
     hasOverridesChanges && "overrides",
     hasBrandingChanges && "branding",
     hasDefaultAssetChanges && "assets default",
@@ -213,7 +222,6 @@ export default function TenantSettingsPanel() {
 
   const syncFromSettings = () => {
     setThemeDraft(settings.theme);
-    setThemeModeDraft(settings.themeMode);
     setOverridesDraft(settings.themeOverrides);
     setBrandingDraft({ appName: settings.branding.appName, windowTitle: settings.branding.windowTitle });
     if (tempLogoUrlRef.current) URL.revokeObjectURL(tempLogoUrlRef.current);
@@ -226,11 +234,11 @@ export default function TenantSettingsPanel() {
     setPendingFaviconFile(null);
     setUseDefaultLogo(false);
     setUseDefaultFavicon(false);
+    toast.success("Cambios descartados.");
   };
 
   const loadDefaults = () => {
     setThemeDraft(defaultTenantSettings.theme);
-    setThemeModeDraft(defaultTenantSettings.themeMode);
     setOverridesDraft(defaultTenantSettings.themeOverrides);
     setBrandingDraft({
       appName: defaultTenantSettings.branding.appName,
@@ -242,12 +250,28 @@ export default function TenantSettingsPanel() {
     setFaviconPreview(defaultTenantSettings.branding.faviconUrl);
     setPendingLogoFile(null);
     setPendingFaviconFile(null);
+    toast("Defaults cargados. Confirma cambios para guardar.");
   };
 
-  const onAssetUpload = (assetType: "logo" | "favicon", event: ChangeEvent<HTMLInputElement>) => {
+  const onAssetUpload = async (
+    assetType: "logo" | "favicon",
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+
+    try {
+      await validateTenantSettingsAssetFile(assetType, file);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Archivo invalido. Usa PNG, JPG, WEBP o ICO.";
+      toast.error(message);
+      return;
+    }
+
     const objectUrl = URL.createObjectURL(file);
     if (assetType === "logo") {
       if (tempLogoUrlRef.current) URL.revokeObjectURL(tempLogoUrlRef.current);
@@ -255,6 +279,7 @@ export default function TenantSettingsPanel() {
       setLogoPreview(objectUrl);
       setPendingLogoFile(file);
       setUseDefaultLogo(false);
+      toast.success("Logo listo para guardar.");
       return;
     }
     if (tempFaviconUrlRef.current) URL.revokeObjectURL(tempFaviconUrlRef.current);
@@ -262,6 +287,7 @@ export default function TenantSettingsPanel() {
     setFaviconPreview(objectUrl);
     setPendingFaviconFile(file);
     setUseDefaultFavicon(false);
+    toast.success("Favicon listo para guardar.");
   };
 
   const applyChanges = async () => {
@@ -270,7 +296,6 @@ export default function TenantSettingsPanel() {
     try {
       const payload: UpdateTenantSettingsPayload = {};
       if (hasThemeChanges) payload.theme = { ...themeDraft };
-      if (hasModeChanges) payload.themeMode = themeModeDraft;
       if (hasOverridesChanges) payload.themeOverrides = { ...normalizedOverrides };
       if (hasBrandingChanges) {
         payload.branding = {
@@ -284,10 +309,15 @@ export default function TenantSettingsPanel() {
       if (useDefaultFavicon && settings.branding.faviconUrl !== defaultTenantSettings.branding.faviconUrl) {
         payload.branding = { ...(payload.branding ?? {}), faviconUrl: defaultTenantSettings.branding.faviconUrl };
       }
-      if (payload.theme || payload.themeMode || payload.themeOverrides || payload.branding) await saveSettings(payload);
+      if (payload.theme || payload.themeOverrides || payload.branding) await saveSettings(payload);
       if (pendingLogoFile) await uploadBrandingAsset("logo", pendingLogoFile);
       if (pendingFaviconFile) await uploadBrandingAsset("favicon", pendingFaviconFile);
       setConfirmOpen(false);
+      toast.success("Cambios aplicados correctamente.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "No se pudieron aplicar los cambios.";
+      toast.error(message);
     } finally {
       setIsApplying(false);
     }
@@ -297,25 +327,30 @@ export default function TenantSettingsPanel() {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  useEffect(() => {
+    if (!errorMessage) return;
+    toast.error(errorMessage, { id: "tenant-settings-error" });
+  }, [errorMessage]);
+
   if (!canEditTenantSettings) {
     return <p className="text-sm text-muted">No tienes permisos para editar settings.</p>;
   }
 
   return (
-    <section className="space-y-5">
+    <section className="space-y-5 [&_button:not(:disabled)]:cursor-pointer [&_button:disabled]:cursor-not-allowed [&_button:disabled]:opacity-45 [&_button:disabled]:saturate-0 [&_input[type='checkbox']]:cursor-pointer [&_input[type='color']]:cursor-pointer">
       <div className="rounded-[28px] border border-card-border bg-card p-6 shadow-theme-soft">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-border-warning bg-surface-warning px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-warning"><Sparkles className="h-3.5 w-3.5" />Theme Builder</div>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-primary">Live Palette Editor</h2>
-            <p className="mt-2 text-sm text-muted">Preview en vivo tipo generador de tema. Ambito: {user?.role === "SUPER_ADMIN" ? "plataforma" : "tenant"}.</p>
+            <p className="mt-2 text-sm text-muted">Preview en vivo tipo generador de tema. Ambito: {user?.role === "SUPER_ADMIN" ? "plataforma" : "negocio"}.</p>
             <p className="mt-2 text-xs text-muted">{pendingText ? `Pendiente: ${pendingText}.` : "No hay cambios pendientes."}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {isBusy && <span className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs text-neutral"><LoaderCircle className="h-3.5 w-3.5 animate-spin" />{isLoadingSettings ? "Cargando..." : "Guardando..."}</span>}
-            <button type="button" onClick={loadDefaults} disabled={isBusy} className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-neutral disabled:opacity-60"><RotateCcw className="h-4 w-4" />Defaults</button>
-            <button type="button" onClick={syncFromSettings} disabled={!hasChanges || isBusy} className="rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-neutral disabled:opacity-60">Descartar</button>
-            <button type="button" onClick={() => setConfirmOpen(true)} disabled={!hasChanges || isBusy} className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-text disabled:opacity-60">Confirmar cambios</button>
+            <button type="button" onClick={loadDefaults} disabled={isBusy} className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-neutral"><RotateCcw className="h-4 w-4" />Defaults</button>
+            <button type="button" onClick={syncFromSettings} disabled={!hasChanges || isBusy} className="rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-neutral">Descartar</button>
+            <button type="button" onClick={() => setConfirmOpen(true)} disabled={!hasChanges || isBusy} className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-text">Confirmar cambios</button>
           </div>
         </div>
       </div>
@@ -324,11 +359,6 @@ export default function TenantSettingsPanel() {
 
       <div className="grid gap-5 xl:grid-cols-[320px_1fr]">
         <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
-          <div className="rounded-[24px] border border-card-border bg-card p-4 shadow-theme-card">
-            <div className="mb-3 flex items-center justify-between"><p className="text-sm font-semibold text-primary">Modo de tema</p><div className="inline-flex rounded-xl border border-card-border bg-surface-soft p-1"><button onClick={() => setThemeModeDraft("AUTO")} className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${themeModeDraft === "AUTO" ? "bg-surface text-fg-strong" : "text-muted"}`}>Auto</button><button onClick={() => setThemeModeDraft("ADVANCED")} className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${themeModeDraft === "ADVANCED" ? "bg-surface text-fg-strong" : "text-muted"}`}>Advanced</button></div></div>
-            <p className="text-xs text-muted">Usa AUTO para derivaciones inteligentes o ADVANCED para control total.</p>
-          </div>
-
           <CollapsibleCard
             title="Paleta principal"
             description="Colores de marca y estados base."
@@ -439,9 +469,11 @@ export default function TenantSettingsPanel() {
                   Logo
                   <input
                     type="file"
-                    accept={IMAGE_ACCEPT}
+                    accept={TENANT_SETTINGS_IMAGE_ACCEPT}
                     className="hidden"
-                    onChange={(event) => onAssetUpload("logo", event)}
+                    onChange={(event) => {
+                      void onAssetUpload("logo", event);
+                    }}
                   />
                 </label>
                 <button
@@ -456,6 +488,9 @@ export default function TenantSettingsPanel() {
                   Default
                 </button>
               </div>
+              <p className="px-1 text-[11px] text-muted">
+                Logo: PNG, JPG o WEBP. Maximo {LOGO_MAX_SIZE_LABEL}. SVG bloqueado.
+              </p>
 
               <div className="flex items-center gap-2 rounded-xl border border-card-border bg-surface p-2">
                 <img
@@ -468,9 +503,11 @@ export default function TenantSettingsPanel() {
                   Favicon
                   <input
                     type="file"
-                    accept={IMAGE_ACCEPT}
+                    accept={TENANT_SETTINGS_IMAGE_ACCEPT}
                     className="hidden"
-                    onChange={(event) => onAssetUpload("favicon", event)}
+                    onChange={(event) => {
+                      void onAssetUpload("favicon", event);
+                    }}
                   />
                 </label>
                 <button
@@ -485,6 +522,9 @@ export default function TenantSettingsPanel() {
                   Default
                 </button>
               </div>
+              <p className="px-1 text-[11px] text-muted">
+                Favicon: PNG, ICO o WEBP. Maximo {FAVICON_MAX_SIZE_LABEL}. SVG bloqueado.
+              </p>
             </div>
           </CollapsibleCard>
         </aside>
@@ -555,7 +595,6 @@ export default function TenantSettingsPanel() {
                         type="color"
                         value={normalizeColorInput(custom || computed)}
                         onChange={(event) => {
-                          setThemeModeDraft("ADVANCED");
                           setOverridesDraft((prev) => ({ ...prev, [token.key]: event.target.value }));
                         }}
                         className="h-7 w-8 rounded-md border border-card-border"
@@ -564,7 +603,6 @@ export default function TenantSettingsPanel() {
                         type="text"
                         value={custom || computed}
                         onChange={(event) => {
-                          setThemeModeDraft("ADVANCED");
                           setOverridesDraft((prev) => ({ ...prev, [token.key]: event.target.value }));
                         }}
                         className="min-w-0 flex-1 rounded-lg border border-card-border bg-surface-soft px-2 py-1.5 text-[11px] text-primary"
@@ -591,7 +629,7 @@ export default function TenantSettingsPanel() {
           </CollapsibleCard>
 
           <div className="rounded-[24px] border border-card-border bg-card p-5 shadow-theme-card">
-            <div className="mb-4 flex items-center justify-between"><div><h3 className="text-xl font-semibold text-primary">Components Demo</h3><p className="text-sm text-muted">Cada bloque valida un set de tokens especifico en vivo.</p></div><div className="inline-flex items-center gap-2 rounded-full border border-card-border bg-surface px-3 py-1 text-xs text-muted"><Paintbrush className="h-3.5 w-3.5 text-fg-icon" />{themeModeDraft}</div></div>
+            <div className="mb-4 flex items-center justify-between"><div><h3 className="text-xl font-semibold text-primary">Components Demo</h3><p className="text-sm text-muted">Cada bloque valida un set de tokens especifico en vivo.</p></div><div className="inline-flex items-center gap-2 rounded-full border border-card-border bg-surface px-3 py-1 text-xs text-muted"><Paintbrush className="h-3.5 w-3.5 text-fg-icon" />LIVE</div></div>
             <div className="grid gap-4 xl:grid-cols-12">
               <article className="rounded-2xl border border-card-border bg-surface p-4 xl:col-span-6">
                 <h4 className="text-sm font-semibold text-primary">Actions + Hover</h4>

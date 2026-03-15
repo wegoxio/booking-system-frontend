@@ -21,6 +21,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 
 type IntervalRow = {
   row_id: string;
@@ -267,9 +268,10 @@ export default function BookingsSchedulePanel({
         });
       }
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "No se pudo cargar el horario del empleado.",
-      );
+      const message =
+        error instanceof Error ? error.message : "No se pudo cargar el horario del empleado.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoadingSchedule(false);
     }
@@ -333,6 +335,7 @@ export default function BookingsSchedulePanel({
     if (workingValidation) {
       setErrorMessage(workingValidation);
       setSuccessMessage("");
+      toast.error(workingValidation);
       return;
     }
 
@@ -340,6 +343,7 @@ export default function BookingsSchedulePanel({
     if (breaksValidation) {
       setErrorMessage(breaksValidation);
       setSuccessMessage("");
+      toast.error(breaksValidation);
       return;
     }
 
@@ -358,9 +362,13 @@ export default function BookingsSchedulePanel({
       );
       setScheduleSnapshot(updated);
       setSuccessMessage("Horario guardado correctamente.");
+      toast.success("Horario guardado correctamente.");
       onScheduleChanged?.(selectedEmployeeId);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No se pudo guardar el horario.");
+      const message =
+        error instanceof Error ? error.message : "No se pudo guardar el horario.";
+      setErrorMessage(message);
+      toast.error(message);
       setSuccessMessage("");
     } finally {
       setIsSavingSchedule(false);
@@ -375,12 +383,14 @@ export default function BookingsSchedulePanel({
     if (!baseStart || !baseEnd) {
       setErrorMessage("Define hora de inicio y fin para aplicar el helper L-V.");
       setSuccessMessage("");
+      toast.error("Define hora de inicio y fin para aplicar el helper L-V.");
       return;
     }
 
     if (baseEnd <= baseStart) {
       setErrorMessage("La hora fin del helper debe ser mayor que la hora inicio.");
       setSuccessMessage("");
+      toast.error("La hora fin del helper debe ser mayor que la hora inicio.");
       return;
     }
 
@@ -400,6 +410,11 @@ export default function BookingsSchedulePanel({
       type === "working"
         ? "Horario L-V aplicado. Revisa y guarda."
         : "Break L-V aplicado. Revisa y guarda.",
+    );
+    toast.success(
+      type === "working"
+        ? "Plantilla L-V aplicada al horario laboral."
+        : "Plantilla L-V aplicada a los descansos.",
     );
   };
 
@@ -440,10 +455,12 @@ export default function BookingsSchedulePanel({
     const endIso = parseLocalInputToIso(timeOffForm.end_local);
     if (!startIso || !endIso) {
       setErrorMessage("Debes definir una fecha/hora valida para el bloqueo.");
+      toast.error("Debes definir una fecha/hora valida para el bloqueo.");
       return;
     }
     if (new Date(endIso).getTime() <= new Date(startIso).getTime()) {
       setErrorMessage("La fecha/hora de fin debe ser mayor que inicio.");
+      toast.error("La fecha/hora de fin debe ser mayor que inicio.");
       return;
     }
 
@@ -463,9 +480,13 @@ export default function BookingsSchedulePanel({
       setTimeOffForm(INITIAL_TIME_OFF_FORM);
       await loadSchedule();
       setSuccessMessage("Bloqueo creado correctamente.");
+      toast.success("Bloqueo creado correctamente.");
       onScheduleChanged?.(selectedEmployeeId);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No se pudo crear el bloqueo.");
+      const message =
+        error instanceof Error ? error.message : "No se pudo crear el bloqueo.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsCreatingTimeOff(false);
     }
@@ -480,9 +501,13 @@ export default function BookingsSchedulePanel({
       await bookingsService.removeEmployeeTimeOff(selectedEmployeeId, timeOffId, token);
       await loadSchedule();
       setSuccessMessage("Bloqueo eliminado.");
+      toast.success("Bloqueo eliminado correctamente.");
       onScheduleChanged?.(selectedEmployeeId);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No se pudo eliminar el bloqueo.");
+      const message =
+        error instanceof Error ? error.message : "No se pudo eliminar el bloqueo.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setDeletingTimeOffId(null);
     }

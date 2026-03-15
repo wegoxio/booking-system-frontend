@@ -19,6 +19,7 @@ import type {
 } from "@/types/employee.types";
 import { wait } from "@/utils/delay";
 import { validateEmployeeCreateForm } from "@/utils/validation";
+import { toast } from "react-hot-toast";
 
 const emptyForm: EmployeeFormState = {
   name: "",
@@ -70,6 +71,7 @@ export default function EmployeesManagement() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo cargar employees.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -124,6 +126,7 @@ export default function EmployeesManagement() {
     const validationError = validateEmployeeCreateForm(form);
     if (validationError) {
       setFormError(validationError);
+      toast.error(validationError);
       return;
     }
 
@@ -143,8 +146,10 @@ export default function EmployeesManagement() {
           is_active: form.is_active,
         };
         await employeesService.update(editingId, payload, token);
+        toast.success("Employee actualizado correctamente.");
       } else {
         await employeesService.create(basePayload, token);
+        toast.success("Employee creado correctamente.");
       }
 
       await loadEmployees();
@@ -152,6 +157,7 @@ export default function EmployeesManagement() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo guardar employee.";
       setFormError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }

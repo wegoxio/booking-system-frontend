@@ -68,7 +68,7 @@ export default function TenantsAdminsTable({
                                     <button
                                         type="button"
                                         onClick={() => onEdit(tenant)}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover"
                                     >
                                         <Pencil className="h-3.5 w-3.5" />
                                         Editar
@@ -76,7 +76,7 @@ export default function TenantsAdminsTable({
                                     <button
                                         type="button"
                                         onClick={() => onDelete(tenant)}
-                                        className="inline-flex items-center gap-2 rounded-xl border border-border-danger bg-surface-danger px-3 py-2 text-xs font-medium text-danger"
+                                        className="inline-flex items-center gap-2 rounded-xl border border-border-danger bg-surface-danger px-3 py-2 text-xs font-medium text-danger transition-colors hover:bg-danger hover:text-inverse"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
                                         Eliminar

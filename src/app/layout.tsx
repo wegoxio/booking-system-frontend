@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { TenantSettingsProvider } from "@/context/TenantSettingsContext";
+import AppToaster from "@/modules/ui/AppToaster";
 
 export const metadata: Metadata = {
   title: "Wegox Booking System",
@@ -19,6 +20,7 @@ export default function RootLayout({
         <AuthProvider>
           <TenantSettingsProvider>
             {children}
+            <AppToaster />
           </TenantSettingsProvider>
         </AuthProvider>
       </body>

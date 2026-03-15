@@ -72,7 +72,7 @@ export default function EmployeesTable({
                   <button
                     type="button"
                     onClick={() => onOpenSchedule(employee)}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-border-warning bg-surface-warning-soft px-3 py-2 text-xs font-medium text-warning"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-border-warning bg-surface-warning-soft px-3 py-2 text-xs font-medium text-warning transition-colors hover:bg-surface-warning"
                   >
                     <CalendarClock className="h-3.5 w-3.5" />
                     Horario
@@ -80,7 +80,7 @@ export default function EmployeesTable({
                   <button
                     type="button"
                     onClick={() => onEdit(employee)}
-                    className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral"
+                    className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover"
                   >
                     Editar
                   </button>
@@ -93,4 +93,3 @@ export default function EmployeesTable({
     </div>
   );
 }
-

@@ -21,6 +21,7 @@ import {
   toCreateServicePayload,
   toUpdateServicePayload,
 } from "../utils/service-form.utils";
+import { toast } from "react-hot-toast";
 
 export default function ServicesManagement() {
   const { token } = useAuth();
@@ -91,6 +92,7 @@ export default function ServicesManagement() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo cargar informacion.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -144,6 +146,7 @@ export default function ServicesManagement() {
     const validationError = validateServiceForm(form);
     if (validationError) {
       setFormError(validationError);
+      toast.error(validationError);
       return;
     }
 
@@ -152,14 +155,17 @@ export default function ServicesManagement() {
     try {
       if (editingId) {
         await servicesService.update(editingId, toUpdateServicePayload(form), token);
+        toast.success("Servicio actualizado correctamente.");
       } else {
         await servicesService.create(toCreateServicePayload(form), token);
+        toast.success("Servicio creado correctamente.");
       }
       await loadData();
       closeModal();
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo guardar el servicio.";
       setFormError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -176,9 +182,13 @@ export default function ServicesManagement() {
         token,
       );
       await loadData();
+      toast.success(
+        service.is_active ? "Servicio desactivado correctamente." : "Servicio activado correctamente.",
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo cambiar el estado.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsTogglingId(null);
     }

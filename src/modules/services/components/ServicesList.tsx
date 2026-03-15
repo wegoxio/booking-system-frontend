@@ -79,7 +79,7 @@ export function ServicesList({
                   <button
                     type="button"
                     onClick={() => onEdit(service)}
-                    className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral"
+                    className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover"
                   >
                     Editar
                   </button>
@@ -87,7 +87,7 @@ export function ServicesList({
                     type="button"
                     onClick={() => onToggleStatus(service)}
                     disabled={isTogglingId === service.id}
-                    className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral disabled:opacity-60"
+                    className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover disabled:opacity-60"
                   >
                     {isTogglingId === service.id
                       ? "Actualizando..."

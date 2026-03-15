@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import Button from "@/modules/ui/Button";
 import Input from "@/modules/ui/Input";
+import TurnstileWidget from "@/modules/ui/TurnstileWidget";
 import {
   ArrowRight,
   CalendarClock,
@@ -40,25 +41,44 @@ const LOGIN_HIGHLIGHTS: HighlightItem[] = [
   },
 ];
 
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+const TURNSTILE_LOGIN_ACTION =
+  process.env.NEXT_PUBLIC_TURNSTILE_LOGIN_ACTION?.trim() || "login";
+
 export default function LoginForm() {
   const { login, isLoading } = useAuth();
   const router = useRouter();
+  const isTurnstileEnabled = TURNSTILE_SITE_KEY.length > 0;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
     setErrorMessage("");
 
+    if (isTurnstileEnabled && !captchaToken) {
+      setErrorMessage("Completa la verificacion de seguridad para continuar.");
+      return;
+    }
+
     try {
-      await login({ email, password });
+      await login({
+        email,
+        password,
+        captcha_token: isTurnstileEnabled ? captchaToken ?? undefined : undefined,
+      });
       router.push("/dashboard");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error al iniciar sesion";
       setErrorMessage(message);
+      if (isTurnstileEnabled) {
+        setCaptchaRefreshKey((prev) => prev + 1);
+      }
     }
   };
 
@@ -185,6 +205,17 @@ export default function LoginForm() {
                     Olvide mi contrasena
                   </button>
                 </div>
+
+                {isTurnstileEnabled ? (
+                  <div className="rounded-xl border border-border bg-surface-soft p-3">
+                    <TurnstileWidget
+                      siteKey={TURNSTILE_SITE_KEY}
+                      action={TURNSTILE_LOGIN_ACTION}
+                      refreshKey={captchaRefreshKey}
+                      onTokenChange={setCaptchaToken}
+                    />
+                  </div>
+                ) : null}
 
                 <Button
                   type="submit"

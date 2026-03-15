@@ -8,11 +8,13 @@ import type {
   EmployeeTimeOffRecord,
   EmployeeScheduleResponse,
   ListBookingsQuery,
+  PublicBookingConfirmation,
+  PublicBookingEmployee,
+  PublicBookingService,
   SetEmployeeSchedulePayload,
   UpdateBookingStatusPayload,
 } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
-import type { Service } from "@/types/service.types";
 
 function toQueryString(params: Record<string, string | undefined>) {
   const searchParams = new URLSearchParams();
@@ -25,8 +27,8 @@ function toQueryString(params: Record<string, string | undefined>) {
 }
 
 export const bookingsService = {
-  findPublicServices: async (tenantSlug: string): Promise<Service[]> => {
-    return apiFetch<Service[]>(
+  findPublicServices: async (tenantSlug: string): Promise<PublicBookingService[]> => {
+    return apiFetch<PublicBookingService[]>(
       `/public/tenants/${encodeURIComponent(tenantSlug)}/bookings/services`,
       {
         method: "GET",
@@ -37,11 +39,11 @@ export const bookingsService = {
   findPublicEligibleEmployees: async (
     tenantSlug: string,
     serviceIds: string[],
-  ): Promise<Employee[]> => {
+  ): Promise<PublicBookingEmployee[]> => {
     const query = toQueryString({
       service_ids: serviceIds.join(","),
     });
-    return apiFetch<Employee[]>(
+    return apiFetch<PublicBookingEmployee[]>(
       `/public/tenants/${encodeURIComponent(tenantSlug)}/bookings/eligible-employees${query}`,
       {
         method: "GET",
@@ -70,8 +72,8 @@ export const bookingsService = {
   createPublic: async (
     tenantSlug: string,
     payload: CreateBookingPayload,
-  ): Promise<Booking> => {
-    return apiFetch<Booking>(
+  ): Promise<PublicBookingConfirmation> => {
+    return apiFetch<PublicBookingConfirmation>(
       `/public/tenants/${encodeURIComponent(tenantSlug)}/bookings`,
       {
         method: "POST",

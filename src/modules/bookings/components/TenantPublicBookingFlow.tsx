@@ -11,9 +11,13 @@ import {
 } from "@/modules/settings/utils/theme-colors";
 import Avatar from "@/modules/ui/Avatar";
 import CalendarDatePicker from "@/modules/ui/CalendarDatePicker";
-import type { Booking, BookingSlot } from "@/types/booking.types";
-import type { Employee } from "@/types/employee.types";
-import type { Service } from "@/types/service.types";
+import TurnstileWidget from "@/modules/ui/TurnstileWidget";
+import type {
+  BookingSlot,
+  PublicBookingConfirmation,
+  PublicBookingEmployee,
+  PublicBookingService,
+} from "@/types/booking.types";
 import type { TenantSettingsRecord } from "@/types/tenant-settings.types";
 import {
   CheckCircle2,
@@ -25,6 +29,7 @@ import {
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 
 type BookingStep = "services" | "employee" | "datetime" | "customer" | "done";
 
@@ -47,6 +52,9 @@ const INITIAL_CUSTOMER_FORM: CustomerFormState = {
   customer_phone: "",
   notes: "",
 };
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+const TURNSTILE_BOOKING_ACTION =
+  process.env.NEXT_PUBLIC_TURNSTILE_BOOKING_ACTION?.trim() || "booking_create";
 
 function getTodayDateInput() {
   const now = new Date();
@@ -133,9 +141,10 @@ function setFaviconHref(url: string) {
 export default function TenantPublicBookingFlow({
   tenantSlug,
 }: TenantPublicBookingFlowProps) {
-  const [services, setServices] = useState<Service[]>([]);
+  const isTurnstileEnabled = TURNSTILE_SITE_KEY.length > 0;
+  const [services, setServices] = useState<PublicBookingService[]>([]);
   const [businessSettings, setBusinessSettings] = useState<TenantSettingsRecord | null>(null);
-  const [eligibleEmployees, setEligibleEmployees] = useState<Employee[]>([]);
+  const [eligibleEmployees, setEligibleEmployees] = useState<PublicBookingEmployee[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedDate, setSelectedDate] = useState(getTodayDateInput());
@@ -144,8 +153,10 @@ export default function TenantPublicBookingFlow({
   const [requiredDurationMinutes, setRequiredDurationMinutes] = useState<number | null>(null);
   const [availabilityTimezone, setAvailabilityTimezone] = useState<string | null>(null);
   const [customerForm, setCustomerForm] = useState<CustomerFormState>(INITIAL_CUSTOMER_FORM);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [currentStep, setCurrentStep] = useState<BookingStep>("services");
-  const [createdBooking, setCreatedBooking] = useState<Booking | null>(null);
+  const [createdBooking, setCreatedBooking] = useState<PublicBookingConfirmation | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
   const [isLoadingMeta, setIsLoadingMeta] = useState(true);
@@ -397,6 +408,8 @@ export default function TenantPublicBookingFlow({
     setRequiredDurationMinutes(null);
     setAvailabilityTimezone(null);
     setCustomerForm(INITIAL_CUSTOMER_FORM);
+    setCaptchaToken(null);
+    setCaptchaRefreshKey((prev) => prev + 1);
     setCreatedBooking(null);
     setErrorMessage("");
     setCurrentStep("services");
@@ -418,6 +431,10 @@ export default function TenantPublicBookingFlow({
       setErrorMessage("El email del cliente no es valido.");
       return;
     }
+    if (isTurnstileEnabled && !captchaToken) {
+      setErrorMessage("Completa la verificacion de seguridad para confirmar.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMessage("");
@@ -431,11 +448,17 @@ export default function TenantPublicBookingFlow({
         customer_phone: customerForm.customer_phone.trim() || undefined,
         notes: customerForm.notes.trim() || undefined,
         source: "WEB",
+        captcha_token: isTurnstileEnabled ? captchaToken ?? undefined : undefined,
       });
       setCreatedBooking(booking);
       setCurrentStep("done");
+      toast.success("Reserva confirmada correctamente.");
     } catch (error) {
+      if (isTurnstileEnabled) {
+        setCaptchaRefreshKey((prev) => prev + 1);
+      }
       setErrorMessage(error instanceof Error ? error.message : "No se pudo crear la reserva.");
+      toast.error(error instanceof Error ? error.message : "No se pudo crear la reserva.");
     } finally {
       setIsSubmitting(false);
     }
@@ -647,7 +670,7 @@ export default function TenantPublicBookingFlow({
                                     {employee.name}
                                   </span>
                                   <span className="block truncate text-xs text-muted">
-                                    {employee.email}
+                                    Profesional disponible
                                   </span>
                                 </span>
                               </button>
@@ -796,6 +819,20 @@ export default function TenantPublicBookingFlow({
                           />
                         </label>
                       </div>
+
+                      {isTurnstileEnabled ? (
+                        <div className="rounded-2xl border border-border-soft bg-surface-soft p-3">
+                          <p className="mb-2 text-xs font-medium text-fg-label">
+                            Verificacion de seguridad
+                          </p>
+                          <TurnstileWidget
+                            siteKey={TURNSTILE_SITE_KEY}
+                            action={TURNSTILE_BOOKING_ACTION}
+                            refreshKey={captchaRefreshKey}
+                            onTokenChange={setCaptchaToken}
+                          />
+                        </div>
+                      ) : null}
 
                       <div className="flex items-center justify-between">
                         <button

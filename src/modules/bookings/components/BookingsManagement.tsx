@@ -10,6 +10,7 @@ import type { Booking, BookingStatus } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 
 const STATUS_FILTERS: Array<{ value: "" | BookingStatus; label: string }> = [
   { value: "", label: "Todos los estados" },
@@ -59,9 +60,10 @@ export default function BookingsManagement() {
       const employeesData = await employeesService.findAll(token);
       setEmployees(employeesData);
     } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : "No se pudieron cargar empleados.",
-      );
+      const message =
+        error instanceof Error ? error.message : "No se pudieron cargar empleados.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoadingMeta(false);
     }
@@ -83,7 +85,10 @@ export default function BookingsManagement() {
       );
       setBookings(data);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No se pudieron cargar bookings.");
+      const message =
+        error instanceof Error ? error.message : "No se pudieron cargar bookings.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoadingBookings(false);
     }
@@ -133,8 +138,12 @@ export default function BookingsManagement() {
     try {
       await bookingsService.updateStatus(booking.id, { status }, token);
       await loadBookings();
+      toast.success("Estado de booking actualizado.");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "No se pudo actualizar el estado.");
+      const message =
+        error instanceof Error ? error.message : "No se pudo actualizar el estado.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setUpdatingBookingId(null);
     }

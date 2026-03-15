@@ -21,6 +21,7 @@ import TableSkeleton from "@/modules/ui/TableSkeleton";
 import SectionHeader from "@/modules/ui/SectionHeader";
 import TableHeader from "@/modules/ui/TableHeader";
 import { validateTenantCreateForm } from "@/utils/validation";
+import { toast } from "react-hot-toast";
 
 export default function TenantsManagement() {
   const { token } = useAuth();
@@ -64,6 +65,7 @@ export default function TenantsManagement() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo cargar tenants.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -128,10 +130,12 @@ export default function TenantsManagement() {
     try {
       await tenantsService.remove(tenantToDelete.id, token);
       await loadTenants();
+      toast.success("Tenant eliminado correctamente.");
       setTenantToDelete(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo eliminar el tenant.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsDeleting(false);
     }
@@ -144,6 +148,7 @@ export default function TenantsManagement() {
     const validationError = validateTenantCreateForm(form);
     if (validationError) {
       setFormError(validationError);
+      toast.error(validationError);
       return;
     }
 
@@ -163,8 +168,10 @@ export default function TenantsManagement() {
           is_active: form.is_active,
         };
         await tenantsService.update(editingId, updatePayload, token);
+        toast.success("Tenant actualizado correctamente.");
       } else {
         await tenantsService.create(createPayload, token);
+        toast.success("Tenant creado correctamente.");
       }
 
       await loadTenants();
@@ -172,6 +179,7 @@ export default function TenantsManagement() {
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo guardar tenant.";
       setFormError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }

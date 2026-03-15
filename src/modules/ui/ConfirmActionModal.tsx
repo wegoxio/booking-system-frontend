@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, ShieldAlert, X } from "lucide-react";
+import { useModalPresence } from "@/hooks/useModalPresence";
 
 type ConfirmActionModalProps = {
   isOpen: boolean;
@@ -27,9 +28,10 @@ export default function ConfirmActionModal({
   onClose,
 }: ConfirmActionModalProps) {
   const [isChecked, setIsChecked] = useState(false);
+  const { shouldRender, isVisible } = useModalPresence(isOpen, 0);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!shouldRender) {
       setIsChecked(false);
       return;
     }
@@ -41,9 +43,9 @@ export default function ConfirmActionModal({
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [isOpen]);
+  }, [shouldRender]);
 
-  if (!isOpen) return null;
+  if (!shouldRender) return null;
 
   const handleClose = () => {
     if (isConfirming) return;
@@ -56,18 +58,26 @@ export default function ConfirmActionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+    <div
+      className={`fixed inset-0 z-[80] flex items-center justify-center p-4 ${
+        isVisible ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+    >
       <button
         type="button"
         aria-label="Cerrar modal de confirmacion"
-        className="absolute inset-0 bg-overlay-strong backdrop-blur-[5px]"
+        className={`absolute inset-0 bg-overlay-strong backdrop-blur-[5px] ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
         onClick={handleClose}
       />
 
       <div
         role="dialog"
         aria-modal="true"
-        className="relative z-10 w-full max-w-xl overflow-hidden rounded-[28px] border border-inverse-60 bg-gradient-to-b from-surface-warm to-surface-soft shadow-theme-modal"
+        className={`relative z-10 w-full max-w-xl overflow-hidden rounded-[28px] border border-inverse-60 bg-gradient-to-b from-surface-warm to-surface-soft shadow-theme-modal ${
+          isVisible ? "opacity-100" : "opacity-0"
+        }`}
       >
         <div className="flex items-start justify-between gap-3 border-b border-border-soft px-6 py-5">
           <div>
@@ -84,7 +94,7 @@ export default function ConfirmActionModal({
             type="button"
             onClick={handleClose}
             disabled={isConfirming}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-neutral disabled:opacity-60"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-neutral transition-colors hover:bg-secondary-hover disabled:opacity-60"
           >
             <X className="h-4 w-4" />
           </button>
@@ -116,7 +126,7 @@ export default function ConfirmActionModal({
             type="button"
             onClick={handleClose}
             disabled={isConfirming}
-            className="rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-neutral disabled:opacity-60"
+            className="rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm text-neutral transition-colors hover:bg-secondary-hover disabled:opacity-60"
           >
             {cancelText}
           </button>

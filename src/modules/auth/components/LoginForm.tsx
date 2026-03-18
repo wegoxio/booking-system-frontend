@@ -14,8 +14,8 @@ import {
   Users2,
   type LucideIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { SubmitEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { SubmitEvent, useEffect, useMemo, useState } from "react";
 
 type HighlightItem = {
   title: string;
@@ -48,6 +48,7 @@ const TURNSTILE_LOGIN_ACTION =
 export default function LoginForm() {
   const { login, isLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isTurnstileEnabled = TURNSTILE_SITE_KEY.length > 0;
 
   const [email, setEmail] = useState("");
@@ -56,6 +57,26 @@ export default function LoginForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+
+  const noticeMessage = useMemo(() => {
+    const notice = searchParams.get("notice");
+    if (notice === "access-ready") {
+      return "Tu acceso quedó configurado. Ya puedes iniciar sesion.";
+    }
+
+    if (notice === "password-reset") {
+      return "Tu contraseña fue actualizada. Ya puedes iniciar sesion.";
+    }
+
+    return "";
+  }, [searchParams]);
+
+  useEffect(() => {
+    const presetEmail = searchParams.get("email")?.trim() ?? "";
+    if (presetEmail) {
+      setEmail(presetEmail);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -141,6 +162,11 @@ export default function LoginForm() {
                 <p className="mt-2 text-sm text-fg-secondary">
                   Accede a tu panel para administrar citas, equipo y configuraciones.
                 </p>
+                {noticeMessage ? (
+                  <div className="mt-4 rounded-2xl border border-border-success bg-surface-success px-4 py-3 text-sm text-success">
+                    {noticeMessage}
+                  </div>
+                ) : null}
               </div>
 
               <form className="space-y-5" onSubmit={handleSubmit}>

@@ -45,6 +45,9 @@ export type Booking = {
   customer_name: string;
   customer_email: string | null;
   customer_phone: string | null;
+  customer_phone_country_iso2: string | null;
+  customer_phone_national_number: string | null;
+  customer_phone_e164: string | null;
   notes: string | null;
   source: BookingSource;
   created_by_user_id: string | null;
@@ -60,6 +63,7 @@ export type BookingSlot = {
 export type PublicBookingEmployee = {
   id: string;
   name: string;
+  working_days: number[];
 };
 
 export type PublicBookingService = {
@@ -180,7 +184,9 @@ export type CreateBookingPayload = {
   start_at_utc: string;
   customer_name: string;
   customer_email?: string;
-  customer_phone?: string;
+  customer_phone?: string | null;
+  customer_phone_country_iso2?: string | null;
+  customer_phone_national_number?: string | null;
   notes?: string;
   source?: BookingSource;
   captcha_token?: string;

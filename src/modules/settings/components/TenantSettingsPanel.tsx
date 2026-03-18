@@ -11,6 +11,7 @@ import {
   createThemeVariables,
   normalizeThemeSettings,
 } from "@/modules/settings/utils/theme-colors";
+import ColorPickerField from "@/modules/ui/ColorPickerField";
 import ConfirmActionModal from "@/modules/ui/ConfirmActionModal";
 import type {
   TenantThemeSettings,
@@ -18,11 +19,14 @@ import type {
 } from "@/types/tenant-settings.types";
 import {
   AlertTriangle,
+  BarChart3,
   ChevronDown,
   ImageIcon,
   LoaderCircle,
+  Monitor,
   Palette,
   RotateCcw,
+  Smartphone,
   Sparkles,
   Type,
   Upload,
@@ -97,20 +101,29 @@ const settingsDemoChartData = [
   { label: "Jun", revenue: 860, bookings: 660, cancelled: 170 },
 ];
 
-const HEX_6 = /^#([0-9a-fA-F]{6})$/;
-const HEX_3 = /^#([0-9a-fA-F]{3})$/;
+const settingsPreviewSidebarItems = ["Dashboard", "Bookings", "Employees", "Settings"];
+
+const settingsPreviewAppointments = [
+  { customer: "Carlos Ruiz", service: "Fade + Beard", time: "10:30" },
+  { customer: "Ana Perez", service: "Color + Blowout", time: "11:15" },
+  { customer: "Mateo Gil", service: "Corte premium", time: "12:00" },
+];
+
+const settingsPreviewMetrics = [
+  { label: "Bookings hoy", value: "18", detail: "agenda activa" },
+  { label: "Revenue", value: "$4,820", detail: "semana actual" },
+  { label: "No-shows", value: "7", detail: "seguimiento operativo" },
+];
+
+const settingsPreviewSignals = [
+  { label: "Confirmadas", value: "82%", progress: 82, color: "var(--success)" },
+  { label: "Reagendadas", value: "11%", progress: 42, color: "var(--chart-secondary)" },
+  { label: "No-show risk", value: "7%", progress: 24, color: "var(--danger)" },
+];
+
+const settingsPreviewPublicServices = ["Fade premium", "Color express", "Corte + barba"];
 const LOGO_MAX_SIZE_LABEL = getTenantAssetMaxSizeLabel("logo");
 const FAVICON_MAX_SIZE_LABEL = getTenantAssetMaxSizeLabel("favicon");
-
-function normalizeColorInput(value: string | undefined) {
-  if (!value) return "#000000";
-  const normalized = value.trim();
-  if (HEX_6.test(normalized)) return normalized.toLowerCase();
-  const match = HEX_3.exec(normalized);
-  if (!match) return "#000000";
-  const [r, g, b] = match[1].split("");
-  return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
-}
 
 function equalEditableTheme(a: TenantThemeSettings, b: TenantThemeSettings) {
   return editableThemeFields.every(({ key }) => a[key] === b[key]);
@@ -539,18 +552,11 @@ export default function TenantSettingsPanel() {
                       style={{ backgroundColor: themeDraft[field.key] }}
                     />
                   </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={normalizeColorInput(themeDraft[field.key])}
-                      onChange={(event) => applyEditableThemeField(field.key, event.target.value)}
-                      className="h-10 w-12 rounded-lg border border-card-border bg-surface"
-                    />
-                    <input
-                      type="text"
+                  <div className="mt-3">
+                    <ColorPickerField
                       value={themeDraft[field.key]}
-                      onChange={(event) => applyEditableThemeField(field.key, event.target.value)}
-                      className="min-w-0 flex-1 rounded-xl border border-card-border bg-surface-soft px-3 py-2 text-sm text-fg"
+                      onChange={(value) => applyEditableThemeField(field.key, value)}
+                      ariaLabel={`Editar ${field.label}`}
                     />
                   </div>
                 </label>
@@ -710,153 +716,341 @@ export default function TenantSettingsPanel() {
             </div>
 
             <div className="mt-5 grid gap-4 xl:grid-cols-12">
-              <div className="rounded-3xl border border-card-border bg-surface p-4 xl:col-span-7">
-                <div
-                  className="overflow-hidden rounded-[26px] border border-card-border shadow-theme-shell"
-                  style={previewShellStyle}
-                >
-                  <div className="grid min-h-[260px] lg:grid-cols-[220px_1fr]">
-                    <aside
-                      className="border-b border-inverse-15 p-4 lg:border-b-0 lg:border-r"
-                      style={previewSidebarStyle}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="grid h-12 w-12 place-items-center rounded-2xl"
-                          style={previewSidebarItemStyle}
-                        >
-                          <img
-                            src={logoPreview || defaultTenantSettings.branding.logoUrl}
-                            alt="Brand logo"
-                            className="h-8 w-8 object-contain"
-                            onError={(event) => {
-                              event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
-                            }}
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-sidebar-text">
-                            {brandingPreviewName}
-                          </p>
-                          <p className="truncate text-xs text-inverse-70">Dashboard</p>
-                        </div>
-                      </div>
+              <div
+                className="relative overflow-hidden rounded-3xl border border-card-border p-4 shadow-theme-card xl:col-span-12"
+                style={{
+                  backgroundImage:
+                    "radial-gradient(circle at top left, var(--surface-warm), transparent 36%), radial-gradient(circle at right center, var(--surface-muted), transparent 30%), linear-gradient(180deg, var(--surface), var(--surface-panel))",
+                }}
+              >
+                <div className="relative z-10 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-secondary">
+                      <Monitor className="h-3.5 w-3.5" />
+                      Dashboard
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-secondary">
+                      <Smartphone className="h-3.5 w-3.5" />
+                      Booking publico
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Una sola paleta, dos superficies y una narrativa visual mucho mas clara.
+                  </p>
+                </div>
 
-                      <div className="mt-6 space-y-2">
-                        {["Dashboard", "Bookings", "Employees", "Settings"].map((item, index) => (
+                <div className="relative mt-4 min-h-[640px] xl:pr-[308px]">
+                  <div
+                    className="relative overflow-hidden rounded-[30px] border border-card-border shadow-theme-shell"
+                    style={previewShellStyle}
+                  >
+                    <div className="flex items-center justify-between border-b border-card-border bg-surface px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-danger/70" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-warning/70" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-success/70" />
+                        <span className="ml-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                          Dashboard operativo
+                        </span>
+                      </div>
+                      <span className="rounded-full border border-card-border bg-surface px-3 py-1 text-[11px] font-medium text-fg-secondary">
+                        auto-derived UI
+                      </span>
+                    </div>
+
+                    <div className="grid min-h-[520px] lg:grid-cols-[228px_1fr]">
+                      <aside
+                        className="border-b border-inverse-15 p-5 lg:border-b-0 lg:border-r"
+                        style={previewSidebarStyle}
+                      >
+                        <div className="flex items-center gap-3">
                           <div
-                            key={item}
-                            className="rounded-xl px-3 py-2 text-sm transition-colors"
-                            style={index === 1 ? previewSidebarActiveStyle : previewSidebarItemStyle}
+                            className="grid h-12 w-12 place-items-center rounded-2xl"
+                            style={previewSidebarItemStyle}
                           >
-                            {item}
+                            <img
+                              src={logoPreview || defaultTenantSettings.branding.logoUrl}
+                              alt="Brand logo"
+                              className="h-8 w-8 object-contain"
+                              onError={(event) => {
+                                event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
+                              }}
+                            />
                           </div>
-                        ))}
-                      </div>
-                    </aside>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-sidebar-text">
+                              {brandingPreviewName}
+                            </p>
+                            <p className="truncate text-xs text-inverse-70">Dashboard</p>
+                          </div>
+                        </div>
 
-                    <div className="p-4">
-                      <header className="flex items-center justify-between rounded-2xl border border-navbar-border bg-navbar px-4 py-3">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                            Vista tenant
+                        <div className="mt-6 space-y-2">
+                          {settingsPreviewSidebarItems.map((item, index) => (
+                            <div
+                              key={item}
+                              className="rounded-xl px-3 py-2 text-sm transition-colors"
+                              style={index === 1 ? previewSidebarActiveStyle : previewSidebarItemStyle}
+                            >
+                              {item}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div
+                          className="mt-6 rounded-2xl border border-inverse-15 p-3"
+                          style={{ backgroundColor: "var(--inverse-10)" }}
+                        >
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-inverse-70">
+                            Visual balance
                           </p>
-                          <p className="mt-1 text-sm font-semibold text-fg-strong">
-                            {brandingPreviewTitle}
+                          <p className="mt-2 text-sm font-semibold text-sidebar-text">
+                            Sidebar con peso visual y contenido mas suave para que el contraste se vea intencional.
                           </p>
                         </div>
-                        <button className="rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-text shadow-theme-accent">
-                          Nueva reserva
-                        </button>
-                      </header>
+                      </aside>
 
-                      <div className="mt-4 grid gap-3 lg:grid-cols-[1.1fr_.9fr]">
-                        <div className="rounded-2xl border border-card-border bg-surface-soft p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.12em] text-muted">
-                                Proximas citas
-                              </p>
-                              <p className="mt-1 text-sm font-semibold text-fg-strong">
-                                Flujo operativo real
-                              </p>
+                      <div className="space-y-4 p-4">
+                        <header className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-navbar-border bg-navbar px-4 py-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                              Vista tenant
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-fg-strong">
+                              {brandingPreviewTitle}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <button className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-semibold text-neutral transition-colors hover:bg-secondary-hover">
+                              Ver analytics
+                            </button>
+                            <button className="rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-text shadow-theme-accent">
+                              Nueva reserva
+                            </button>
+                          </div>
+                        </header>
+
+                        <div className="grid gap-3 lg:grid-cols-[1.15fr_.85fr]">
+                          <div className="rounded-[24px] border border-card-border bg-gradient-to-br from-surface-warm via-surface to-surface-soft p-4">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-surface px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                                identidad consistente
+                              </span>
+                              <span className="rounded-full bg-surface-warning-soft px-2.5 py-1 text-[11px] font-semibold text-warning">
+                                live preview
+                              </span>
                             </div>
-                            <span className="rounded-full bg-surface-warning-soft px-2.5 py-1 text-[11px] font-semibold text-warning">
-                              Live
-                            </span>
+                            <h4 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-fg-strong">
+                              El dashboard se ve mas completo, no solo recoloreado.
+                            </h4>
+                            <p className="mt-2 max-w-xl text-sm text-fg-secondary">
+                              La paleta ahora se percibe en jerarquia, contraste, cards, CTAs y estados dentro de un mock mucho mas narrativo.
+                            </p>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <button className="rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-text shadow-theme-accent">
+                                CTA principal
+                              </button>
+                              <button className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-semibold text-neutral transition-colors hover:bg-secondary-hover">
+                                Accion secundaria
+                              </button>
+                            </div>
                           </div>
 
-                          <div className="mt-3 space-y-2">
-                            {[
-                              { customer: "Carlos Ruiz", service: "Fade + Beard", time: "10:30" },
-                              { customer: "Ana Perez", service: "Color + Blowout", time: "11:15" },
-                              { customer: "Mateo Gil", service: "Corte premium", time: "12:00" },
-                            ].map((item) => (
+                          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                            {settingsPreviewMetrics.map((item) => (
                               <div
-                                key={`${item.customer}-${item.time}`}
-                                className="flex items-center justify-between rounded-2xl border border-border-soft bg-surface px-3 py-2.5"
+                                key={item.label}
+                                className="rounded-[22px] border border-card-border bg-surface-soft p-3"
                               >
-                                <div className="min-w-0">
-                                  <p className="truncate text-sm font-medium text-fg-strong">
-                                    {item.customer}
-                                  </p>
-                                  <p className="truncate text-xs text-fg-secondary">
-                                    {item.service}
-                                  </p>
-                                </div>
-                                <span className="rounded-full bg-surface-muted px-2.5 py-1 text-[11px] font-semibold text-neutral">
-                                  {item.time}
-                                </span>
+                                <p className="text-xs uppercase tracking-[0.12em] text-muted">
+                                  {item.label}
+                                </p>
+                                <p className="mt-2 text-2xl font-semibold text-fg-strong">
+                                  {item.value}
+                                </p>
+                                <p className="mt-1 text-xs text-fg-secondary">{item.detail}</p>
                               </div>
                             ))}
                           </div>
+                        </div>
 
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <button className="rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-text shadow-theme-accent">
-                              Confirmar
-                            </button>
-                            <button className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-semibold text-neutral transition-colors hover:bg-secondary-hover">
-                              Reagendar
-                            </button>
-                            <button className="rounded-xl border border-border-danger bg-surface-danger px-3 py-2 text-xs font-semibold text-danger transition-colors hover:bg-danger hover:text-inverse">
-                              Cancelar
-                            </button>
+                        <div className="grid gap-3 lg:grid-cols-[1.08fr_.92fr]">
+                          <div className="rounded-[24px] border border-card-border bg-surface-soft p-4">
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.12em] text-muted">
+                                  Proximas citas
+                                </p>
+                                <p className="mt-1 text-base font-semibold text-fg-strong">
+                                  Flujo operativo real
+                                </p>
+                              </div>
+                              <span className="rounded-full bg-surface-warning-soft px-2.5 py-1 text-[11px] font-semibold text-warning">
+                                Live
+                              </span>
+                            </div>
+
+                            <div className="mt-3 space-y-2">
+                              {settingsPreviewAppointments.map((item) => (
+                                <div
+                                  key={`${item.customer}-${item.time}`}
+                                  className="flex items-center justify-between rounded-2xl border border-border-soft bg-surface px-3 py-2.5"
+                                >
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-medium text-fg-strong">
+                                      {item.customer}
+                                    </p>
+                                    <p className="truncate text-xs text-fg-secondary">
+                                      {item.service}
+                                    </p>
+                                  </div>
+                                  <span className="rounded-full bg-surface-muted px-2.5 py-1 text-[11px] font-semibold text-neutral">
+                                    {item.time}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="rounded-[24px] border border-card-border bg-surface-soft p-4">
+                            <div className="flex items-center justify-between gap-2">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.12em] text-muted">
+                                  Senales de interfaz
+                                </p>
+                                <p className="mt-1 text-base font-semibold text-fg-strong">
+                                  Estados y ritmo visual
+                                </p>
+                              </div>
+                              <span className="rounded-full border border-card-border bg-surface px-2.5 py-1 text-[11px] font-semibold text-fg-secondary">
+                                auto
+                              </span>
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                              {settingsPreviewSignals.map((item) => (
+                                <div key={item.label}>
+                                  <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                                    <span className="font-medium text-fg-secondary">{item.label}</span>
+                                    <span className="font-semibold text-fg-strong">{item.value}</span>
+                                  </div>
+                                  <div className="h-2 rounded-full bg-surface">
+                                    <div
+                                      className="h-2 rounded-full"
+                                      style={{ width: `${item.progress}%`, backgroundColor: item.color }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-2 gap-2">
+                              <div className="rounded-2xl border border-border-soft bg-surface px-3 py-2">
+                                <p className="text-[11px] uppercase tracking-[0.12em] text-muted">
+                                  Contraste
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-fg-strong">
+                                  claro y legible
+                                </p>
+                              </div>
+                              <div className="rounded-2xl border border-border-soft bg-surface px-3 py-2">
+                                <p className="text-[11px] uppercase tracking-[0.12em] text-muted">
+                                  Superficies
+                                </p>
+                                <p className="mt-1 text-sm font-semibold text-fg-strong">
+                                  suaves y ordenadas
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 w-full max-w-[290px] xl:absolute xl:right-0 xl:top-8 xl:mt-0">
+                    <div className="rounded-[30px] border border-card-border bg-surface p-3 shadow-theme-modal">
+                      <div className="rounded-[24px] border border-card-border bg-gradient-to-b from-surface-warm to-surface-soft p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                              Booking publico
+                            </p>
+                            <p className="mt-1 text-sm font-semibold text-fg-strong">
+                              {brandingPreviewName}
+                            </p>
+                          </div>
+                          <div className="grid h-11 w-11 place-items-center rounded-2xl border border-card-border bg-surface">
+                            <img
+                              src={logoPreview || defaultTenantSettings.branding.logoUrl}
+                              alt="Brand preview"
+                              className="h-7 w-7 object-contain"
+                              onError={(event) => {
+                                event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
+                              }}
+                            />
                           </div>
                         </div>
 
-                        <div className="space-y-3">
-                          {[
-                            {
-                              label: "Bookings hoy",
-                              value: "18",
-                              detail: "agenda activa",
-                            },
-                            {
-                              label: "Revenue",
-                              value: "$4,820",
-                              detail: "semana actual",
-                            },
-                            {
-                              label: "No-shows",
-                              value: "7",
-                              detail: "seguimiento operativo",
-                            },
-                          ].map((item) => (
-                            <div
-                              key={item.label}
-                              className="rounded-2xl border border-card-border bg-surface-soft p-3"
-                            >
+                        <div className="mt-4 rounded-[22px] border border-card-border bg-surface p-3">
+                          <p className="text-xs uppercase tracking-[0.12em] text-muted">
+                            Servicio destacado
+                          </p>
+                          <p className="mt-1 text-base font-semibold text-fg-strong">
+                            Reserva clara y mas premium
+                          </p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {settingsPreviewPublicServices.map((item, index) => (
+                              <span
+                                key={item}
+                                className={`rounded-full px-3 py-1 text-[11px] font-semibold ${
+                                  index === 0
+                                    ? "bg-accent text-accent-text shadow-theme-accent-sm"
+                                    : "border border-card-border bg-surface-soft text-fg-secondary"
+                                }`}
+                              >
+                                {item}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="mt-3 rounded-[22px] border border-card-border bg-surface p-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
                               <p className="text-xs uppercase tracking-[0.12em] text-muted">
-                                {item.label}
+                                Slots
                               </p>
-                              <p className="mt-2 text-2xl font-semibold text-fg-strong">
-                                {item.value}
-                              </p>
-                              <p className="mt-1 text-xs text-fg-secondary">
-                                {item.detail}
+                              <p className="mt-1 text-sm font-semibold text-fg-strong">
+                                Horarios disponibles
                               </p>
                             </div>
-                          ))}
+                            <span className="rounded-full bg-surface-warning-soft px-2.5 py-1 text-[11px] font-semibold text-warning">
+                              hoy
+                            </span>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-3 gap-2">
+                            {settingsPreviewAppointments.map((item, index) => (
+                              <span
+                                key={`${item.time}-slot`}
+                                className={`rounded-xl border px-2 py-2 text-center text-[11px] font-semibold ${
+                                  index === 1
+                                    ? "border-border-warning bg-surface-warning-soft text-warning"
+                                    : "border-card-border bg-surface-soft text-fg-secondary"
+                                }`}
+                              >
+                                {item.time}
+                              </span>
+                            ))}
+                          </div>
+
+                          <button className="mt-4 w-full rounded-xl bg-accent px-3 py-2.5 text-sm font-semibold text-accent-text shadow-theme-accent">
+                            Confirmar cita
+                          </button>
+                          <p className="mt-2 text-center text-xs text-muted">
+                            El cliente final percibe la marca desde la primera pantalla.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -864,7 +1058,7 @@ export default function TenantSettingsPanel() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-card-border bg-surface p-4 xl:col-span-5">
+              <div className="rounded-3xl border border-card-border bg-surface p-4 xl:col-span-6">
                 <h4 className="text-sm font-semibold text-fg-strong">Jerarquia tipografica</h4>
                 <div className="mt-3 space-y-2 rounded-2xl border border-border-soft bg-surface-soft p-4">
                   <p className="text-base font-semibold text-fg-strong">
@@ -903,11 +1097,36 @@ export default function TenantSettingsPanel() {
                       <p className="text-sm text-fg-secondary">{brandingPreviewTitle}</p>
                     </div>
                   </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="rounded-2xl border border-border-soft bg-surface px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.12em] text-muted">
+                        Logo
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-fg-strong">
+                        presencia clara
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border-soft bg-surface px-3 py-2">
+                      <p className="text-[11px] uppercase tracking-[0.12em] text-muted">
+                        Tono
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-fg-strong">
+                        marca cohesionada
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-card-border bg-surface p-4 xl:col-span-12">
-                <h4 className="text-sm font-semibold text-fg-strong">Chart</h4>
+              <div className="rounded-3xl border border-card-border bg-surface p-4 xl:col-span-6">
+                <div className="flex items-center justify-between gap-2">
+                  <h4 className="text-sm font-semibold text-fg-strong">Pulso de datos</h4>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-surface-soft px-2.5 py-1 text-[11px] font-medium text-fg-secondary">
+                    <BarChart3 className="h-3.5 w-3.5" />
+                    live feel
+                  </span>
+                </div>
                 <div className="mt-3 rounded-2xl border border-border-soft bg-surface-soft p-3">
                   <div className="mb-2 flex items-center gap-3 text-[11px] text-muted">
                     <span className="inline-flex items-center gap-1.5">

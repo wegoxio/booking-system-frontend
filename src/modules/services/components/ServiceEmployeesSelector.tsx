@@ -1,4 +1,5 @@
 import { Check, Search, Users2 } from "lucide-react";
+import { getPhoneDisplay } from "@/modules/phone/utils/phone";
 import Avatar from "@/modules/ui/Avatar";
 import type { Employee } from "@/types/employee.types";
 
@@ -100,7 +101,12 @@ export function ServiceEmployeesSelector({
                       </div>
                       <p className="truncate text-sm text-muted">{employee.email}</p>
                       <p className="mt-0.5 text-xs text-fg-soft">
-                        {employee.phone || "Sin telefono registrado"}
+                        {getPhoneDisplay({
+                          display: employee.phone,
+                          countryIso2: employee.phone_country_iso2,
+                          nationalNumber: employee.phone_national_number,
+                          e164: employee.phone_e164,
+                        }) || "Sin telefono registrado"}
                       </p>
                     </div>
                     <div

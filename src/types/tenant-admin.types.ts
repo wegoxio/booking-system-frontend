@@ -7,6 +7,10 @@ export type TenantAdmin = {
   role: "TENANT_ADMIN";
   tenant_id: string;
   is_active: boolean;
+  invited_at: string | null;
+  email_verified_at: string | null;
+  onboarding_completed_at: string | null;
+  access_state: "INVITED" | "PENDING_SETUP" | "ACTIVE";
   tenant: {
     id: string;
     name: string;
@@ -18,7 +22,6 @@ export type TenantAdmin = {
 export type CreateTenantAdminPayload = {
   name: string;
   email: string;
-  password: string;
   tenant_id: string;
 };
 
@@ -30,7 +33,6 @@ export type UpdateTenantAdminPayload = Partial<CreateTenantAdminPayload> & {
 export type TenantAdminFormState = {
   name: string;
   email: string;
-  password: string;
   tenant_id: string;
   is_active: boolean;
 };

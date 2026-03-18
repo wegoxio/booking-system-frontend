@@ -294,3 +294,22 @@
 .rdp-root .rdp-day_today .rdp-day_button {
   border: 1px solid var(--border-warning);
 }
+
+.color-picker-range::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  appearance: none;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  border-radius: 9999px;
+  background: var(--text-strong);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12);
+}
+
+.color-picker-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.96);
+  border-radius: 9999px;
+  background: var(--text-strong);
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12);
+}

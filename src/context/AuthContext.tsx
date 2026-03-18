@@ -6,6 +6,7 @@ import {
   getAccessToken,
   onAccessTokenChange,
   setAccessToken,
+  syncCsrfTokenFromCookie,
 } from "@/modules/auth/services/auth-session.service";
 import { refreshAccessTokenWithStoredRefreshToken } from "@/modules/http/services/api";
 import { LoginPayload } from "@/types/auth.types";
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authService.login({ email, password, captcha_token });
       setAccessToken(response.access_token);
+      syncCsrfTokenFromCookie();
 
       const me = await authService.getAuthenticatedUser(response.access_token);
       setUser(me);

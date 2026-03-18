@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import { getPhoneSearchValue } from "@/modules/phone/utils/phone";
 import BookingsTable from "@/modules/bookings/components/BookingsTable";
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
 import { employeesService } from "@/modules/employees/services/employees.service";
@@ -123,8 +124,13 @@ export default function BookingsManagement() {
       const servicesText = booking.items
         .map((item) => item.service_name_snapshot)
         .join(" ");
+      const customerPhoneText = getPhoneSearchValue({
+        display: booking.customer_phone,
+        nationalNumber: booking.customer_phone_national_number,
+        e164: booking.customer_phone_e164,
+      });
       const haystack =
-        `${booking.customer_name} ${booking.customer_email ?? ""} ${booking.customer_phone ?? ""} ${booking.employee?.name ?? ""} ${servicesText}`.toLowerCase();
+        `${booking.customer_name} ${booking.customer_email ?? ""} ${customerPhoneText} ${booking.employee?.name ?? ""} ${servicesText}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
   }, [bookings, searchQuery]);

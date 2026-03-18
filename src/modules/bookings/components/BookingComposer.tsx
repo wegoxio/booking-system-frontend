@@ -1,4 +1,5 @@
 import Avatar from "@/modules/ui/Avatar";
+import PhoneField from "@/modules/ui/PhoneField";
 import type { BookingSlot } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import type { Service } from "@/types/service.types";
@@ -8,7 +9,8 @@ import { useMemo } from "react";
 export type BookingCustomerFormState = {
   customer_name: string;
   customer_email: string;
-  customer_phone: string;
+  customer_phone_country_iso2: string;
+  customer_phone_national_number: string;
   notes: string;
 };
 
@@ -359,20 +361,34 @@ export default function BookingComposer({
               />
             </label>
 
-            <label className="space-y-1.5">
-              <span className="text-xs font-medium text-fg-label">Telefono</span>
-              <input
-                value={customerForm.customer_phone}
-                onChange={(event) =>
-                  onCustomerFormChange({
-                    ...customerForm,
-                    customer_phone: event.target.value,
-                  })
-                }
-                className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
-                placeholder="+34 600 000 000"
-              />
-            </label>
+            <PhoneField
+              idPrefix="booking-customer-phone"
+              label="Telefono"
+              countryIso2={customerForm.customer_phone_country_iso2}
+              nationalNumber={customerForm.customer_phone_national_number}
+              onCountryChange={(value) =>
+                onCustomerFormChange({
+                  ...customerForm,
+                  customer_phone_country_iso2: value,
+                })
+              }
+              onNationalNumberChange={(value) =>
+                onCustomerFormChange({
+                  ...customerForm,
+                  customer_phone_national_number: value,
+                })
+              }
+              onClear={() =>
+                onCustomerFormChange({
+                  ...customerForm,
+                  customer_phone_country_iso2: "",
+                  customer_phone_national_number: "",
+                })
+              }
+              wrapperClassName="md:col-span-2"
+              selectTriggerClassName="border-border bg-surface-soft"
+              inputClassName="border-border bg-surface-soft"
+            />
 
             <label className="space-y-1.5 md:col-span-2">
               <span className="text-xs font-medium text-fg-label">Notas</span>

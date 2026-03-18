@@ -25,6 +25,20 @@ function buildTimeOptions(stepMinutes: number): SelectOption[] {
   return options;
 }
 
+const TIME_OPTIONS_CACHE = new Map<number, SelectOption[]>();
+
+function getTimeOptions(stepMinutes: number): SelectOption[] {
+  const normalizedStep = Math.max(stepMinutes, 5);
+  const cached = TIME_OPTIONS_CACHE.get(normalizedStep);
+  if (cached) {
+    return cached;
+  }
+
+  const options = buildTimeOptions(normalizedStep);
+  TIME_OPTIONS_CACHE.set(normalizedStep, options);
+  return options;
+}
+
 export default function TimePickerSelect({
   value,
   onChange,
@@ -32,7 +46,7 @@ export default function TimePickerSelect({
   disabled = false,
   triggerClassName = "",
 }: TimePickerSelectProps): React.ReactNode {
-  const options = useMemo(() => buildTimeOptions(stepMinutes), [stepMinutes]);
+  const options = useMemo(() => getTimeOptions(stepMinutes), [stepMinutes]);
 
   return (
     <SelectField

@@ -11,7 +11,6 @@ interface TenantAdminModalContentProps {
   isEditing: boolean;
   onNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
-  onPasswordChange: (value: string) => void;
   onTenantChange: (value: string) => void;
   onIsActiveChange: (value: boolean) => void;
 }
@@ -22,7 +21,6 @@ export default function TenantAdminModalContent({
   isEditing,
   onNameChange,
   onEmailChange,
-  onPasswordChange,
   onTenantChange,
   onIsActiveChange,
 }: TenantAdminModalContentProps): React.ReactNode {
@@ -60,26 +58,6 @@ export default function TenantAdminModalContent({
             placeholder="admin@tenant.com"
             required
             maxLength={255}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label htmlFor="tenant-admin-password" className="text-sm font-medium text-fg-label">
-            Password {isEditing ? "(opcional)" : ""}
-          </label>
-          <input
-            id="tenant-admin-password"
-            type="password"
-            value={form.password}
-            onChange={(event) => onPasswordChange(event.target.value)}
-            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
-            placeholder={
-              isEditing
-                ? "Completa solo si deseas actualizarla"
-                : "Password segura para acceso"
-            }
-            required={!isEditing}
-            maxLength={128}
           />
         </div>
 
@@ -142,10 +120,12 @@ export default function TenantAdminModalContent({
           <div className="rounded-2xl border border-border-soft bg-surface-panel-strong p-4">
             <div className="inline-flex items-center gap-2 text-sm font-medium text-fg">
               <ShieldCheck className="h-4 w-4 text-fg-icon" />
-              Seguridad de acceso
+              Acceso seguro
             </div>
             <p className="mt-2 text-sm text-muted">
-              Usa una password robusta con mayusculas, minusculas, numeros y simbolos.
+              {isEditing
+                ? "El cliente gestiona su propia contraseña. Si olvida el acceso, podrá recuperarlo por correo."
+                : "Wegox no define la contraseña inicial. Se enviará un enlace para verificar el correo y completar el acceso."}
             </p>
           </div>
         </div>

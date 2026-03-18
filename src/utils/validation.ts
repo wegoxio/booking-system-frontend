@@ -3,6 +3,7 @@ import { TenantFormState } from "@/types/tenant.types";
 import { normalizeSlug } from "./format";
 import { TenantAdminFormState } from "@/types/tenant-admin.types";
 import { EmployeeFormState } from "@/types/employee.types";
+import { validateOptionalPhoneValue } from "@/modules/phone/utils/phone";
 
 export function validateServiceForm(form: ServiceFormState): string | null {
     const normalizedName = form.name.trim();
@@ -64,19 +65,12 @@ export function validateTenantAdminCreateForm(form: TenantAdminFormState, isEdit
         return "Debes asignar un tenant.";
     }
 
-    if (!isEditing || form.password.trim()) {
-        if (!isStrongPassword(form.password.trim())) {
-            return "La password debe tener 8+ caracteres, mayuscula, minuscula, numero y simbolo.";
-        }
-    }
-
     return null;
 }
 
 export function validateEmployeeCreateForm(form: EmployeeFormState): string | null {
     const normalizedName = form.name.trim();
     const normalizedEmail = form.email.trim();
-    const normalizedPhone = form.phone.trim();
 
     if (normalizedName.length < 1 || normalizedName.length > 120) {
         return "El nombre debe tener entre 1 y 120 caracteres.";
@@ -86,8 +80,14 @@ export function validateEmployeeCreateForm(form: EmployeeFormState): string | nu
         return "Debes ingresar un correo valido.";
     }
 
-    if (normalizedPhone.length > 0 && normalizedPhone.length < 3) {
-        return "El telefono debe tener al menos 3 caracteres.";
+    const phoneValidationError = validateOptionalPhoneValue({
+        countryIso2: form.phone_country_iso2,
+        nationalNumber: form.phone_national_number,
+        legacyDisplay: form.phone_legacy,
+    });
+
+    if (phoneValidationError) {
+        return phoneValidationError;
     }
 
     return null;

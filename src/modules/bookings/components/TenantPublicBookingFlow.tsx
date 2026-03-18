@@ -1,8 +1,14 @@
 ﻿"use client";
 
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
+import { validateOptionalPhoneValue } from "@/modules/phone/utils/phone";
 import { defaultTenantSettings } from "@/modules/settings/config/default-tenant-settings";
 import { tenantSettingsService } from "@/modules/settings/services/tenant-settings.service";
+import {
+  applyDocumentBranding,
+  readDocumentFaviconHref,
+  readDocumentTitle,
+} from "@/modules/settings/utils/document-branding";
 import {
   createThemeVariables,
   normalizeThemeMode,
@@ -11,6 +17,7 @@ import {
 } from "@/modules/settings/utils/theme-colors";
 import Avatar from "@/modules/ui/Avatar";
 import CalendarDatePicker from "@/modules/ui/CalendarDatePicker";
+import PhoneField from "@/modules/ui/PhoneField";
 import TurnstileWidget from "@/modules/ui/TurnstileWidget";
 import type {
   BookingSlot,
@@ -36,7 +43,8 @@ type BookingStep = "services" | "employee" | "datetime" | "customer" | "done";
 type CustomerFormState = {
   customer_name: string;
   customer_email: string;
-  customer_phone: string;
+  customer_phone_country_iso2: string;
+  customer_phone_national_number: string;
   notes: string;
 };
 
@@ -49,12 +57,14 @@ const STEP_ORDER: BookingStep[] = ["services", "employee", "datetime", "customer
 const INITIAL_CUSTOMER_FORM: CustomerFormState = {
   customer_name: "",
   customer_email: "",
-  customer_phone: "",
+  customer_phone_country_iso2: "",
+  customer_phone_national_number: "",
   notes: "",
 };
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
 const TURNSTILE_BOOKING_ACTION =
   process.env.NEXT_PUBLIC_TURNSTILE_BOOKING_ACTION?.trim() || "booking_create";
+const WEEKDAY_FORMATTER = new Intl.DateTimeFormat("es-ES", { weekday: "long" });
 
 function getTodayDateInput() {
   const now = new Date();
@@ -62,6 +72,54 @@ function getTodayDateInput() {
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const dd = String(now.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+}
+
+function parseDateInput(value: string) {
+  const [year, month, day] = value.split("-").map((part) => Number(part));
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+}
+
+function getDateWeekday(value: string) {
+  return parseDateInput(value)?.getDay() ?? null;
+}
+
+function isDateAllowedForWorkingDays(value: string, workingDays: number[]) {
+  if (workingDays.length === 0) return false;
+  const weekday = getDateWeekday(value);
+  return weekday !== null && workingDays.includes(weekday);
+}
+
+function getNextAllowedDateFrom(value: string, workingDays: number[]) {
+  const startDate = parseDateInput(value);
+  if (!startDate || workingDays.length === 0) return null;
+
+  for (let offset = 0; offset < 366; offset += 1) {
+    const nextDate = new Date(startDate);
+    nextDate.setDate(startDate.getDate() + offset);
+
+    if (workingDays.includes(nextDate.getDay())) {
+      const year = nextDate.getFullYear();
+      const month = String(nextDate.getMonth() + 1).padStart(2, "0");
+      const day = String(nextDate.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+  }
+
+  return null;
+}
+
+function formatWorkingDaysLabel(workingDays: number[]) {
+  if (workingDays.length === 0) return "Sin horario publico configurado";
+
+  return [...new Set(workingDays)]
+    .sort((a, b) => a - b)
+    .map((day) => {
+      const referenceDate = new Date(2026, 0, 4 + day);
+      const weekdayLabel = WEEKDAY_FORMATTER.format(referenceDate);
+      return weekdayLabel.charAt(0).toUpperCase() + weekdayLabel.slice(1);
+    })
+    .join(", ");
 }
 
 function formatSlotTime(iso: string, timeZone?: string | null) {
@@ -113,29 +171,6 @@ function getStepTitle(step: BookingStep) {
     case "done":
       return "Reserva confirmada";
   }
-}
-
-function getFaviconElement() {
-  if (typeof document === "undefined") return null;
-  let faviconElement = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
-  if (!faviconElement) {
-    faviconElement = document.createElement("link");
-    faviconElement.rel = "icon";
-    document.head.appendChild(faviconElement);
-  }
-  return faviconElement;
-}
-
-function readFaviconHref() {
-  if (typeof document === "undefined") return defaultTenantSettings.branding.faviconUrl;
-  const favicon = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
-  return favicon?.href ?? defaultTenantSettings.branding.faviconUrl;
-}
-
-function setFaviconHref(url: string) {
-  const faviconElement = getFaviconElement();
-  if (!faviconElement) return;
-  faviconElement.href = url.trim() || defaultTenantSettings.branding.faviconUrl;
 }
 
 export default function TenantPublicBookingFlow({
@@ -226,6 +261,18 @@ export default function TenantPublicBookingFlow({
     () => eligibleEmployees.find((employee) => employee.id === selectedEmployeeId) ?? null,
     [eligibleEmployees, selectedEmployeeId],
   );
+  const selectedEmployeeWorkingDays = useMemo(
+    () => [...new Set(selectedEmployee?.working_days ?? [])].sort((a, b) => a - b),
+    [selectedEmployee],
+  );
+  const selectableDateSeed = useMemo(() => {
+    const today = getTodayDateInput();
+    if (selectedEmployeeWorkingDays.length === 0) {
+      return today;
+    }
+
+    return getNextAllowedDateFrom(today, selectedEmployeeWorkingDays) ?? today;
+  }, [selectedEmployeeWorkingDays]);
 
   const selectedSlot = useMemo(
     () => slots.find((slot) => slot.start_at_utc === selectedSlotStart) ?? null,
@@ -274,6 +321,21 @@ export default function TenantPublicBookingFlow({
       return;
     }
 
+    if (selectedEmployeeWorkingDays.length === 0) {
+      setSlots([]);
+      setSelectedSlotStart(null);
+      setRequiredDurationMinutes(null);
+      setAvailabilityTimezone(null);
+      return;
+    }
+
+    if (!isDateAllowedForWorkingDays(selectedDate, selectedEmployeeWorkingDays)) {
+      setSlots([]);
+      setSelectedSlotStart(null);
+      setRequiredDurationMinutes(null);
+      return;
+    }
+
     setIsLoadingSlots(true);
     setErrorMessage("");
     try {
@@ -292,13 +354,19 @@ export default function TenantPublicBookingFlow({
       setSlots([]);
       setSelectedSlotStart(null);
       setRequiredDurationMinutes(null);
-      setErrorMessage(
-        error instanceof Error ? error.message : "No se pudo calcular disponibilidad.",
-      );
+        setErrorMessage(
+          error instanceof Error ? error.message : "No se pudo calcular disponibilidad.",
+        );
     } finally {
       setIsLoadingSlots(false);
     }
-  }, [selectedDate, selectedEmployeeId, selectedServiceIds, tenantSlug]);
+  }, [
+    selectedDate,
+    selectedEmployeeId,
+    selectedEmployeeWorkingDays,
+    selectedServiceIds,
+    tenantSlug,
+  ]);
 
   useEffect(() => {
     void loadMeta();
@@ -306,15 +374,19 @@ export default function TenantPublicBookingFlow({
 
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const previousTitle = document.title;
-    const previousFavicon = readFaviconHref();
+    const previousTitle = readDocumentTitle();
+    const previousFavicon = readDocumentFaviconHref();
 
-    document.title = branding.windowTitle;
-    setFaviconHref(branding.faviconUrl);
+    applyDocumentBranding({
+      title: branding.windowTitle,
+      faviconUrl: branding.faviconUrl,
+    });
 
     return () => {
-      document.title = previousTitle;
-      setFaviconHref(previousFavicon);
+      applyDocumentBranding({
+        title: previousTitle,
+        faviconUrl: previousFavicon,
+      });
     };
   }, [branding.faviconUrl, branding.windowTitle]);
 
@@ -371,6 +443,29 @@ export default function TenantPublicBookingFlow({
   useEffect(() => {
     void refreshAvailability();
   }, [refreshAvailability]);
+
+  useEffect(() => {
+    if (!selectedEmployeeId) return;
+
+    if (selectedEmployeeWorkingDays.length === 0) {
+      setSelectedSlotStart(null);
+      setRequiredDurationMinutes(null);
+      return;
+    }
+
+    if (isDateAllowedForWorkingDays(selectedDate, selectedEmployeeWorkingDays)) {
+      return;
+    }
+
+    const nextAllowedDate =
+      getNextAllowedDateFrom(selectedDate, selectedEmployeeWorkingDays) ??
+      getNextAllowedDateFrom(getTodayDateInput(), selectedEmployeeWorkingDays);
+
+    if (nextAllowedDate && nextAllowedDate !== selectedDate) {
+      setSelectedDate(nextAllowedDate);
+      setSelectedSlotStart(null);
+    }
+  }, [selectedDate, selectedEmployeeId, selectedEmployeeWorkingDays]);
 
   const handleToggleService = (serviceId: string) => {
     setSelectedServiceIds((prev) =>
@@ -431,6 +526,15 @@ export default function TenantPublicBookingFlow({
       setErrorMessage("El email del cliente no es valido.");
       return;
     }
+    const phoneValidationError = validateOptionalPhoneValue({
+      countryIso2: customerForm.customer_phone_country_iso2,
+      nationalNumber: customerForm.customer_phone_national_number,
+      label: "telefono",
+    });
+    if (phoneValidationError) {
+      setErrorMessage(phoneValidationError);
+      return;
+    }
     if (isTurnstileEnabled && !captchaToken) {
       setErrorMessage("Completa la verificacion de seguridad para confirmar.");
       return;
@@ -445,7 +549,10 @@ export default function TenantPublicBookingFlow({
         start_at_utc: selectedSlotStart,
         customer_name: customerForm.customer_name.trim(),
         customer_email: customerForm.customer_email.trim() || undefined,
-        customer_phone: customerForm.customer_phone.trim() || undefined,
+        customer_phone_country_iso2:
+          customerForm.customer_phone_country_iso2.trim() || undefined,
+        customer_phone_national_number:
+          customerForm.customer_phone_national_number.trim() || undefined,
         notes: customerForm.notes.trim() || undefined,
         source: "WEB",
         captcha_token: isTurnstileEnabled ? captchaToken ?? undefined : undefined,
@@ -704,12 +811,26 @@ export default function TenantPublicBookingFlow({
                     <>
                       <div className="rounded-2xl border border-border-soft bg-surface-soft p-3">
                         <label className="mb-2 block text-xs font-medium text-fg-label">Fecha</label>
-                        <CalendarDatePicker
-                          value={selectedDate}
-                          onChange={setSelectedDate}
-                          minDate={getTodayDateInput()}
-                          placeholder="Seleccionar fecha"
-                        />
+                        {selectedEmployeeWorkingDays.length === 0 ? (
+                          <p className="rounded-2xl border border-border-soft bg-surface px-3 py-3 text-sm text-muted">
+                            Este profesional aun no tiene dias laborables publicados.
+                          </p>
+                        ) : (
+                          <>
+                            <CalendarDatePicker
+                              value={selectedDate}
+                              onChange={setSelectedDate}
+                              minDate={getTodayDateInput()}
+                              placeholder="Seleccionar fecha"
+                              disabledMatchers={[
+                                (date: Date) => !selectedEmployeeWorkingDays.includes(date.getDay()),
+                              ]}
+                            />
+                            <p className="mt-2 text-xs text-muted">
+                              Dias atendidos: {formatWorkingDaysLabel(selectedEmployeeWorkingDays)}.
+                            </p>
+                          </>
+                        )}
                       </div>
 
                       <div>
@@ -793,20 +914,34 @@ export default function TenantPublicBookingFlow({
                             placeholder="cliente@correo.com"
                           />
                         </label>
-                        <label className="space-y-1.5">
-                          <span className="text-xs font-medium text-fg-label">Telefono</span>
-                          <input
-                            value={customerForm.customer_phone}
-                            onChange={(event) =>
-                              setCustomerForm((prev) => ({
-                                ...prev,
-                                customer_phone: event.target.value,
-                              }))
-                            }
-                            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-fg"
-                            placeholder="+34 600 000 000"
-                          />
-                        </label>
+                        <PhoneField
+                          idPrefix="public-booking-phone"
+                          label="Telefono"
+                          countryIso2={customerForm.customer_phone_country_iso2}
+                          nationalNumber={customerForm.customer_phone_national_number}
+                          onCountryChange={(value) =>
+                            setCustomerForm((prev) => ({
+                              ...prev,
+                              customer_phone_country_iso2: value,
+                            }))
+                          }
+                          onNationalNumberChange={(value) =>
+                            setCustomerForm((prev) => ({
+                              ...prev,
+                              customer_phone_national_number: value,
+                            }))
+                          }
+                          onClear={() =>
+                            setCustomerForm((prev) => ({
+                              ...prev,
+                              customer_phone_country_iso2: "",
+                              customer_phone_national_number: "",
+                            }))
+                          }
+                          wrapperClassName="md:col-span-2"
+                          selectTriggerClassName="border-border bg-surface"
+                          inputClassName="border-border bg-surface"
+                        />
                         <label className="space-y-1.5 md:col-span-2">
                           <span className="text-xs font-medium text-fg-label">Notas</span>
                           <textarea

@@ -1,8 +1,9 @@
 import {
   clearSessionTokens,
   getAccessToken,
-  getCsrfTokenFromCookie,
+  getCsrfToken,
   setAccessToken,
+  syncCsrfTokenFromCookie,
 } from "@/modules/auth/services/auth-session.service";
 import type { RefreshResponse } from "@/types/auth.types";
 
@@ -39,13 +40,23 @@ function shouldTryRefresh(endpoint: string): boolean {
 }
 
 async function requestFreshTokens(): Promise<string | null> {
-  const csrfToken = getCsrfTokenFromCookie();
+  const executeRefresh = async (csrfToken: string | null) =>
+    fetch(`${API_URL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include",
+      cache: "no-store",
+      headers: csrfToken ? { "X-CSRF-Token": csrfToken } : undefined,
+    });
 
-  const response = await fetch(`${API_URL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-    headers: csrfToken ? { "X-CSRF-Token": csrfToken } : undefined,
-  });
+  const initialCsrfToken = getCsrfToken();
+  let response = await executeRefresh(initialCsrfToken);
+
+  if (!response.ok && (response.status === 401 || response.status === 403)) {
+    const syncedCookieToken = syncCsrfTokenFromCookie();
+    if (syncedCookieToken && syncedCookieToken !== initialCsrfToken) {
+      response = await executeRefresh(syncedCookieToken);
+    }
+  }
 
   if (!response.ok) {
     clearSessionTokens();
@@ -59,6 +70,7 @@ async function requestFreshTokens(): Promise<string | null> {
   }
 
   setAccessToken(data.access_token);
+  syncCsrfTokenFromCookie();
   return data.access_token;
 }
 
@@ -90,10 +102,11 @@ export async function apiFetch<t>(
     typeof FormData !== "undefined" && restOptions.body instanceof FormData;
 
   const executeRequest = async (resolvedToken: string | null): Promise<Response> => {
-    const csrfToken = getCsrfTokenFromCookie();
+    const csrfToken = getCsrfToken();
 
     return fetch(`${API_URL}${endpoint}`, {
       ...restOptions,
+      cache: restOptions.cache ?? "no-store",
       credentials: restOptions.credentials ?? "include",
       headers: buildHeaders(headers, resolvedToken, csrfToken, isFormData),
     });

@@ -7,6 +7,7 @@ import { employeesService } from "@/modules/employees/services/employees.service
 import { servicesService } from "@/modules/services/services/services.service";
 import ServiceEditModalContent from "@/modules/services/components/ServiceEditModalContent";
 import { ServicesList } from "@/modules/services/components/ServicesList";
+import { getPhoneSearchValue } from "@/modules/phone/utils/phone";
 import SectionHeader from "@/modules/ui/SectionHeader";
 import TableEditModal from "@/modules/ui/TableEditModal";
 import TableHeader from "@/modules/ui/TableHeader";
@@ -67,7 +68,12 @@ export default function ServicesManagement() {
     }
 
     return activeEmployees.filter((employee) => {
-      const haystack = `${employee.name} ${employee.email} ${employee.phone ?? ""}`.toLowerCase();
+      const haystack =
+        `${employee.name} ${employee.email} ${getPhoneSearchValue({
+          display: employee.phone,
+          nationalNumber: employee.phone_national_number,
+          e164: employee.phone_e164,
+        })}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
   }, [activeEmployees, employeeSearch]);

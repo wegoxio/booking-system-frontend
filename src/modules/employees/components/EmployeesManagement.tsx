@@ -11,6 +11,12 @@ import SectionHeader from "@/modules/ui/SectionHeader";
 import TableEditModal from "@/modules/ui/TableEditModal";
 import TableHeader from "@/modules/ui/TableHeader";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
+import {
+  getPhoneSearchValue,
+  hasStructuredPhoneValue,
+  normalizePhoneCountryIso2,
+  normalizePhoneDigits,
+} from "@/modules/phone/utils/phone";
 import type {
   CreateEmployeePayload,
   Employee,
@@ -24,7 +30,9 @@ import { toast } from "react-hot-toast";
 const emptyForm: EmployeeFormState = {
   name: "",
   email: "",
-  phone: "",
+  phone_country_iso2: "",
+  phone_national_number: "",
+  phone_legacy: "",
   is_active: true,
 };
 
@@ -55,7 +63,12 @@ export default function EmployeesManagement() {
     }
 
     return employees.filter((employee) => {
-      const haystack = `${employee.name} ${employee.email} ${employee.phone ?? ""}`.toLowerCase();
+      const haystack =
+        `${employee.name} ${employee.email} ${getPhoneSearchValue({
+          display: employee.phone,
+          nationalNumber: employee.phone_national_number,
+          e164: employee.phone_e164,
+        })}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
   }, [employees, searchQuery]);
@@ -92,31 +105,34 @@ export default function EmployeesManagement() {
     resetForm();
   }, [resetForm]);
 
-  const openCreateModal = () => {
+  const openCreateModal = useCallback(() => {
     resetForm();
     setIsModalOpen(true);
-  };
+  }, [resetForm]);
 
-  const openEditModal = (employee: Employee) => {
+  const openEditModal = useCallback((employee: Employee) => {
     setEditingId(employee.id);
     setForm({
       name: employee.name,
       email: employee.email,
-      phone: employee.phone ?? "",
+      phone_country_iso2: employee.phone_country_iso2 ?? "",
+      phone_national_number: employee.phone_national_number ?? "",
+      phone_legacy:
+        employee.phone_country_iso2 || employee.phone_national_number ? "" : employee.phone ?? "",
       is_active: employee.is_active,
     });
     setFormError("");
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const openScheduleModal = (employee: Employee) => {
+  const openScheduleModal = useCallback((employee: Employee) => {
     setSelectedScheduleEmployeeId(employee.id);
     setIsScheduleModalOpen(true);
-  };
+  }, []);
 
-  const closeScheduleModal = () => {
+  const closeScheduleModal = useCallback(() => {
     setIsScheduleModalOpen(false);
-  };
+  }, []);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -130,11 +146,30 @@ export default function EmployeesManagement() {
       return;
     }
 
+    const hasStructuredPhone = hasStructuredPhoneValue(
+      form.phone_country_iso2,
+      form.phone_national_number,
+    );
+    const normalizedLegacyPhone = form.phone_legacy.trim();
+
     const basePayload: CreateEmployeePayload = {
       name: form.name.trim(),
       email: form.email.trim().toLowerCase(),
-      phone: form.phone.trim() || undefined,
     };
+
+    if (hasStructuredPhone) {
+      basePayload.phone = null;
+      basePayload.phone_country_iso2 = normalizePhoneCountryIso2(form.phone_country_iso2);
+      basePayload.phone_national_number = normalizePhoneDigits(form.phone_national_number);
+    } else if (normalizedLegacyPhone) {
+      basePayload.phone = normalizedLegacyPhone;
+      basePayload.phone_country_iso2 = null;
+      basePayload.phone_national_number = null;
+    } else if (editingId) {
+      basePayload.phone = null;
+      basePayload.phone_country_iso2 = null;
+      basePayload.phone_national_number = null;
+    }
 
     setIsSaving(true);
     setFormError("");
@@ -239,7 +274,20 @@ export default function EmployeesManagement() {
           isEditing={!!editingId}
           onNameChange={(value) => setForm((prev) => ({ ...prev, name: value }))}
           onEmailChange={(value) => setForm((prev) => ({ ...prev, email: value }))}
-          onPhoneChange={(value) => setForm((prev) => ({ ...prev, phone: value }))}
+          onPhoneCountryChange={(value) =>
+            setForm((prev) => ({ ...prev, phone_country_iso2: value }))
+          }
+          onPhoneNationalNumberChange={(value) =>
+            setForm((prev) => ({ ...prev, phone_national_number: value }))
+          }
+          onClearPhone={() =>
+            setForm((prev) => ({
+              ...prev,
+              phone_country_iso2: "",
+              phone_national_number: "",
+              phone_legacy: "",
+            }))
+          }
           onIsActiveChange={(value) => setForm((prev) => ({ ...prev, is_active: value }))}
         />
       </TableEditModal>

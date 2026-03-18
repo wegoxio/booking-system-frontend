@@ -26,7 +26,6 @@ import { toast } from "react-hot-toast";
 const emptyForm: TenantAdminFormState = {
   name: "",
   email: "",
-  password: "",
   tenant_id: "",
   is_active: true,
 };
@@ -117,7 +116,6 @@ export default function TenantAdminsManagement() {
     setForm({
       name: tenantAdmin.name,
       email: tenantAdmin.email,
-      password: "",
       tenant_id: tenantAdmin.tenant_id,
       is_active: tenantAdmin.is_active,
     });
@@ -135,10 +133,6 @@ export default function TenantAdminsManagement() {
 
   const handleEmailChange = (value: string) => {
     setForm((prev) => ({ ...prev, email: value }));
-  };
-
-  const handlePasswordChange = (value: string) => {
-    setForm((prev) => ({ ...prev, password: value }));
   };
 
   const handleTenantChange = (value: string) => {
@@ -177,8 +171,7 @@ export default function TenantAdminsManagement() {
     event.preventDefault();
     if (!token) return;
 
-    const isEditing = !!editingId;
-    const validationError = validateTenantAdminCreateForm(form, isEditing);
+    const validationError = validateTenantAdminCreateForm(form, !!editingId);
     if (validationError) {
       setFormError(validationError);
       toast.error(validationError);
@@ -201,19 +194,14 @@ export default function TenantAdminsManagement() {
           is_active: form.is_active,
         };
 
-        if (form.password.trim()) {
-          payload.password = form.password.trim();
-        }
-
         await tenantAdminsService.update(editingId, payload, token);
         toast.success("Tenant admin actualizado correctamente.");
       } else {
         const payload: CreateTenantAdminPayload = {
           ...basePayload,
-          password: form.password.trim(),
         };
         await tenantAdminsService.create(payload, token);
-        toast.success("Tenant admin creado correctamente.");
+        toast.success("Invitacion enviada correctamente.");
       }
 
       await loadData();
@@ -293,10 +281,10 @@ export default function TenantAdminsManagement() {
         badgeLabel={editingId ? "Edit Tenant Admin" : "New Tenant Admin"}
         badgeIcon={<Users2 className="h-3.5 w-3.5" />}
         title={editingId ? "Editar tenant admin" : "Crear tenant admin"}
-        description="Define credenciales de acceso y tenant asociado."
-        helperText="Esta accion actualiza permisos de administracion por tenant."
+        description="Asigna el tenant y el correo desde el que el cliente activará su acceso."
+        helperText="La contraseña inicial no la define Wegox: el cliente la crea desde un enlace seguro."
         errorMessage={formError}
-        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear tenant admin"}
+        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Enviar invitacion"}
         isSubmitting={isSaving}
         onClose={closeModal}
         onSubmit={handleSubmit}
@@ -307,7 +295,6 @@ export default function TenantAdminsManagement() {
           isEditing={!!editingId}
           onNameChange={handleNameChange}
           onEmailChange={handleEmailChange}
-          onPasswordChange={handlePasswordChange}
           onTenantChange={handleTenantChange}
           onIsActiveChange={handleIsActiveChange}
         />

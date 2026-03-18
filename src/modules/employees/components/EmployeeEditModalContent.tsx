@@ -1,17 +1,23 @@
 import { Mail, Phone, ShieldCheck } from "lucide-react";
 import { Avatar as EmployeeAvatar } from "@/modules/employees/components/components/Avatar";
+import { getPhoneDisplay } from "@/modules/phone/utils/phone";
+import PhoneField from "@/modules/ui/PhoneField";
 
 type EmployeeEditModalContentProps = {
   form: {
     name: string;
     email: string;
-    phone: string;
+    phone_country_iso2: string;
+    phone_national_number: string;
+    phone_legacy: string;
     is_active: boolean;
   };
   isEditing: boolean;
   onNameChange: (value: string) => void;
   onEmailChange: (value: string) => void;
-  onPhoneChange: (value: string) => void;
+  onPhoneCountryChange: (value: string) => void;
+  onPhoneNationalNumberChange: (value: string) => void;
+  onClearPhone: () => void;
   onIsActiveChange: (value: boolean) => void;
 };
 
@@ -20,9 +26,18 @@ export default function EmployeeEditModalContent({
   isEditing,
   onNameChange,
   onEmailChange,
-  onPhoneChange,
+  onPhoneCountryChange,
+  onPhoneNationalNumberChange,
+  onClearPhone,
   onIsActiveChange,
 }: EmployeeEditModalContentProps): React.ReactNode {
+  const phoneDisplay =
+    getPhoneDisplay({
+      display: form.phone_legacy,
+      countryIso2: form.phone_country_iso2,
+      nationalNumber: form.phone_national_number,
+    }) ?? "";
+
   return (
     <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1.05fr_0.95fr]">
       <div className="space-y-4">
@@ -57,19 +72,19 @@ export default function EmployeeEditModalContent({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="employee-phone" className="text-sm font-medium text-fg-label">
-            Telefono
-          </label>
-          <input
-            id="employee-phone"
-            value={form.phone}
-            onChange={(event) => onPhoneChange(event.target.value)}
-            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
-            placeholder="+34 600 000 000"
-            maxLength={30}
-          />
-        </div>
+        <PhoneField
+          idPrefix="employee-phone"
+          label="Telefono"
+          countryIso2={form.phone_country_iso2}
+          nationalNumber={form.phone_national_number}
+          onCountryChange={onPhoneCountryChange}
+          onNationalNumberChange={onPhoneNationalNumberChange}
+          onClear={onClearPhone}
+          helperText="Selecciona un pais y escribe el numero sin el prefijo internacional."
+          legacyValue={form.phone_legacy}
+          selectTriggerClassName="border-border bg-surface"
+          inputClassName="border-border bg-surface"
+        />
 
         {isEditing ? (
           <label className="flex items-center gap-2 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-sm text-fg-label">
@@ -109,7 +124,7 @@ export default function EmployeeEditModalContent({
               Telefono de soporte
             </div>
             <p className="mt-2 text-sm text-muted">
-              {form.phone.trim() || "Aun no se ha definido un telefono para este perfil."}
+              {phoneDisplay || "Aun no se ha definido un telefono para este perfil."}
             </p>
           </div>
 

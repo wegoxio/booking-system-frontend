@@ -1,10 +1,22 @@
 "use client";
 
-import BookingsSchedulePanel from "@/modules/bookings/components/BookingsSchedulePanel";
 import { useModalPresence } from "@/hooks/useModalPresence";
 import type { Employee } from "@/types/employee.types";
 import { CalendarClock, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useEffect } from "react";
+
+const BookingsSchedulePanel = dynamic(
+  () => import("@/modules/bookings/components/BookingsSchedulePanel"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="inline-flex items-center gap-2 text-sm text-muted">
+        Cargando configurador de horario...
+      </div>
+    ),
+  },
+);
 
 type EmployeeScheduleModalProps = {
   isOpen: boolean;
@@ -47,7 +59,7 @@ export default function EmployeeScheduleModal({
       <button
         type="button"
         aria-label="Cerrar modal"
-        className={`absolute inset-0 bg-overlay backdrop-blur-[6px] ${
+        className={`absolute inset-0 bg-overlay ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}
         onClick={onClose}

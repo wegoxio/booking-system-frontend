@@ -3,7 +3,7 @@
 import * as Popover from "@radix-ui/react-popover";
 import { CalendarDays } from "lucide-react";
 import { type CSSProperties, useMemo, useState } from "react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, type Matcher } from "react-day-picker";
 import "react-day-picker/style.css";
 
 type CalendarDatePickerProps = {
@@ -12,6 +12,7 @@ type CalendarDatePickerProps = {
   minDate?: string;
   placeholder?: string;
   buttonClassName?: string;
+  disabledMatchers?: Matcher | Matcher[];
 };
 
 function parseDateString(value: string): Date | undefined {
@@ -45,11 +46,24 @@ export default function CalendarDatePicker({
   minDate,
   placeholder = "Seleccionar fecha",
   buttonClassName = "",
+  disabledMatchers,
 }: CalendarDatePickerProps): React.ReactNode {
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedDate = useMemo(() => parseDateString(value), [value]);
   const minDateValue = useMemo(() => parseDateString(minDate ?? ""), [minDate]);
+  const resolvedDisabledMatchers = useMemo(() => {
+    const matchers = [
+      ...(minDateValue ? [{ before: minDateValue }] : []),
+      ...(Array.isArray(disabledMatchers)
+        ? disabledMatchers
+        : disabledMatchers
+          ? [disabledMatchers]
+          : []),
+    ];
+
+    return matchers.length > 0 ? matchers : undefined;
+  }, [disabledMatchers, minDateValue]);
 
   const calendarThemeStyle = {
     "--rdp-accent-color": "var(--primary-accent)",
@@ -69,27 +83,30 @@ export default function CalendarDatePicker({
         </button>
       </Popover.Trigger>
 
-      <Popover.Portal>
-        <Popover.Content
-          sideOffset={8}
-          className="z-[80] rounded-2xl border border-border bg-surface p-3 shadow-theme-card"
-        >
-          <DayPicker
-            mode="single"
-            selected={selectedDate}
-            onSelect={(nextDate) => {
-              if (!nextDate) return;
-              onChange(toDateString(nextDate));
-              setIsOpen(false);
-            }}
-            disabled={minDateValue ? { before: minDateValue } : undefined}
-            weekStartsOn={1}
-            showOutsideDays
-            className="text-fg"
-            style={calendarThemeStyle}
-          />
-        </Popover.Content>
-      </Popover.Portal>
+      {isOpen ? (
+        <Popover.Portal>
+          <Popover.Content
+            sideOffset={8}
+            className="z-[80] rounded-2xl border border-border bg-surface p-3 shadow-theme-card"
+          >
+            <DayPicker
+              mode="single"
+              selected={selectedDate}
+              defaultMonth={selectedDate ?? minDateValue ?? new Date()}
+              onSelect={(nextDate) => {
+                if (!nextDate) return;
+                onChange(toDateString(nextDate));
+                setIsOpen(false);
+              }}
+              disabled={resolvedDisabledMatchers}
+              weekStartsOn={1}
+              showOutsideDays
+              className="text-fg"
+              style={calendarThemeStyle}
+            />
+          </Popover.Content>
+        </Popover.Portal>
+      ) : null}
     </Popover.Root>
   );
 }

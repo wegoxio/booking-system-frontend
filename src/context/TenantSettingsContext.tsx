@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { defaultTenantSettings } from "@/modules/settings/config/default-tenant-settings";
+import { applyDocumentBranding } from "@/modules/settings/utils/document-branding";
 import {
   tenantSettingsService,
   type TenantSettingsAssetType,
@@ -31,6 +32,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 
 type TenantSettingsContextType = {
   settings: TenantSettings;
@@ -77,20 +79,6 @@ function toTenantSettings(record: TenantSettingsRecord): TenantSettings {
   });
 }
 
-function setFavicon(url: string) {
-  const fallbackFavicon = "/favicon.ico";
-  const nextUrl = url.trim() || fallbackFavicon;
-  let faviconElement = document.querySelector("link[rel='icon']") as HTMLLinkElement | null;
-
-  if (!faviconElement) {
-    faviconElement = document.createElement("link");
-    faviconElement.rel = "icon";
-    document.head.appendChild(faviconElement);
-  }
-
-  faviconElement.href = nextUrl;
-}
-
 function applyThemeVariables(
   theme: TenantThemeSettings,
   themeMode: TenantThemeMode,
@@ -113,6 +101,7 @@ type PersistTarget =
 
 export function TenantSettingsProvider({ children }: { children: ReactNode }) {
   const { user, token, isLoading: isAuthLoading } = useAuth();
+  const pathname = usePathname();
   const [settings, setSettings] = useState<TenantSettings>(defaultTenantSettings);
   const [isLoadingSettings, setIsLoadingSettings] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -124,9 +113,11 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     applyThemeVariables(settings.theme, settings.themeMode, settings.themeOverrides);
-    document.title = settings.branding.windowTitle.trim() || defaultTenantSettings.branding.windowTitle;
-    setFavicon(settings.branding.faviconUrl);
-  }, [settings]);
+    applyDocumentBranding({
+      title: settings.branding.windowTitle,
+      faviconUrl: settings.branding.faviconUrl,
+    });
+  }, [pathname, settings]);
 
   const resolvePersistTarget = useCallback((): PersistTarget | null => {
     if (!user) return null;

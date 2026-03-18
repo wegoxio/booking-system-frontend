@@ -6,6 +6,9 @@ export type Employee = {
   name: string;
   email: string;
   phone: string | null;
+  phone_country_iso2: string | null;
+  phone_national_number: string | null;
+  phone_e164: string | null;
   schedule_timezone?: string;
   slot_interval_minutes?: number;
   is_active: boolean;
@@ -14,7 +17,9 @@ export type Employee = {
 export type CreateEmployeePayload = {
   name: string;
   email: string;
-  phone?: string;
+  phone?: string | null;
+  phone_country_iso2?: string | null;
+  phone_national_number?: string | null;
 };
 
 export type UpdateEmployeePayload = Partial<CreateEmployeePayload> & {
@@ -24,6 +29,8 @@ export type UpdateEmployeePayload = Partial<CreateEmployeePayload> & {
 export type EmployeeFormState = {
   name: string;
   email: string;
-  phone: string;
+  phone_country_iso2: string;
+  phone_national_number: string;
+  phone_legacy: string;
   is_active: boolean;
 };

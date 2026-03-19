@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wegox Booking Frontend
 
-## Getting Started
+Frontend web de Wegox Booking, una plataforma SaaS de reservas multi-tenant para negocios de servicios.
 
-First, run the development server:
+## Que incluye esta aplicacion
+
+- login de administradores
+- restauracion de sesion con refresh token y CSRF
+- dashboard privado por rol
+- flujo publico de reservas por `tenantSlug`
+- branding dinamico por tenant y por plataforma
+- gestion de servicios, empleados y bookings
+- onboarding visual para tenant admins
+- activacion de cuenta y password reset
+
+## Stack tecnico
+
+- Next.js 16.1.6
+- React 19.2.3
+- TypeScript
+- Tailwind CSS 4
+- Radix UI
+- Recharts
+- driver.js
+
+## Rutas principales
+
+- `/`: login
+- `/forgot-password`: solicitud de recuperacion o reenvio de acceso
+- `/reset-password`: definicion de nueva password mediante token
+- `/activate-account`: activacion inicial de cuenta de tenant admin
+- `/book/[tenantSlug]`: reserva publica
+- `/dashboard`: resumen por rol
+- `/services`: gestion de servicios
+- `/employees`: gestion de empleados
+- `/bookings`: gestion de reservas
+- `/tenants`: gestion de tenants para `SUPER_ADMIN`
+- `/users`: gestion de tenant admins para `SUPER_ADMIN`
+- `/audit-logs`: auditoria
+- `/settings`: branding y configuracion visual
+
+## Requisitos
+
+- Node.js 20+
+- pnpm
+- backend compatible levantado
+
+## Puesta en marcha local
+
+1. Instala dependencias:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configura `.env` con al menos:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_API_URL`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Levanta el entorno de desarrollo:
 
-## Learn More
+```bash
+pnpm dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Para validar produccion local:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm build
+pnpm start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts utiles
 
-## Deploy on Vercel
+```bash
+pnpm dev
+pnpm build
+pnpm lint
+pnpm exec tsc --noEmit
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Alcance funcional validado
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+El estado actual del frontend cubre:
+
+- login seguro con captcha opcional
+- access token solo en memoria
+- refresh automatico ante `401`
+- dashboard con navegacion segun `SUPER_ADMIN` o `TENANT_ADMIN`
+- CRUD visual de servicios
+- CRUD visual de empleados
+- upload y visualizacion de avatars de empleados
+- creacion y gestion de bookings
+- flujo publico de reserva multi-step
+- branding dinamico con logo, favicon, titulo y variables CSS
+- tour inicial para tenant admins
+- activacion de cuenta y password reset por token
+
+## Compatibilidad de release
+
+Para la primera salida publica del MVP, este frontend esta pensado para emparejarse con el backend `v1.0.0-beta.1`.
+
+## Limitaciones conocidas
+
+- no hay suite automatizada de tests frontend todavia
+- no hay pagos integrados
+- no hay WhatsApp o SMS nativo
+- no hay calendar sync
+- la app depende de una configuracion correcta de `NEXT_PUBLIC_API_URL`, cookies y CORS

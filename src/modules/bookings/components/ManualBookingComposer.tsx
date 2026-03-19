@@ -1,20 +1,15 @@
 import Avatar from "@/modules/ui/Avatar";
 import PhoneField from "@/modules/ui/PhoneField";
-import type { BookingSlot } from "@/types/booking.types";
+import type { BookingStatus } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import type { Service } from "@/types/service.types";
-import { CalendarDays, Clock3, UserRound } from "lucide-react";
+import { CalendarDays, Clock3, ShieldAlert, UserRound } from "lucide-react";
 import { useMemo } from "react";
+import type { BookingCustomerFormState } from "./BookingComposer";
 
-export type BookingCustomerFormState = {
-  customer_name: string;
-  customer_email: string;
-  customer_phone_country_iso2: string;
-  customer_phone_national_number: string;
-  notes: string;
-};
+export type ManualBookingStatusSelection = "" | BookingStatus;
 
-type BookingComposerProps = {
+type ManualBookingComposerProps = {
   services: Service[];
   selectedServiceIds: string[];
   onToggleService: (serviceId: string) => void;
@@ -22,37 +17,34 @@ type BookingComposerProps = {
   isLoadingEligibleEmployees: boolean;
   selectedEmployeeId: string;
   onSelectEmployee: (employeeId: string) => void;
-  selectedDate: string;
-  onDateChange: (date: string) => void;
-  slots: BookingSlot[];
-  isLoadingSlots: boolean;
-  selectedSlotStart: string | null;
-  onSelectSlot: (slotStart: string) => void;
-  requiredDurationMinutes: number | null;
-  availabilityTimezone: string | null;
+  manualDate: string;
+  onManualDateChange: (date: string) => void;
+  manualTime: string;
+  onManualTimeChange: (time: string) => void;
+  manualStatus: ManualBookingStatusSelection;
+  onManualStatusChange: (status: ManualBookingStatusSelection) => void;
+  allowOverlap: boolean;
+  onAllowOverlapChange: (value: boolean) => void;
+  cancellationReason: string;
+  onCancellationReasonChange: (value: string) => void;
   customerForm: BookingCustomerFormState;
   onCustomerFormChange: (next: BookingCustomerFormState) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
   errorMessage: string;
-  isReadyToSubmit: boolean;
+  estimatedDurationMinutes: number | null;
+  estimatedTotalPrice: number;
 };
 
-function getTodayDateInput() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
-function formatSlotTime(iso: string, timeZone?: string | null) {
-  return new Date(iso).toLocaleTimeString("es-ES", {
-    hour: "2-digit",
-    minute: "2-digit",
-    ...(timeZone ? { timeZone } : {}),
-  });
-}
+const STATUS_OPTIONS: Array<{ value: ManualBookingStatusSelection; label: string }> = [
+  { value: "", label: "Automatico" },
+  { value: "PENDING", label: "Pendiente" },
+  { value: "CONFIRMED", label: "Confirmada" },
+  { value: "IN_PROGRESS", label: "En progreso" },
+  { value: "COMPLETED", label: "Completada" },
+  { value: "CANCELLED", label: "Cancelada" },
+  { value: "NO_SHOW", label: "No asistio" },
+];
 
 function formatDuration(minutes: number | null) {
   if (!minutes) return "--";
@@ -63,7 +55,11 @@ function formatDuration(minutes: number | null) {
   return `${hours}h ${remaining}m`;
 }
 
-export default function BookingComposer({
+function isCancellationStatus(status: ManualBookingStatusSelection) {
+  return status === "CANCELLED" || status === "NO_SHOW";
+}
+
+export default function ManualBookingComposer({
   services,
   selectedServiceIds,
   onToggleService,
@@ -71,37 +67,43 @@ export default function BookingComposer({
   isLoadingEligibleEmployees,
   selectedEmployeeId,
   onSelectEmployee,
-  selectedDate,
-  onDateChange,
-  slots,
-  isLoadingSlots,
-  selectedSlotStart,
-  onSelectSlot,
-  requiredDurationMinutes,
-  availabilityTimezone,
+  manualDate,
+  onManualDateChange,
+  manualTime,
+  onManualTimeChange,
+  manualStatus,
+  onManualStatusChange,
+  allowOverlap,
+  onAllowOverlapChange,
+  cancellationReason,
+  onCancellationReasonChange,
   customerForm,
   onCustomerFormChange,
   onSubmit,
   isSubmitting,
   errorMessage,
-  isReadyToSubmit,
-}: BookingComposerProps): React.ReactNode {
+  estimatedDurationMinutes,
+  estimatedTotalPrice,
+}: ManualBookingComposerProps): React.ReactNode {
   const selectedServices = useMemo(
     () => services.filter((service) => selectedServiceIds.includes(service.id)),
     [services, selectedServiceIds],
   );
 
-  const totalPrice = useMemo(
-    () => selectedServices.reduce((sum, service) => sum + Number(service.price), 0),
-    [selectedServices],
-  );
+  const isReadyToSubmit =
+    selectedServiceIds.length > 0 &&
+    selectedEmployeeId.length > 0 &&
+    manualDate.length > 0 &&
+    manualTime.length > 0 &&
+    customerForm.customer_name.trim().length > 0 &&
+    (!isCancellationStatus(manualStatus) || cancellationReason.trim().length > 0);
 
   return (
     <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
       <div className="mb-5">
-        <h3 className="text-lg font-semibold text-fg-strong">Agendar cita</h3>
+        <h3 className="text-lg font-semibold text-fg-strong">Registro manual</h3>
         <p className="text-sm text-muted">
-          Sigue este orden: servicio, profesional, horario y datos del cliente.
+          Para walk-ins, citas telefonicas o historial pasado cargado por el comercio.
         </p>
       </div>
 
@@ -131,15 +133,22 @@ export default function BookingComposer({
                     <p className="mt-1 text-xs text-muted">
                       {service.duration_minutes} min - {service.price} {service.currency}
                     </p>
+                    {service.instructions ? (
+                      <p className="mt-2 text-xs text-warning">
+                        Indicaciones: {service.instructions}
+                      </p>
+                    ) : null}
                   </button>
                 );
               })}
             </div>
 
             {selectedServices.length > 0 ? (
-              <p className="mt-3 text-xs text-muted">
-                {selectedServices.length} servicio(s) seleccionado(s). Total estimado:{" "}
-                {totalPrice.toFixed(2)} {selectedServices[0]?.currency ?? "USD"}.
+              <p className="mt-3 inline-flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                <Clock3 className="h-3.5 w-3.5 text-fg-icon" />
+                {selectedServices.length} servicio(s) seleccionado(s). Duracion estimada:{" "}
+                {formatDuration(estimatedDurationMinutes)}. Total estimado:{" "}
+                {estimatedTotalPrice.toFixed(2)} {selectedServices[0]?.currency ?? "USD"}.
               </p>
             ) : (
               <p className="mt-3 text-xs text-muted">
@@ -201,58 +210,91 @@ export default function BookingComposer({
         <div>
           <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-surface-warning px-3 py-1 text-xs font-semibold text-warning">
             3
-            <span className="uppercase tracking-[0.14em]">Fecha y hora</span>
+            <span className="uppercase tracking-[0.14em]">Fecha, hora y control</span>
           </div>
 
           <div className="rounded-2xl border border-border-soft bg-surface p-3">
-            <label className="mb-2 block text-xs font-medium text-fg-label">Fecha</label>
-            <div className="relative">
-              <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-icon" />
-              <input
-                type="date"
-                min={getTodayDateInput()}
-                value={selectedDate}
-                onChange={(event) => onDateChange(event.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-soft py-2.5 pl-9 pr-3 text-sm text-fg"
-              />
+            <div className="grid gap-3 md:grid-cols-3">
+              <label className="space-y-1.5">
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-fg-label">
+                  <CalendarDays className="h-4 w-4 text-fg-icon" />
+                  Fecha
+                </span>
+                <input
+                  type="date"
+                  value={manualDate}
+                  onChange={(event) => onManualDateChange(event.target.value)}
+                  className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="inline-flex items-center gap-2 text-xs font-medium text-fg-label">
+                  <Clock3 className="h-4 w-4 text-fg-icon" />
+                  Hora
+                </span>
+                <input
+                  type="time"
+                  value={manualTime}
+                  onChange={(event) => onManualTimeChange(event.target.value)}
+                  step={300}
+                  className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-xs font-medium text-fg-label">Estado inicial</span>
+                <select
+                  value={manualStatus}
+                  onChange={(event) =>
+                    onManualStatusChange(event.target.value as ManualBookingStatusSelection)
+                  }
+                  className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
+                >
+                  {STATUS_OPTIONS.map((option) => (
+                    <option key={option.value || "auto"} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
-            <label className="mt-3 mb-2 block text-xs font-medium text-fg-label">
-              Slots disponibles
-            </label>
-            {isLoadingSlots ? (
-              <p className="text-sm text-muted">Calculando disponibilidad...</p>
-            ) : slots.length === 0 ? (
-              <p className="text-sm text-muted">
-                No hay slots para la fecha seleccionada.
-              </p>
-            ) : (
-              <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3 lg:grid-cols-4">
-                {slots.map((slot) => {
-                  const isSelected = slot.start_at_utc === selectedSlotStart;
-                  return (
-                    <button
-                      key={slot.start_at_utc}
-                      type="button"
-                      onClick={() => onSelectSlot(slot.start_at_utc)}
-                      className={`rounded-xl border px-2.5 py-2 text-xs font-medium transition ${
-                        isSelected
-                          ? "border-accent bg-accent text-accent-text"
-                          : "border-border-soft bg-surface-soft text-fg-secondary hover:bg-surface-muted"
-                      }`}
-                    >
-                      {formatSlotTime(slot.start_at_utc, availabilityTimezone)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+            <p className="mt-3 text-xs text-muted">
+              {manualStatus
+                ? `Se guardara como ${STATUS_OPTIONS.find((option) => option.value === manualStatus)?.label?.toLowerCase()}.`
+                : "Automatico: futuras como pendientes y pasadas como completadas."}
+            </p>
 
-            {requiredDurationMinutes ? (
-              <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted">
-                <Clock3 className="h-3.5 w-3.5 text-fg-icon" />
-                Duracion estimada: {formatDuration(requiredDurationMinutes)}.
-              </p>
+            <label className="mt-3 flex items-start gap-2 rounded-2xl border border-border-warning bg-surface-warning-soft px-4 py-3 text-sm text-warning">
+              <input
+                type="checkbox"
+                checked={allowOverlap}
+                onChange={(event) => onAllowOverlapChange(event.target.checked)}
+              />
+              <span>
+                Forzar registro si choca con agenda.
+                <span className="mt-1 block text-xs text-warning">
+                  Util solo para walk-ins, atrasos operativos o carga historica.
+                </span>
+              </span>
+            </label>
+
+            {isCancellationStatus(manualStatus) ? (
+              <label className="mt-3 block space-y-2">
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-fg-label">
+                  <ShieldAlert className="h-4 w-4 text-danger" />
+                  Motivo
+                </span>
+                <textarea
+                  value={cancellationReason}
+                  onChange={(event) => onCancellationReasonChange(event.target.value)}
+                  rows={4}
+                  maxLength={500}
+                  className="w-full rounded-3xl border border-border bg-surface px-4 py-3 text-sm text-fg outline-none transition focus:border-accent"
+                  placeholder="Ej: cliente cancelo de ultima hora, no asistio, se reagendo..."
+                />
+              </label>
             ) : null}
           </div>
         </div>
@@ -296,7 +338,7 @@ export default function BookingComposer({
             </label>
 
             <PhoneField
-              idPrefix="booking-customer-phone"
+              idPrefix="manual-booking-customer-phone"
               label="Telefono"
               countryIso2={customerForm.customer_phone_country_iso2}
               nationalNumber={customerForm.customer_phone_national_number}
@@ -345,7 +387,7 @@ export default function BookingComposer({
 
         <div className="flex flex-col gap-3 border-t border-border-soft pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted">
-            Solo se muestran slots realmente disponibles para ese profesional.
+            Por defecto valida agenda real. Activa el override solo cuando realmente necesites forzar el registro.
           </p>
           <button
             type="button"
@@ -354,7 +396,7 @@ export default function BookingComposer({
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
           >
             <UserRound className="h-4 w-4" />
-            {isSubmitting ? "Agendando..." : "Agendar cita"}
+            {isSubmitting ? "Guardando..." : "Registrar manualmente"}
           </button>
         </div>
       </div>

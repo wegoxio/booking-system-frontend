@@ -33,8 +33,17 @@ const emptyForm: EmployeeFormState = {
   phone_country_iso2: "",
   phone_national_number: "",
   phone_legacy: "",
+  avatar_url: null,
+  avatar_file: null,
   is_active: true,
 };
+
+const EMPLOYEE_AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+const EMPLOYEE_AVATAR_ALLOWED_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]);
 
 export default function EmployeesManagement() {
   const { token } = useAuth();
@@ -119,6 +128,8 @@ export default function EmployeesManagement() {
       phone_national_number: employee.phone_national_number ?? "",
       phone_legacy:
         employee.phone_country_iso2 || employee.phone_national_number ? "" : employee.phone ?? "",
+      avatar_url: employee.avatar_url ?? null,
+      avatar_file: null,
       is_active: employee.is_active,
     });
     setFormError("");
@@ -175,16 +186,21 @@ export default function EmployeesManagement() {
     setFormError("");
 
     try {
+      let savedEmployee: Employee;
       if (editingId) {
         const payload: UpdateEmployeePayload = {
           ...basePayload,
           is_active: form.is_active,
         };
-        await employeesService.update(editingId, payload, token);
+        savedEmployee = await employeesService.update(editingId, payload, token);
         toast.success("Employee actualizado correctamente.");
       } else {
-        await employeesService.create(basePayload, token);
+        savedEmployee = await employeesService.create(basePayload, token);
         toast.success("Employee creado correctamente.");
+      }
+
+      if (form.avatar_file) {
+        savedEmployee = await employeesService.uploadAvatar(savedEmployee.id, form.avatar_file, token);
       }
 
       await loadEmployees();
@@ -288,6 +304,29 @@ export default function EmployeesManagement() {
               phone_legacy: "",
             }))
           }
+          onAvatarFileChange={(file) => {
+            if (!file) {
+              setForm((prev) => ({ ...prev, avatar_file: null }));
+              return;
+            }
+
+            if (!EMPLOYEE_AVATAR_ALLOWED_TYPES.has(file.type)) {
+              const message = "La foto debe ser PNG, JPG o WEBP.";
+              setFormError(message);
+              toast.error(message);
+              return;
+            }
+
+            if (file.size > EMPLOYEE_AVATAR_MAX_BYTES) {
+              const message = "La foto no puede superar 2 MB.";
+              setFormError(message);
+              toast.error(message);
+              return;
+            }
+
+            setForm((prev) => ({ ...prev, avatar_file: file }));
+            setFormError("");
+          }}
           onIsActiveChange={(value) => setForm((prev) => ({ ...prev, is_active: value }))}
         />
       </TableEditModal>

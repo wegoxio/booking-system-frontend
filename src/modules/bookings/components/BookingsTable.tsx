@@ -26,6 +26,13 @@ type BookingsTableProps = {
   onStatusChange: (booking: Booking, status: BookingStatus) => void;
 };
 
+const BOOKING_SOURCE_LABELS: Record<Booking["source"], string> = {
+  ADMIN: "Admin",
+  WEB: "Web",
+  API: "API",
+  MANUAL: "Manual",
+};
+
 const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   PENDING: ["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW"],
   CONFIRMED: ["CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "NO_SHOW"],
@@ -138,7 +145,9 @@ export default function BookingsTable({
                   <p className="mt-1 text-xs text-muted">
                     {booking.total_price} {booking.currency}
                   </p>
-                  <p className="mt-1 text-xs text-muted">{booking.source}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    {BOOKING_SOURCE_LABELS[booking.source]}
+                  </p>
                 </td>
 
                 <td className="border-y border-border-soft bg-surface px-4 py-4">

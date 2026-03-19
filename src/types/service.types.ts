@@ -7,6 +7,7 @@ export type Service = {
   tenant_id: string;
   name: string;
   description: string | null;
+  instructions: string | null;
   duration_minutes: number;
   buffer_before_minutes: number;
   buffer_after_minutes: number;
@@ -24,6 +25,7 @@ export type Service = {
 export type CreateServicePayload = {
   name: string;
   description?: string;
+  instructions?: string;
   duration_minutes: number;
   buffer_before_minutes?: number;
   buffer_after_minutes?: number;
@@ -47,6 +49,7 @@ export type ToggleServiceStatusPayload = {
 export type ServiceFormState = {
   name: string;
   description: string;
+  instructions: string;
   duration_minutes: number;
   capacity: number;
   price: number;

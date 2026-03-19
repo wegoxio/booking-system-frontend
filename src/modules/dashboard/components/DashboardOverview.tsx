@@ -41,7 +41,7 @@ export default function DashboardOverview() {
   const isSuperAdmin = overview?.role === "SUPER_ADMIN" || user?.role === "SUPER_ADMIN";
 
   return (
-    <section className="space-y-3">
+    <section data-tour="dashboard-overview" className="space-y-3">
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 className="text-[42px] font-semibold leading-none text-fg-strong">
           {dashboardTitle}

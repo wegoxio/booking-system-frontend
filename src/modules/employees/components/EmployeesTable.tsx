@@ -41,7 +41,7 @@ function EmployeesTable({
               <tr key={employee.id} className="text-primary shadow-theme-row">
                 <td className="rounded-l-[24px] border-y border-l border-border-soft bg-surface px-4 py-4">
                   <div className="flex items-center gap-3">
-                    <EmployeeAvatar name={employee.name} />
+                    <EmployeeAvatar name={employee.name} imageUrl={employee.avatar_url} />
                     <div className="min-w-0">
                       <p className="font-semibold text-fg-strong">{employee.name}</p>
                       <p className="text-xs text-muted">ID interno del staff</p>

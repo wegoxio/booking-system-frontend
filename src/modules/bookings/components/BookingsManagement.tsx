@@ -2,15 +2,16 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { getPhoneSearchValue } from "@/modules/phone/utils/phone";
+import BookingsCreateModal from "@/modules/bookings/components/BookingsCreateModal";
 import BookingsTable from "@/modules/bookings/components/BookingsTable";
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
 import { employeesService } from "@/modules/employees/services/employees.service";
+import SectionHeader from "@/modules/ui/SectionHeader";
 import TableEditModal from "@/modules/ui/TableEditModal";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
-import TableStatsCard from "@/modules/ui/TableStatsCard";
 import type { Booking, BookingStatus } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
-import { CheckCircle2, CircleAlert, Search, XCircle } from "lucide-react";
+import { CheckCircle2, CircleAlert, Plus, Search, XCircle } from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -58,6 +59,7 @@ export default function BookingsManagement() {
   const [statusFilter, setStatusFilter] = useState<"" | BookingStatus>("");
   const [employeeFilter, setEmployeeFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
 
@@ -148,6 +150,12 @@ export default function BookingsManagement() {
     [bookings],
   );
 
+  const bookingsStats = [
+    { label: "Bookings", value: bookings.length },
+    { label: "Hoy", value: bookingsTodayCount },
+    { label: "Activos", value: pendingBookingsCount },
+  ];
+
   const handleBookingStatusChange = async (booking: Booking, status: BookingStatus) => {
     if (!token) return;
     if (booking.status === status) return;
@@ -183,6 +191,14 @@ export default function BookingsManagement() {
     setCancellationReason("");
     setModalError("");
   }, [updatingBookingId]);
+
+  const openCreateModal = useCallback(() => {
+    setIsCreateModalOpen(true);
+  }, []);
+
+  const closeCreateModal = useCallback(() => {
+    setIsCreateModalOpen(false);
+  }, []);
 
   const handleStatusModalSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -231,27 +247,14 @@ export default function BookingsManagement() {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[28px] border border-card-border bg-gradient-to-br from-surface-warm to-surface-soft p-6 shadow-theme-soft">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
-              Bookings
-            </h2>
-            <p className="mt-4 max-w-3xl text-sm text-muted">
-              Agenda citas por profesional con slots reales segun servicios y disponibilidad.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <TableStatsCard label="Bookings" value={bookings.length} />
-            <TableStatsCard label="Hoy" value={bookingsTodayCount} />
-            <TableStatsCard label="Activos" value={pendingBookingsCount} />
-          </div>
-        </div>
-      </div>
+      <SectionHeader
+        headerTitle="Bookings"
+        headerDescription="Agenda citas por profesional con slots reales segun servicios y disponibilidad."
+        stats={bookingsStats}
+      />
 
       <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <h3 className="text-lg font-semibold text-fg-strong">Citas agendadas</h3>
             <p className="text-sm text-muted">
@@ -259,7 +262,17 @@ export default function BookingsManagement() {
             </p>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent transition hover:brightness-[0.98]"
+          >
+            <Plus className="h-4 w-4" />
+            Registrar cita
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <label className="relative min-w-60">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-placeholder" />
               <input
@@ -301,7 +314,6 @@ export default function BookingsManagement() {
               onChange={(event) => setDateFilter(event.target.value)}
               className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
             />
-          </div>
         </div>
 
         {errorMessage ? <p className="mt-4 text-sm text-danger">{errorMessage}</p> : null}
@@ -315,9 +327,9 @@ export default function BookingsManagement() {
                 ? "No hay bookings registrados todavia."
                 : "No hay resultados para los filtros actuales."}
             </p>
-            <p className="mt-2 text-sm text-muted">
-              Agenda una cita o ajusta filtros para visualizar la informacion.
-            </p>
+              <p className="mt-2 text-sm text-muted">
+                Agenda una cita o ajusta filtros para visualizar la informacion.
+              </p>
           </div>
         ) : (
           <BookingsTable
@@ -329,6 +341,13 @@ export default function BookingsManagement() {
           />
         )}
       </div>
+
+      <BookingsCreateModal
+        isOpen={isCreateModalOpen}
+        token={token}
+        onClose={closeCreateModal}
+        onBookingCreated={loadBookings}
+      />
 
       <TableEditModal
         isOpen={pendingStatusChange !== null}

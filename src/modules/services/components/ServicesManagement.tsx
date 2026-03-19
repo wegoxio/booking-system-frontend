@@ -56,7 +56,7 @@ export default function ServicesManagement() {
     return services.filter((service) => {
       const employeeNames = service.employees.map((employee) => employee.name).join(" ");
       const haystack =
-        `${service.name} ${service.description ?? ""} ${employeeNames} ${service.currency}`.toLowerCase();
+        `${service.name} ${service.description ?? ""} ${service.instructions ?? ""} ${employeeNames} ${service.currency}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
   }, [searchQuery, services]);

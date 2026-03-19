@@ -6,9 +6,22 @@ import Input from "@/modules/ui/Input";
 import { isStrongPassword } from "@/utils/validation";
 import { ArrowLeft, KeyRound } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 
-export default function ResetPasswordPage() {
+function ResetPasswordFallback() {
+  return (
+    <section className="flex min-h-screen items-center justify-center bg-app px-4 py-6">
+      <div className="w-full max-w-lg rounded-[28px] border border-border bg-surface p-6 shadow-theme-soft sm:p-8">
+        <h1 className="text-2xl font-semibold text-fg-strong">Restablecer contrasena</h1>
+        <div className="mt-6 rounded-2xl border border-border bg-surface-soft px-4 py-5 text-sm text-fg-secondary">
+          Preparando el enlace seguro...
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const didResolveRef = useRef(false);
@@ -185,5 +198,13 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </section>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordFallback />}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

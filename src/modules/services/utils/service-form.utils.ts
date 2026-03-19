@@ -8,6 +8,7 @@ import type {
 export const emptyServiceForm: ServiceFormState = {
   name: "",
   description: "",
+  instructions: "",
   duration_minutes: 60,
   capacity: 1,
   price: 0,
@@ -20,6 +21,7 @@ export function toCreateServicePayload(form: ServiceFormState): CreateServicePay
   return {
     name: form.name.trim(),
     description: form.description.trim() || undefined,
+    instructions: form.instructions.trim() || undefined,
     duration_minutes: form.duration_minutes,
     capacity: form.capacity,
     price: Number(form.price.toFixed(2)),
@@ -33,6 +35,7 @@ export function toUpdateServicePayload(form: ServiceFormState): UpdateServicePay
   return {
     name: form.name.trim(),
     description: form.description.trim() || undefined,
+    instructions: form.instructions.trim() || undefined,
     duration_minutes: form.duration_minutes,
     capacity: form.capacity,
     price: Number(form.price.toFixed(2)),
@@ -46,6 +49,7 @@ export function serviceToFormState(service: Service): ServiceFormState {
   return {
     name: service.name,
     description: service.description ?? "",
+    instructions: service.instructions ?? "",
     duration_minutes: service.duration_minutes,
     capacity: service.capacity,
     price: Number(service.price),

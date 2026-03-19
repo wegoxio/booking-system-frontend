@@ -1,7 +1,8 @@
-import { Mail, Phone, ShieldCheck } from "lucide-react";
+import { Camera, Mail, Phone, ShieldCheck } from "lucide-react";
 import { Avatar as EmployeeAvatar } from "@/modules/employees/components/components/Avatar";
 import { getPhoneDisplay } from "@/modules/phone/utils/phone";
 import PhoneField from "@/modules/ui/PhoneField";
+import { useEffect, useState } from "react";
 
 type EmployeeEditModalContentProps = {
   form: {
@@ -10,6 +11,8 @@ type EmployeeEditModalContentProps = {
     phone_country_iso2: string;
     phone_national_number: string;
     phone_legacy: string;
+    avatar_url: string | null;
+    avatar_file: File | null;
     is_active: boolean;
   };
   isEditing: boolean;
@@ -18,6 +21,7 @@ type EmployeeEditModalContentProps = {
   onPhoneCountryChange: (value: string) => void;
   onPhoneNationalNumberChange: (value: string) => void;
   onClearPhone: () => void;
+  onAvatarFileChange: (file: File | null) => void;
   onIsActiveChange: (value: boolean) => void;
 };
 
@@ -29,8 +33,23 @@ export default function EmployeeEditModalContent({
   onPhoneCountryChange,
   onPhoneNationalNumberChange,
   onClearPhone,
+  onAvatarFileChange,
   onIsActiveChange,
 }: EmployeeEditModalContentProps): React.ReactNode {
+  const [localAvatarPreviewUrl, setLocalAvatarPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!form.avatar_file) {
+      setLocalAvatarPreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(form.avatar_file);
+    setLocalAvatarPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [form.avatar_file]);
+
   const phoneDisplay =
     getPhoneDisplay({
       display: form.phone_legacy,
@@ -86,6 +105,22 @@ export default function EmployeeEditModalContent({
           inputClassName="border-border bg-surface"
         />
 
+        <label className="space-y-1.5">
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-fg-label">
+            <Camera className="h-4 w-4 text-fg-icon" />
+            Foto del perfil
+          </span>
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(event) => onAvatarFileChange(event.target.files?.[0] ?? null)}
+            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
+          />
+          <p className="text-xs text-muted">
+            PNG, JPG o WEBP. Maximo 2 MB. Si no subes imagen se usara el avatar con iniciales.
+          </p>
+        </label>
+
         {isEditing ? (
           <label className="flex items-center gap-2 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-sm text-fg-label">
             <input
@@ -100,7 +135,10 @@ export default function EmployeeEditModalContent({
 
       <div className="space-y-4 rounded-[28px] border border-border bg-inverse-80 p-5">
         <div className="flex items-center gap-3">
-          <EmployeeAvatar name={form.name || "Nuevo Employee"} />
+          <EmployeeAvatar
+            name={form.name || "Nuevo Employee"}
+            imageUrl={localAvatarPreviewUrl ?? form.avatar_url}
+          />
           <div>
             <p className="font-semibold text-fg-strong">{form.name.trim() || "Nuevo Employee"}</p>
             <p className="text-sm text-muted">{form.email.trim() || "correo@empresa.com"}</p>

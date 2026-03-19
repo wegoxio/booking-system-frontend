@@ -8,7 +8,7 @@ export type BookingStatus =
   | "CANCELLED"
   | "NO_SHOW";
 
-export type BookingSource = "ADMIN" | "WEB" | "API";
+export type BookingSource = "ADMIN" | "WEB" | "API" | "MANUAL";
 
 export type BookingItem = {
   id: string;
@@ -22,6 +22,7 @@ export type BookingItem = {
   buffer_after_minutes_snapshot: number;
   price_snapshot: string;
   currency_snapshot: string;
+  instructions_snapshot: string | null;
   sort_order: number;
 };
 
@@ -63,6 +64,7 @@ export type BookingSlot = {
 export type PublicBookingEmployee = {
   id: string;
   name: string;
+  avatar_url?: string | null;
   working_days: number[];
 };
 
@@ -70,6 +72,7 @@ export type PublicBookingService = {
   id: string;
   name: string;
   description: string | null;
+  instructions: string | null;
   duration_minutes: number;
   price: string;
   currency: string;
@@ -84,6 +87,7 @@ export type PublicBookingItem = {
   duration_minutes_snapshot: number;
   price_snapshot: string;
   currency_snapshot: string;
+  instructions_snapshot?: string | null;
   sort_order: number;
 };
 
@@ -190,6 +194,21 @@ export type CreateBookingPayload = {
   notes?: string;
   source?: BookingSource;
   captcha_token?: string;
+};
+
+export type CreateManualBookingPayload = {
+  employee_id: string;
+  service_ids: string[];
+  start_at_utc: string;
+  customer_name: string;
+  customer_email?: string;
+  customer_phone?: string | null;
+  customer_phone_country_iso2?: string | null;
+  customer_phone_national_number?: string | null;
+  notes?: string;
+  status?: BookingStatus;
+  cancellation_reason?: string;
+  allow_overlap?: boolean;
 };
 
 export type UpdateBookingStatusPayload = {

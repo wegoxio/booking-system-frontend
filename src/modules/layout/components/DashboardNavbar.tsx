@@ -5,9 +5,15 @@ import TopIconButton from "./TopIconButton";
 
 type DashboardNavbarProps = {
   onMenuClick: () => void;
+  onTourClick?: () => void;
+  isTourAvailable?: boolean;
 };
 
-export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
+export default function DashboardNavbar({
+  onMenuClick,
+  onTourClick,
+  isTourAvailable = false,
+}: DashboardNavbarProps) {
   return (
     <header className="flex h-11 items-center justify-between rounded-xl border border-navbar-border bg-navbar px-3 text-primary">
       <div className="flex items-center gap-2">
@@ -25,7 +31,12 @@ export default function DashboardNavbar({ onMenuClick }: DashboardNavbarProps) {
         <TopIconButton ariaLabel="Notifications">
           <Bell className="h-3.5 w-3.5" />
         </TopIconButton>
-        <TopIconButton ariaLabel="Help">
+        <TopIconButton
+          ariaLabel={isTourAvailable ? "Iniciar tour guiado" : "Help"}
+          onClick={onTourClick}
+          data-tour={isTourAvailable ? "dashboard-tour-trigger" : undefined}
+          className={isTourAvailable ? "ring-1 ring-accent/25" : ""}
+        >
           <CircleHelp className="h-3.5 w-3.5" />
         </TopIconButton>
         <TopIconButton ariaLabel="Search">

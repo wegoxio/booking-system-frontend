@@ -32,4 +32,15 @@ export const employeesService = {
       body: JSON.stringify(payload),
     });
   },
+
+  uploadAvatar: async (id: string, file: File, token: string): Promise<Employee> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return apiFetch<Employee>(`/employees/${id}/avatar`, {
+      method: "POST",
+      token,
+      body: formData,
+    });
+  },
 };

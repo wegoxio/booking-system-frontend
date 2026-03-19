@@ -1,8 +1,15 @@
 "use client";
 
 import * as Popover from "@radix-ui/react-popover";
-import { Check, ChevronDown, Droplets } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import {
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 type ColorPickerFieldProps = {
   value: string;
@@ -10,7 +17,6 @@ type ColorPickerFieldProps = {
   disabled?: boolean;
   className?: string;
   ariaLabel?: string;
-  presets?: string[];
 };
 
 type HsvColor = {
@@ -19,23 +25,18 @@ type HsvColor = {
   v: number;
 };
 
+type HslColor = {
+  h: number;
+  s: number;
+  l: number;
+};
+
+type InputMode = "HEX" | "RGB" | "HSL";
+
 const HEX_COLOR_REGEX = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
-const DEFAULT_PRESETS = [
-  "#dd4040",
-  "#efc35f",
-  "#2d4680",
-  "#3a5a78",
-  "#4f6d7a",
-  "#6b8f71",
-  "#8f6a5a",
-  "#b7605d",
-  "#2f3543",
-  "#5f6470",
-  "#c08b5c",
-  "#e9e9ed",
-];
 const HUE_STRIP =
   "linear-gradient(90deg, #ff0000 0%, #ffff00 16.67%, #00ff00 33.33%, #00ffff 50%, #0000ff 66.67%, #ff00ff 83.33%, #ff0000 100%)";
+const INPUT_MODES: InputMode[] = ["HEX", "RGB", "HSL"];
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -74,17 +75,6 @@ function rgbToHex(r: number, g: number, b: number) {
     clamp(Math.round(channel), 0, 255).toString(16).padStart(2, "0");
 
   return `#${channelToHex(r)}${channelToHex(g)}${channelToHex(b)}`;
-}
-
-function withAlpha(value: string, alpha: number) {
-  const { r, g, b } = hexToRgb(value);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function getReadableTextColor(background: string) {
-  const { r, g, b } = hexToRgb(background);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.64 ? "#0f172a" : "#ffffff";
 }
 
 function rgbToHsv(value: string): HsvColor {
@@ -155,32 +145,141 @@ function hsvToHex({ h, s, v }: HsvColor) {
   return rgbToHex((red + match) * 255, (green + match) * 255, (blue + match) * 255);
 }
 
+function rgbToHsl(value: string): HslColor {
+  const { r, g, b } = hexToRgb(value);
+  const red = r / 255;
+  const green = g / 255;
+  const blue = b / 255;
+  const max = Math.max(red, green, blue);
+  const min = Math.min(red, green, blue);
+  const delta = max - min;
+
+  let hue = 0;
+  const lightness = (max + min) / 2;
+
+  if (delta !== 0) {
+    if (max === red) {
+      hue = ((green - blue) / delta) % 6;
+    } else if (max === green) {
+      hue = (blue - red) / delta + 2;
+    } else {
+      hue = (red - green) / delta + 4;
+    }
+  }
+
+  const saturation =
+    delta === 0 ? 0 : delta / (1 - Math.abs(2 * lightness - 1));
+
+  return {
+    h: hue < 0 ? hue * 60 + 360 : hue * 60,
+    s: saturation * 100,
+    l: lightness * 100,
+  };
+}
+
+function hslToHex({ h, s, l }: HslColor) {
+  const hue = ((h % 360) + 360) % 360;
+  const saturation = clamp(s, 0, 100) / 100;
+  const lightness = clamp(l, 0, 100) / 100;
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+  const huePrime = hue / 60;
+  const secondary = chroma * (1 - Math.abs((huePrime % 2) - 1));
+  const match = lightness - chroma / 2;
+
+  let red = 0;
+  let green = 0;
+  let blue = 0;
+
+  if (huePrime >= 0 && huePrime < 1) {
+    red = chroma;
+    green = secondary;
+  } else if (huePrime < 2) {
+    red = secondary;
+    green = chroma;
+  } else if (huePrime < 3) {
+    green = chroma;
+    blue = secondary;
+  } else if (huePrime < 4) {
+    green = secondary;
+    blue = chroma;
+  } else if (huePrime < 5) {
+    red = secondary;
+    blue = chroma;
+  } else {
+    red = chroma;
+    blue = secondary;
+  }
+
+  return rgbToHex((red + match) * 255, (green + match) * 255, (blue + match) * 255);
+}
+
+function ChannelInput({
+  label,
+  value,
+  min,
+  max,
+  onCommit,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onCommit: (value: number) => void;
+}) {
+  return (
+    <label className="space-y-1">
+      <input
+        type="number"
+        min={min}
+        max={max}
+        value={Math.round(value)}
+        onChange={(event) => {
+          if (event.target.value === "") return;
+          const nextValue = Number(event.target.value);
+          if (Number.isNaN(nextValue)) return;
+          onCommit(clamp(nextValue, min, max));
+        }}
+        className="h-10 w-full rounded-xl border border-card-border bg-surface px-3 text-center text-sm font-medium text-fg-strong outline-none transition focus:border-accent"
+      />
+      <span className="block text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+        {label}
+      </span>
+    </label>
+  );
+}
+
 export default function ColorPickerField({
   value,
   onChange,
   disabled = false,
   className = "",
   ariaLabel = "Editar color",
-  presets = DEFAULT_PRESETS,
-}: ColorPickerFieldProps): React.ReactNode {
+}: ColorPickerFieldProps): ReactNode {
   const [isOpen, setIsOpen] = useState(false);
+  const [inputMode, setInputMode] = useState<InputMode>("HEX");
   const [hexInput, setHexInput] = useState("");
   const boardRef = useRef<HTMLDivElement | null>(null);
 
   const normalizedValue = useMemo(() => normalizeHex(value), [value]);
   const currentHsv = useMemo(() => rgbToHsv(normalizedValue), [normalizedValue]);
-  const accentTextColor = useMemo(
-    () => getReadableTextColor(normalizedValue),
-    [normalizedValue],
-  );
-  const palettePresets = useMemo(
-    () => Array.from(new Set(presets.map((preset) => normalizeHex(preset)))),
-    [presets],
-  );
+  const currentRgb = useMemo(() => hexToRgb(normalizedValue), [normalizedValue]);
+  const currentHsl = useMemo(() => rgbToHsl(normalizedValue), [normalizedValue]);
 
   useEffect(() => {
     setHexInput(normalizedValue);
   }, [normalizedValue]);
+
+  const triggerValue = useMemo(() => {
+    if (inputMode === "RGB") {
+      return `${currentRgb.r}, ${currentRgb.g}, ${currentRgb.b}`;
+    }
+
+    if (inputMode === "HSL") {
+      return `${Math.round(currentHsl.h)} ${Math.round(currentHsl.s)}% ${Math.round(currentHsl.l)}%`;
+    }
+
+    return normalizedValue;
+  }, [currentHsl.h, currentHsl.l, currentHsl.s, currentRgb.b, currentRgb.g, currentRgb.r, inputMode, normalizedValue]);
 
   const commitHexInput = () => {
     const parsed = parseHexValue(hexInput);
@@ -209,7 +308,7 @@ export default function ColorPickerField({
     );
   };
 
-  const handleBoardPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+  const handleBoardPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (disabled) return;
 
     event.preventDefault();
@@ -235,21 +334,24 @@ export default function ColorPickerField({
           type="button"
           aria-label={ariaLabel}
           disabled={disabled}
-          className={`inline-flex w-full items-center gap-3 rounded-2xl border border-card-border bg-surface-soft px-3 py-2.5 text-left transition hover:bg-surface disabled:opacity-60 ${className}`.trim()}
+          className={`inline-flex w-full items-center gap-2.5 rounded-xl border border-card-border bg-surface-soft px-2.5 py-2 text-left transition hover:bg-surface disabled:opacity-60 ${className}`.trim()}
         >
           <span
-            className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[16px] border border-card-border shadow-theme-soft-sm"
+            className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl border border-card-border"
             style={{ backgroundColor: normalizedValue }}
           >
-            <span className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.38),transparent_60%)]" />
+            <span className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.35),transparent_60%)]" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
               Color activo
             </span>
             <span className="mt-1 block truncate text-sm font-semibold text-fg-strong">
-              {normalizedValue}
+              {triggerValue}
             </span>
+          </span>
+          <span className="rounded-full border border-card-border bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+            {inputMode}
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 text-fg-icon" />
         </button>
@@ -262,43 +364,58 @@ export default function ColorPickerField({
             align="start"
             sideOffset={10}
             collisionPadding={12}
-            className="z-[90] w-[340px] rounded-[26px] border border-card-border bg-surface p-4 shadow-theme-modal"
+            className="z-[90] w-[284px] rounded-[20px] border border-card-border bg-surface p-2.5 shadow-theme-card"
           >
-            <div className="mt-4 space-y-3">
-              <div>
-                <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                  <span>Picker visual</span>
-                  <span>
-                    S {Math.round(currentHsv.s)}% · V {Math.round(currentHsv.v)}%
-                  </span>
-                </div>
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2.5">
                 <div
-                  ref={boardRef}
-                  onPointerDown={handleBoardPointerDown}
-                  className="relative h-44 w-full cursor-crosshair overflow-hidden rounded-[22px] border border-card-border"
-                  style={{
-                    backgroundColor: hsvToHex({ h: currentHsv.h, s: 100, v: 100 }),
-                  }}
-                >
-                  <div className="absolute inset-0 bg-[linear-gradient(90deg,#ffffff,rgba(255,255,255,0))]" />
-                  <div className="absolute inset-0 bg-[linear-gradient(0deg,#000000,rgba(0,0,0,0))]" />
-                  <span
-                    className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(15,23,42,0.18)]"
-                    style={{
-                      left: `${currentHsv.s}%`,
-                      top: `${100 - currentHsv.v}%`,
-                      backgroundColor: normalizedValue,
-                    }}
-                  />
+                  className="h-9 w-9 shrink-0 rounded-full border border-card-border"
+                  style={{ backgroundColor: normalizedValue }}
+                />
+                <div className="grid flex-1 grid-cols-3 gap-1 rounded-full border border-card-border bg-surface-soft p-1">
+                  {INPUT_MODES.map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setInputMode(mode)}
+                      className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] transition ${
+                        inputMode === mode
+                          ? "bg-accent text-accent-text shadow-theme-accent-sm"
+                          : "text-muted hover:bg-surface"
+                      }`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="rounded-[20px] border border-card-border bg-surface-soft p-3">
-                <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+              <div
+                ref={boardRef}
+                onPointerDown={handleBoardPointerDown}
+                className="relative h-36 w-full cursor-crosshair overflow-hidden rounded-2xl border border-card-border"
+                style={{
+                  backgroundColor: hsvToHex({ h: currentHsv.h, s: 100, v: 100 }),
+                }}
+              >
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,#ffffff,rgba(255,255,255,0))]" />
+                <div className="absolute inset-0 bg-[linear-gradient(0deg,#000000,rgba(0,0,0,0))]" />
+                <span
+                  className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(15,23,42,0.18)]"
+                  style={{
+                    left: `${currentHsv.s}%`,
+                    top: `${100 - currentHsv.v}%`,
+                    backgroundColor: normalizedValue,
+                  }}
+                />
+              </div>
+
+              <div className="rounded-2xl border border-card-border bg-surface-soft p-2.5">
+                <div className="mb-2 flex items-center justify-between text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
                   <span>Tono</span>
-                  <span>{Math.round(currentHsv.h)}°</span>
+                  <span>{Math.round(currentHsv.h)}deg</span>
                 </div>
-                <div className="relative mt-2 h-3">
+                <div className="relative h-3">
                   <div
                     className="absolute inset-0 rounded-full"
                     style={{ backgroundImage: HUE_STRIP }}
@@ -324,31 +441,11 @@ export default function ColorPickerField({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-2xl border border-card-border bg-surface-soft px-3 py-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                    Saturacion
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-fg-strong">
-                    {Math.round(currentHsv.s)}%
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-card-border bg-surface-soft px-3 py-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-                    Brillo
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-fg-strong">
-                    {Math.round(currentHsv.v)}%
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                  HEX
-                </label>
-                <div className="flex items-center gap-2 rounded-2xl border border-card-border bg-surface-soft px-3">
-                  <Droplets className="h-4 w-4 text-fg-placeholder" />
+              {inputMode === "HEX" ? (
+                <label className="space-y-1">
+                  <span className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                    HEX
+                  </span>
                   <input
                     value={hexInput}
                     onChange={(event) => {
@@ -369,47 +466,88 @@ export default function ColorPickerField({
                     }}
                     placeholder="#000000"
                     spellCheck={false}
-                    className="h-11 w-full bg-transparent text-sm font-medium text-fg outline-none placeholder:text-fg-placeholder"
+                    className="h-10 w-full rounded-xl border border-card-border bg-surface px-3 text-sm font-medium text-fg-strong outline-none transition focus:border-accent placeholder:text-fg-placeholder"
+                  />
+                </label>
+              ) : inputMode === "RGB" ? (
+                <div className="grid grid-cols-3 gap-2">
+                  <ChannelInput
+                    label="R"
+                    value={currentRgb.r}
+                    min={0}
+                    max={255}
+                    onCommit={(nextValue) =>
+                      onChange(rgbToHex(nextValue, currentRgb.g, currentRgb.b))
+                    }
+                  />
+                  <ChannelInput
+                    label="G"
+                    value={currentRgb.g}
+                    min={0}
+                    max={255}
+                    onCommit={(nextValue) =>
+                      onChange(rgbToHex(currentRgb.r, nextValue, currentRgb.b))
+                    }
+                  />
+                  <ChannelInput
+                    label="B"
+                    value={currentRgb.b}
+                    min={0}
+                    max={255}
+                    onCommit={(nextValue) =>
+                      onChange(rgbToHex(currentRgb.r, currentRgb.g, nextValue))
+                    }
                   />
                 </div>
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                  <span>Presets</span>
-                  <span>{palettePresets.length} tonos</span>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  <ChannelInput
+                    label="H"
+                    value={currentHsl.h}
+                    min={0}
+                    max={360}
+                    onCommit={(nextValue) =>
+                      onChange(
+                        hslToHex({
+                          h: nextValue,
+                          s: currentHsl.s,
+                          l: currentHsl.l,
+                        }),
+                      )
+                    }
+                  />
+                  <ChannelInput
+                    label="S"
+                    value={currentHsl.s}
+                    min={0}
+                    max={100}
+                    onCommit={(nextValue) =>
+                      onChange(
+                        hslToHex({
+                          h: currentHsl.h,
+                          s: nextValue,
+                          l: currentHsl.l,
+                        }),
+                      )
+                    }
+                  />
+                  <ChannelInput
+                    label="L"
+                    value={currentHsl.l}
+                    min={0}
+                    max={100}
+                    onCommit={(nextValue) =>
+                      onChange(
+                        hslToHex({
+                          h: currentHsl.h,
+                          s: currentHsl.s,
+                          l: nextValue,
+                        }),
+                      )
+                    }
+                  />
                 </div>
-                <div className="grid grid-cols-6 gap-2">
-                  {palettePresets.map((preset) => {
-                    const isSelected = preset === normalizedValue;
-
-                    return (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => onChange(preset)}
-                        className={`group relative h-10 rounded-2xl border transition ${
-                          isSelected
-                            ? "border-fg-strong shadow-theme-soft-sm"
-                            : "border-card-border hover:border-border-strong"
-                        }`}
-                        style={{ backgroundColor: preset }}
-                        aria-label={`Seleccionar ${preset}`}
-                      >
-                        <span className="absolute inset-0 rounded-2xl bg-[linear-gradient(135deg,rgba(255,255,255,0.32),transparent_62%)]" />
-                        {isSelected ? (
-                          <span className="absolute inset-0 grid place-items-center">
-                            <Check
-                              className="h-4 w-4"
-                              style={{ color: getReadableTextColor(preset) }}
-                            />
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              )}
             </div>
           </Popover.Content>
         </Popover.Portal>

@@ -1,5 +1,6 @@
 type AvatarProps = {
   name: string;
+  imageUrl?: string | null;
   className?: string;
 };
 
@@ -18,9 +19,20 @@ function getInitials(name: string) {
   return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
-export default function Avatar({ name, className = "" }: AvatarProps) {
+export default function Avatar({ name, imageUrl, className = "" }: AvatarProps) {
   const colorIndex = name.charCodeAt(0) % AVATAR_COLORS.length;
   const colorClass = AVATAR_COLORS[colorIndex];
+  const normalizedImageUrl = imageUrl?.trim() || "";
+
+  if (normalizedImageUrl) {
+    return (
+      <img
+        src={normalizedImageUrl}
+        alt={name}
+        className={`inline-flex h-8 w-8 rounded-full object-cover ${className}`.trim()}
+      />
+    );
+  }
 
   return (
     <div

@@ -645,13 +645,17 @@ export default function TenantPublicBookingFlow({
                       <span className="text-xs text-muted">Sin seleccionar</span>
                     ) : (
                       selectedServices.map((service) => (
-                        <span
-                          key={service.id}
-                          className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-1 text-[11px] text-fg-secondary"
-                        >
-                          <Scissors className="h-3 w-3" />
-                          {service.name}
-                        </span>
+                        <div key={service.id} className="space-y-1">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-1 text-[11px] text-fg-secondary">
+                            <Scissors className="h-3 w-3" />
+                            {service.name}
+                          </span>
+                          {service.instructions ? (
+                            <p className="max-w-xs text-[11px] text-warning">
+                              Indicaciones: {service.instructions}
+                            </p>
+                          ) : null}
+                        </div>
                       ))
                     )}
                   </div>
@@ -730,6 +734,11 @@ export default function TenantPublicBookingFlow({
                               <p className="mt-1 text-xs text-muted">
                                 {service.duration_minutes} min - {service.price} {service.currency}
                               </p>
+                              {service.instructions ? (
+                                <p className="mt-2 text-xs text-warning">
+                                  Indicaciones: {service.instructions}
+                                </p>
+                              ) : null}
                             </button>
                           );
                         })}
@@ -771,7 +780,7 @@ export default function TenantPublicBookingFlow({
                                     : "border-border-soft bg-surface hover:border-border"
                                 }`}
                               >
-                                <Avatar name={employee.name} />
+                                <Avatar name={employee.name} imageUrl={employee.avatar_url} />
                                 <span className="min-w-0">
                                   <span className="block truncate text-sm font-medium text-fg-strong">
                                     {employee.name}

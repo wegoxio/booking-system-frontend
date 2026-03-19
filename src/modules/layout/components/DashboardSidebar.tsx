@@ -14,6 +14,15 @@ export type DashboardNavItem = {
   icon: LucideIcon;
 };
 
+const navTourIdByHref: Record<string, string> = {
+  "/dashboard": "dashboard-nav-dashboard",
+  "/services": "dashboard-nav-services",
+  "/employees": "dashboard-nav-employees",
+  "/bookings": "dashboard-nav-bookings",
+  "/audit-logs": "dashboard-nav-audit-logs",
+  "/settings": "dashboard-nav-settings",
+};
+
 type DashboardSidebarProps = {
   items: DashboardNavItem[];
   isOpen: boolean;
@@ -49,6 +58,7 @@ export default function DashboardSidebar({
       />
 
       <aside
+        data-tour="dashboard-sidebar"
         className={`sidebar-gradient absolute inset-y-0 left-0 z-40 w-62.5 border-r border-inverse-15 text-sidebar-text shadow-theme-inset transition-transform duration-200 lg:relative lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
@@ -82,6 +92,7 @@ export default function DashboardSidebar({
                   key={item.href}
                   href={itemHref}
                   onClick={onClose}
+                  data-tour={navTourIdByHref[itemHref]}
                   className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                     isActive
                       ? "bg-sidebar-active text-sidebar-active-text"

@@ -49,7 +49,11 @@ export function ServicesList({
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-2">
                     {service.employees.slice(0, 3).map((employee) => (
-                      <Avatar key={employee.id} name={employee.name} />
+                      <Avatar
+                        key={employee.id}
+                        name={employee.name}
+                        imageUrl={employee.avatar_url}
+                      />
                     ))}
                   </div>
                   <div className="min-w-0">

@@ -8,6 +8,7 @@ import { validateOptionalPhoneValue } from "@/modules/phone/utils/phone";
 export function validateServiceForm(form: ServiceFormState): string | null {
     const normalizedName = form.name.trim();
     const normalizedCurrency = form.currency.trim().toUpperCase();
+    const normalizedInstructions = form.instructions.trim();
 
     if (normalizedName.length < 1 || normalizedName.length > 120) {
         return "El nombre debe tener entre 1 y 120 caracteres.";
@@ -20,6 +21,9 @@ export function validateServiceForm(form: ServiceFormState): string | null {
     }
     if (!Number.isFinite(form.price) || form.price < 0) {
         return "El precio debe ser mayor o igual a 0.";
+    }
+    if (normalizedInstructions.length > 2000) {
+        return "Las instrucciones no pueden superar los 2000 caracteres.";
     }
     if (normalizedCurrency.length !== 3) {
         return "La moneda debe tener 3 caracteres (ej. USD, EUR).";

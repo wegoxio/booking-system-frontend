@@ -104,8 +104,8 @@ export default function LoginForm() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-app px-4 py-6 sm:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-[1200px] overflow-hidden rounded-[32px] border border-border bg-surface shadow-theme-shell">
+    <section className="relative min-h-screen overflow-hidden bg-app px-4 py-4 sm:px-5 sm:py-6">
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1200px] flex-col overflow-hidden rounded-[30px] border border-border bg-surface shadow-theme-shell sm:min-h-[calc(100vh-3rem)] sm:rounded-[32px] lg:flex-row">
         <aside className="relative hidden w-[44%] overflow-hidden bg-gradient-to-br from-sidebar-start via-sidebar-end to-fg-strong p-8 text-inverse lg:flex lg:flex-col lg:justify-between">
           <div className="pointer-events-none absolute inset-0 opacity-30">
             <div className="absolute -left-12 top-10 h-44 w-44 rounded-full bg-inverse-20 blur-3xl" />
@@ -149,14 +149,21 @@ export default function LoginForm() {
           </div>
         </aside>
 
-        <div className="flex flex-1 items-center justify-center bg-gradient-to-b from-surface-panel to-surface-subtle p-6 sm:p-10">
-          <div className="w-full max-w-md">
-            <a href="#" className="mb-6 inline-flex items-center gap-2 text-2xl font-semibold text-fg-strong">
-              <img className="h-8 w-8" src="/wegox-logo.svg" alt="Wegox logo" />
-              Wegox
-            </a>
+        <div className="flex flex-1 items-start justify-center bg-gradient-to-b from-surface-panel via-surface-subtle to-surface-soft px-6 pb-8 pt-8 sm:px-8 sm:pb-10 sm:pt-12 lg:items-center lg:p-10">
+          <div className="w-full max-w-md lg:max-w-[440px]">
+            <div className="mb-7 flex justify-center lg:hidden">
+              <img
+                className="h-12 w-12 object-contain drop-shadow-[0_12px_24px_rgba(239,197,95,0.18)]"
+                src="/wegox-logo.svg"
+                alt="Wegox logo"
+              />
+            </div>
 
-            <div className="rounded-[28px] border border-border bg-surface p-6 shadow-theme-soft sm:p-8">
+            <div className="mb-6 hidden lg:flex">
+              <img className="h-10 w-10 object-contain" src="/wegox-logo.svg" alt="Wegox logo" />
+            </div>
+
+            <div className="rounded-[30px] border border-border bg-surface p-6 shadow-theme-soft sm:p-8">
               <div className="mb-6">
                 <h1 className="text-2xl font-semibold text-fg-strong">Iniciar sesion</h1>
                 <p className="mt-2 text-sm text-fg-secondary">
@@ -169,7 +176,7 @@ export default function LoginForm() {
                 ) : null}
               </div>
 
-              <form className="space-y-5" onSubmit={handleSubmit}>
+              <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
                 <Input
                   type="email"
                   id="email"
@@ -208,7 +215,7 @@ export default function LoginForm() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 text-sm">
+                <div className="flex flex-col items-start gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <label className="inline-flex items-center gap-2 text-fg-secondary">
                     <input type="checkbox" className="h-4 w-4 rounded border-border text-accent" />
                     Recordar este equipo
@@ -223,12 +230,13 @@ export default function LoginForm() {
                 </div>
 
                 {isTurnstileEnabled ? (
-                  <div className="rounded-xl border border-border bg-surface-soft p-3">
+                  <div className="overflow-hidden rounded-xl border border-border bg-surface-soft p-2.5 sm:p-3">
                     <TurnstileWidget
                       siteKey={TURNSTILE_SITE_KEY}
                       action={TURNSTILE_LOGIN_ACTION}
                       refreshKey={captchaRefreshKey}
                       onTokenChange={setCaptchaToken}
+                      className="w-full overflow-hidden"
                     />
                   </div>
                 ) : null}

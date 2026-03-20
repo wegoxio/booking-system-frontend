@@ -96,7 +96,7 @@ export default function PhoneCountrySelect({
                 ref={inputRef}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Buscar pais o prefijo"
+                placeholder="Buscar país o prefijo"
                 className="h-11 w-full bg-transparent text-sm text-fg outline-none placeholder:text-fg-placeholder"
               />
             </div>
@@ -104,7 +104,7 @@ export default function PhoneCountrySelect({
             <div className="max-h-72 overflow-y-auto pr-1">
               {filteredOptions.length === 0 ? (
                 <div className="rounded-xl px-3 py-5 text-sm text-muted">
-                  No hay resultados para esa busqueda.
+                  No hay resultados para esa búsqueda.
                 </div>
               ) : (
                 <div className="space-y-1">

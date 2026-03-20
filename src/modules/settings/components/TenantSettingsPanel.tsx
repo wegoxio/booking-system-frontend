@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useTenantSettings } from "@/context/TenantSettingsContext";
 import { defaultTenantSettings } from "@/modules/settings/config/default-tenant-settings";
@@ -68,22 +68,22 @@ const editableThemeFields: Array<{
   {
     key: "primary",
     label: "Accent principal",
-    description: "Botones, CTAs y acciones importantes.",
+    description: "Botones, llamados a la acción y acciones importantes.",
   },
   {
     key: "secondary",
     label: "Canvas del panel",
-    description: "Base del dashboard, cards y fondos suaves.",
+    description: "Base del panel, tarjetas y fondos suaves.",
   },
   {
     key: "tertiary",
-    label: "Sidebar / chrome",
+    label: "Barra lateral / marco",
     description: "Estructura visual y contraste oscuro.",
   },
   {
     key: "textPrimary",
     label: "Texto principal",
-    description: "Titulos y lectura principal.",
+    description: "Títulos y lectura principal.",
   },
   {
     key: "textSecondary",
@@ -101,24 +101,24 @@ const settingsDemoChartData = [
   { label: "Jun", revenue: 860, bookings: 660, cancelled: 170 },
 ];
 
-const settingsPreviewSidebarItems = ["Dashboard", "Bookings", "Employees", "Settings"];
+const settingsPreviewSidebarItems = ["Panel", "Citas", "Empleados", "Configuración"];
 
 const settingsPreviewAppointments = [
-  { customer: "Carlos Ruiz", service: "Fade + Beard", time: "10:30" },
-  { customer: "Ana Perez", service: "Color + Blowout", time: "11:15" },
+  { customer: "Carlos Ruiz", service: "Fade + barba", time: "10:30" },
+  { customer: "Ana Pérez", service: "Color + secado", time: "11:15" },
   { customer: "Mateo Gil", service: "Corte premium", time: "12:00" },
 ];
 
 const settingsPreviewMetrics = [
-  { label: "Bookings hoy", value: "18", detail: "agenda activa" },
-  { label: "Revenue", value: "$4,820", detail: "semana actual" },
-  { label: "No-shows", value: "7", detail: "seguimiento operativo" },
+  { label: "Citas hoy", value: "18", detail: "agenda activa" },
+  { label: "Ingresos", value: "$4,820", detail: "semana actual" },
+  { label: "Inasistencias", value: "7", detail: "seguimiento operativo" },
 ];
 
 const settingsPreviewSignals = [
   { label: "Confirmadas", value: "82%", progress: 82, color: "var(--success)" },
   { label: "Reagendadas", value: "11%", progress: 42, color: "var(--chart-secondary)" },
-  { label: "No-show risk", value: "7%", progress: 24, color: "var(--danger)" },
+  { label: "Riesgo de inasistencia", value: "7%", progress: 24, color: "var(--danger)" },
 ];
 
 const settingsPreviewPublicServices = ["Fade premium", "Color express", "Corte + barba"];
@@ -296,9 +296,9 @@ export default function TenantSettingsPanel() {
 
   const pendingItems = [
     hasThemeChanges && "paleta",
-    hasBrandingChanges && "branding",
-    hasDefaultAssetChanges && "restauracion de assets",
-    hasAssetUploads && "nuevas imagenes",
+    hasBrandingChanges && "marca",
+    hasDefaultAssetChanges && "restauración de recursos",
+    hasAssetUploads && "nuevas imágenes",
     willReturnToSimplifiedMode && "modo simplificado",
   ]
     .filter(Boolean)
@@ -335,7 +335,7 @@ export default function TenantSettingsPanel() {
     toast.success("Cambios descartados.");
   };
 
-  const loadDefaults = () => {
+  const loadPredeterminados = () => {
     setThemeDraft(normalizeThemeSettings(defaultTenantSettings.theme));
     setBrandingDraft({
       appName: defaultTenantSettings.branding.appName,
@@ -347,7 +347,7 @@ export default function TenantSettingsPanel() {
     setFaviconPreview(defaultTenantSettings.branding.faviconUrl);
     setPendingLogoFile(null);
     setPendingFaviconFile(null);
-    toast("Defaults cargados. Revisa el preview y confirma si te gusta.");
+    toast("Predeterminados cargados. Revisa la vista previa y confirma si te gusta.");
   };
 
   const onAssetUpload = async (
@@ -364,7 +364,7 @@ export default function TenantSettingsPanel() {
       const message =
         error instanceof Error
           ? error.message
-          : "Archivo invalido. Usa PNG, JPG, WEBP o ICO.";
+          : "Archivo inválido. Usa PNG, JPG, WEBP o ICO.";
       toast.error(message);
       return;
     }
@@ -437,7 +437,7 @@ export default function TenantSettingsPanel() {
   };
 
   if (!canEditTenantSettings) {
-    return <p className="text-sm text-muted">No tienes permisos para editar settings.</p>;
+    return <p className="text-sm text-muted">No tienes permisos para editar configuración.</p>;
   }
 
   return (
@@ -447,15 +447,15 @@ export default function TenantSettingsPanel() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-border-warning bg-surface-warning px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-warning">
               <Sparkles className="h-3.5 w-3.5" />
-              Visual System
+              Sistema visual
             </div>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
               Paleta simplificada
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-muted">
               El panel ahora se controla con 5 colores editables. Hover, superficies,
-              contrastes y estados se derivan automaticamente para que la
-              personalizacion sea mas simple y tenga impacto real.
+              contrastes y estados se derivan automáticamente para que la
+              personalización sea más simple y tenga impacto real.
             </p>
             <p className="mt-2 text-xs text-muted">
               {pendingItems
@@ -473,12 +473,12 @@ export default function TenantSettingsPanel() {
             ) : null}
             <button
               type="button"
-              onClick={loadDefaults}
+              onClick={loadPredeterminados}
               disabled={isBusy}
               className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-4 py-2.5 text-sm font-medium text-neutral transition-colors hover:bg-secondary-hover"
             >
               <RotateCcw className="h-4 w-4" />
-              Defaults
+              Predeterminados
             </button>
             <button
               type="button"
@@ -505,9 +505,9 @@ export default function TenantSettingsPanel() {
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div>
-              Este tenant tiene overrides avanzados activos. Cuando guardes una nueva
-              paleta, el tema volvera a modo simplificado para que el branding quede
-              consistente en todo el dashboard.
+              Este negocio tiene ajustes avanzados activos. Cuando guardes una nueva
+              paleta, el tema volverá a modo simplificado para que la marca quede
+              consistente en todo el panel.
             </div>
           </div>
         </div>
@@ -523,7 +523,7 @@ export default function TenantSettingsPanel() {
         <aside className="space-y-5 xl:sticky xl:top-4 xl:self-start">
           <SectionCard
             title="Colores editables"
-            description="Solo editas la paleta semilla. El sistema resuelve hover, suaves y estados automaticamente."
+            description="Solo editas la paleta semilla. El sistema resuelve hover, suaves y estados automáticamente."
             icon={<Palette className="h-4 w-4" />}
             isOpen={expandedSections.palette}
             onToggle={() => toggleSection("palette")}
@@ -561,8 +561,8 @@ export default function TenantSettingsPanel() {
           </SectionCard>
 
           <SectionCard
-            title="Branding"
-            description="Nombre del negocio y titulo de la ventana."
+            title="Marca"
+            description="Nombre del negocio y título de la ventana."
             icon={<Type className="h-4 w-4" />}
             isOpen={expandedSections.branding}
             onToggle={() => toggleSection("branding")}
@@ -583,7 +583,7 @@ export default function TenantSettingsPanel() {
               </label>
               <label className="block">
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-                  Titulo de ventana
+                  Título de ventana
                 </span>
                 <input
                   value={brandingDraft.windowTitle}
@@ -591,15 +591,15 @@ export default function TenantSettingsPanel() {
                     setBrandingDraft((prev) => ({ ...prev, windowTitle: event.target.value }))
                   }
                   className="w-full rounded-xl border border-card-border bg-surface px-3 py-2 text-sm text-fg"
-                  placeholder="Mi negocio | Dashboard"
+                  placeholder="Mi negocio | Panel"
                 />
               </label>
             </div>
           </SectionCard>
 
           <SectionCard
-            title="Assets"
-            description="Logo y favicon con previsualizacion antes de guardar."
+            title="Recursos"
+            description="Logo y favicon con previsualización antes de guardar."
             icon={<ImageIcon className="h-4 w-4" />}
             isOpen={expandedSections.assets}
             onToggle={() => toggleSection("assets")}
@@ -610,12 +610,12 @@ export default function TenantSettingsPanel() {
                   <div>
                     <p className="text-sm font-semibold text-fg-strong">Logo</p>
                     <p className="mt-1 text-xs text-muted">
-                      PNG, JPG o WEBP. Maximo {LOGO_MAX_SIZE_LABEL}.
+                      PNG, JPG o WEBP. Máximo {LOGO_MAX_SIZE_LABEL}.
                     </p>
                   </div>
                   <img
                     src={logoPreview || defaultTenantSettings.branding.logoUrl}
-                    alt="Logo preview"
+                    alt="Vista previa del logo"
                     className="h-12 w-12 rounded-xl border border-border-soft bg-surface object-contain p-2"
                     onError={(event) => {
                       event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -644,7 +644,7 @@ export default function TenantSettingsPanel() {
                     }}
                     className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover"
                   >
-                    Default
+                    Predeterminado
                   </button>
                 </div>
               </div>
@@ -654,12 +654,12 @@ export default function TenantSettingsPanel() {
                   <div>
                     <p className="text-sm font-semibold text-fg-strong">Favicon</p>
                     <p className="mt-1 text-xs text-muted">
-                      PNG, ICO o WEBP. Maximo {FAVICON_MAX_SIZE_LABEL}.
+                      PNG, ICO o WEBP. Máximo {FAVICON_MAX_SIZE_LABEL}.
                     </p>
                   </div>
                   <img
                     src={faviconPreview || defaultTenantSettings.branding.faviconUrl}
-                    alt="Favicon preview"
+                    alt="Vista previa del favicon"
                     className="h-12 w-12 rounded-xl border border-border-soft bg-surface object-contain p-2"
                     onError={(event) => {
                       event.currentTarget.src = defaultTenantSettings.branding.faviconUrl;
@@ -688,7 +688,7 @@ export default function TenantSettingsPanel() {
                     }}
                     className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover"
                   >
-                    Default
+                    Predeterminado
                   </button>
                 </div>
               </div>
@@ -700,9 +700,9 @@ export default function TenantSettingsPanel() {
           <article className="rounded-[24px] border border-card-border bg-card p-5 shadow-theme-card">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-xl font-semibold text-fg-strong">Preview modular</h3>
+                <h3 className="text-xl font-semibold text-fg-strong">Vista previa modular</h3>
                 <p className="mt-1 text-sm text-muted">
-                  Sidebar a la izquierda y componentes sueltos a la derecha para leer mejor la identidad visual.
+                  Barra lateral a la izquierda y componentes sueltos a la derecha para leer mejor la identidad visual.
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-card-border bg-surface px-3 py-1 text-xs font-medium text-muted">
@@ -723,15 +723,15 @@ export default function TenantSettingsPanel() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-secondary">
                       <Monitor className="h-3.5 w-3.5" />
-                      Dashboard
+                      Panel
                     </span>
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-surface px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-fg-secondary">
                       <Smartphone className="h-3.5 w-3.5" />
-                      Booking publico
+                      Reserva pública
                     </span>
                   </div>
                 <p className="text-xs text-muted">
-                  Sidebar definido y componentes sueltos para que la paleta respire mejor.
+                  Barra lateral definida y componentes sueltos para que la paleta respire mejor.
                 </p>
                 </div>
 
@@ -748,7 +748,7 @@ export default function TenantSettingsPanel() {
                         >
                           <img
                             src={logoPreview || defaultTenantSettings.branding.logoUrl}
-                            alt="Brand logo"
+                            alt="Logo de marca"
                             className="h-9 w-9 object-contain"
                             onError={(event) => {
                               event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -768,7 +768,7 @@ export default function TenantSettingsPanel() {
                           <div
                             key={item}
                             className="rounded-2xl px-4 py-3 text-sm font-medium transition-colors"
-                            style={item === "Settings" ? previewSidebarActiveStyle : previewSidebarItemStyle}
+                            style={item === "Configuración" ? previewSidebarActiveStyle : previewSidebarItemStyle}
                           >
                             {item}
                           </div>
@@ -782,18 +782,18 @@ export default function TenantSettingsPanel() {
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                            Vista tenant
+                            Vista del negocio
                           </p>
                           <p className="mt-1 text-lg font-semibold text-fg-strong">
                             {brandingPreviewTitle}
                           </p>
                           <p className="mt-2 max-w-2xl text-sm text-fg-secondary">
-                            La identidad se siente en tarjetas, estados y CTAs sin cortar la composicion del panel.
+                            La identidad se siente en tarjetas, estados y CTAs sin cortar la composición del panel.
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                           <button className="rounded-xl border border-border-strong bg-surface-soft px-3 py-2 text-xs font-semibold text-neutral transition-colors hover:bg-secondary-hover">
-                            Ver analytics
+                            Ver analítica
                           </button>
                           <button className="rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-accent-text shadow-theme-accent">
                             Nueva reserva
@@ -823,7 +823,7 @@ export default function TenantSettingsPanel() {
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <p className="text-xs uppercase tracking-[0.12em] text-muted">
-                            Proximas citas
+                            Próximas citas
                           </p>
                           <p className="mt-1 text-base font-semibold text-fg-strong">
                             Agenda operativa
@@ -858,7 +858,7 @@ export default function TenantSettingsPanel() {
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                            Booking publico
+                            Reserva pública
                           </p>
                           <p className="mt-1 text-base font-semibold text-fg-strong">
                             {brandingPreviewName}
@@ -867,7 +867,7 @@ export default function TenantSettingsPanel() {
                         <div className="grid h-12 w-12 place-items-center rounded-[18px] border border-card-border bg-surface">
                           <img
                             src={logoPreview || defaultTenantSettings.branding.logoUrl}
-                            alt="Brand preview"
+                            alt="Vista previa de marca"
                             className="h-7 w-7 object-contain"
                             onError={(event) => {
                               event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -881,7 +881,7 @@ export default function TenantSettingsPanel() {
                           Servicio destacado
                         </p>
                         <p className="mt-1 text-lg font-semibold text-fg-strong">
-                          Reserva clara y mas premium
+                          Reserva clara y más premium
                         </p>
                         <div className="mt-3 flex flex-wrap gap-2">
                           {settingsPreviewPublicServices.map((item, index) => (
@@ -904,7 +904,7 @@ export default function TenantSettingsPanel() {
                       <div className="flex items-center justify-between gap-2">
                         <div>
                           <p className="text-xs uppercase tracking-[0.12em] text-muted">
-                            Senales de interfaz
+                            Señales de interfaz
                           </p>
                           <p className="mt-1 text-base font-semibold text-fg-strong">
                             Estados y ritmo visual
@@ -1012,13 +1012,13 @@ export default function TenantSettingsPanel() {
 
                 <div className="mt-4 rounded-2xl border border-card-border bg-surface-soft p-4">
                   <p className="text-xs uppercase tracking-[0.12em] text-muted">
-                    Brand preview
+                    Vista previa de marca
                   </p>
                   <div className="mt-3 flex items-center gap-3">
                     <div className="grid h-14 w-14 place-items-center rounded-2xl border border-card-border bg-surface">
                       <img
                         src={logoPreview || defaultTenantSettings.branding.logoUrl}
-                        alt="Brand preview"
+                        alt="Vista previa de marca"
                         className="h-9 w-9 object-contain"
                         onError={(event) => {
                           event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -1059,22 +1059,22 @@ export default function TenantSettingsPanel() {
                   <h4 className="text-sm font-semibold text-fg-strong">Pulso de datos</h4>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-card-border bg-surface-soft px-2.5 py-1 text-[11px] font-medium text-fg-secondary">
                     <BarChart3 className="h-3.5 w-3.5" />
-                    live feel
+                    ritmo en vivo
                   </span>
                 </div>
                 <div className="mt-3 rounded-2xl border border-border-soft bg-surface-soft p-3">
                   <div className="mb-2 flex items-center gap-3 text-[11px] text-muted">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-accent" />
-                      Revenue
+                      Ingresos
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-chart-secondary" />
-                      Bookings
+                      Citas
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <span className="h-2 w-2 rounded-full bg-chart-tertiary" />
-                      Cancelled
+                      Canceladas
                     </span>
                   </div>
                   <div className="h-44">
@@ -1145,7 +1145,7 @@ export default function TenantSettingsPanel() {
         title="Aplicar nueva identidad visual"
         description={
           pendingItems
-            ? `Se aplicaran cambios en: ${pendingItems}. Esta actualizacion impactara el dashboard y la experiencia publica del tenant.`
+            ? `Se aplicarán cambios en: ${pendingItems}. Esta actualización impactará el panel y la experiencia pública del negocio.`
             : "No hay cambios pendientes."
         }
         checkboxLabel="Confirmo que deseo actualizar la identidad visual del negocio."
@@ -1159,3 +1159,4 @@ export default function TenantSettingsPanel() {
     </section>
   );
 }
+

@@ -91,7 +91,7 @@ export default function EmployeesManagement() {
       await wait(600);
       setEmployees(data);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo cargar employees.";
+      const message = error instanceof Error ? error.message : "No se pudieron cargar empleados.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -193,10 +193,10 @@ export default function EmployeesManagement() {
           is_active: form.is_active,
         };
         savedEmployee = await employeesService.update(editingId, payload, token);
-        toast.success("Employee actualizado correctamente.");
+        toast.success("Empleado actualizado correctamente.");
       } else {
         savedEmployee = await employeesService.create(basePayload, token);
-        toast.success("Employee creado correctamente.");
+        toast.success("Empleado creado correctamente.");
       }
 
       if (form.avatar_file) {
@@ -206,7 +206,7 @@ export default function EmployeesManagement() {
       await loadEmployees();
       closeModal();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo guardar employee.";
+      const message = error instanceof Error ? error.message : "No se pudo guardar el empleado.";
       setFormError(message);
       toast.error(message);
     } finally {
@@ -216,7 +216,7 @@ export default function EmployeesManagement() {
 
   const employeesStats = [
     {
-      label: "Employees",
+      label: "Empleados",
       value: employees.length,
     },
     {
@@ -228,7 +228,7 @@ export default function EmployeesManagement() {
   return (
     <section className="space-y-4">
       <SectionHeader
-        headerTitle="Employees"
+        headerTitle="Empleados"
         headerDescription="Gestiona el personal que atiende servicios y mantiene operativa la agenda."
         stats={employeesStats}
       />
@@ -243,8 +243,8 @@ export default function EmployeesManagement() {
             inputStateValue={searchQuery}
             inputOnchange={setSearchQuery}
             buttonOnOpen={openCreateModal}
-            buttonLabel="Crear employee"
-            searchPlaceholder="Buscar por nombre, email o telefono"
+            buttonLabel="Crear empleado"
+            searchPlaceholder="Buscar por nombre, correo o teléfono"
           />
 
           {errorMessage ? (
@@ -253,13 +253,13 @@ export default function EmployeesManagement() {
             <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
               <p className="text-base font-medium text-fg">
                 {employees.length === 0
-                  ? "No hay employees registrados todavia."
-                  : "No hay resultados para esa busqueda."}
+                  ? "No hay empleados registrados todavía."
+                  : "No hay resultados para esa búsqueda."}
               </p>
               <p className="mt-2 text-sm text-muted">
                 {employees.length === 0
                   ? "Crea el primero para comenzar a asignar servicios."
-                  : "Prueba otro termino o limpia el filtro actual."}
+                  : "Prueba otro término o limpia el filtro actual."}
               </p>
             </div>
           ) : (
@@ -274,13 +274,13 @@ export default function EmployeesManagement() {
 
       <TableEditModal
         isOpen={isModalOpen}
-        badgeLabel={editingId ? "Edit Employee" : "New Employee"}
+        badgeLabel={editingId ? "Editar empleado" : "Nuevo empleado"}
         badgeIcon={<UserRound className="h-3.5 w-3.5" />}
-        title={editingId ? "Editar employee" : "Crear employee"}
-        description="Mantiene actualizada la informacion del equipo desde un flujo simple."
-        helperText="Esta accion editara la informacion del usuario permanentemente."
+        title={editingId ? "Editar empleado" : "Crear empleado"}
+        description="Mantén actualizada la información del equipo desde un flujo simple."
+        helperText="Esta acción editará la información del usuario permanentemente."
         errorMessage={formError}
-        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear employee"}
+        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear empleado"}
         isSubmitting={isSaving}
         onClose={closeModal}
         onSubmit={handleSubmit}

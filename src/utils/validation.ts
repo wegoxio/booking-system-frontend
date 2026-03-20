@@ -14,7 +14,7 @@ export function validateServiceForm(form: ServiceFormState): string | null {
         return "El nombre debe tener entre 1 y 120 caracteres.";
     }
     if (!Number.isInteger(form.duration_minutes) || form.duration_minutes <= 0) {
-        return "La duracion debe ser un entero positivo.";
+        return "La duración debe ser un entero positivo.";
     }
     if (!Number.isInteger(form.capacity) || form.capacity <= 0) {
         return "La capacidad debe ser un entero positivo.";
@@ -29,7 +29,7 @@ export function validateServiceForm(form: ServiceFormState): string | null {
         return "La moneda debe tener 3 caracteres (ej. USD, EUR).";
     }
     if (form.employee_ids.length === 0) {
-        return "Debes asignar al menos 1 employee al servicio.";
+        return "Debes asignar al menos 1 empleado al servicio.";
     }
     return null;
 }
@@ -47,7 +47,7 @@ export function validateTenantCreateForm(form: TenantFormState): string | null {
     }
 
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalizedSlug)) {
-        return "Slug invalido. Solo minusculas, numeros y guiones.";
+        return "Slug inválido. Solo minúsculas, números y guiones.";
     }
 
     return null;
@@ -62,11 +62,11 @@ export function validateTenantAdminCreateForm(form: TenantAdminFormState, isEdit
     }
 
     if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-        return "Debes ingresar un correo valido.";
+        return "Debes ingresar un correo válido.";
     }
 
     if (!form.tenant_id) {
-        return "Debes asignar un tenant.";
+        return "Debes asignar un negocio.";
     }
 
     return null;
@@ -81,7 +81,7 @@ export function validateEmployeeCreateForm(form: EmployeeFormState): string | nu
     }
 
     if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-        return "Debes ingresar un correo valido.";
+        return "Debes ingresar un correo válido.";
     }
 
     const phoneValidationError = validateOptionalPhoneValue({

@@ -47,7 +47,7 @@ export function ServiceEmployeesSelector({
 
   const selectionSummary = useMemo(() => {
     if (selectedEmployees.length === 0) {
-      return "Seleccionar employees";
+      return "Seleccionar empleados";
     }
 
     const preview = selectedEmployees
@@ -65,13 +65,13 @@ export function ServiceEmployeesSelector({
   return (
     <div ref={containerRef} className="relative space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-sm font-medium text-fg-label">Employees asignados</label>
+        <label className="text-sm font-medium text-fg-label">Empleados asignados</label>
         <span className="text-xs text-muted">{selectedEmployees.length} seleccionados</span>
       </div>
 
       {employees.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border bg-surface px-4 py-4 text-sm text-muted">
-          No hay employees activos. Crea employees en el modulo correspondiente.
+          No hay empleados activos. Crea empleados en el módulo correspondiente.
         </p>
       ) : (
         <button
@@ -102,7 +102,7 @@ export function ServiceEmployeesSelector({
               <p className="truncate text-sm font-medium text-fg">{selectionSummary}</p>
               {selectedEmployees.length > 0 ? (
                 <p className="truncate text-xs text-muted">
-                  Toca para agregar o quitar employees.
+                  Toca para agregar o quitar empleados.
                 </p>
               ) : null}
             </div>
@@ -134,14 +134,14 @@ export function ServiceEmployeesSelector({
               value={employeeSearch}
               onChange={(event) => onEmployeeSearchChange(event.target.value)}
               className="w-full rounded-2xl border border-border-soft bg-surface-soft py-2.5 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-accent focus:bg-surface"
-              placeholder="Buscar por nombre, email o telefono"
+              placeholder="Buscar por nombre, correo o teléfono"
             />
           </label>
 
           <div className="mt-3 max-h-72 space-y-2 overflow-y-auto pr-1">
             {filteredEmployees.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted">
-                No hay resultados para tu busqueda.
+                No hay resultados para tu búsqueda.
               </div>
             ) : (
               filteredEmployees.map((employee) => {
@@ -173,7 +173,7 @@ export function ServiceEmployeesSelector({
                           countryIso2: employee.phone_country_iso2,
                           nationalNumber: employee.phone_national_number,
                           e164: employee.phone_e164,
-                        }) || "Sin telefono registrado"}
+                        }) || "Sin teléfono registrado"}
                       </p>
                     </div>
                     <div

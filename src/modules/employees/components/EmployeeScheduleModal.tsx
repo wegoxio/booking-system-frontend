@@ -82,7 +82,7 @@ export default function EmployeeScheduleModal({
             <p className="mt-1 text-sm text-muted">
               {selectedEmployee
                 ? `Editando horario de ${selectedEmployee.name}.`
-                : "Selecciona y configura horas de trabajo, breaks y bloqueos."}
+                : "Selecciona y configura horas de trabajo, descansos y bloqueos."}
             </p>
           </div>
 

@@ -110,7 +110,7 @@ function getNextAllowedDateFrom(value: string, workingDays: number[]) {
 }
 
 function formatWorkingDaysLabel(workingDays: number[]) {
-  if (workingDays.length === 0) return "Sin horario publico configurado";
+  if (workingDays.length === 0) return "Sin horario público configurado";
 
   return [...new Set(workingDays)]
     .sort((a, b) => a - b)
@@ -523,20 +523,20 @@ export default function TenantPublicBookingFlow({
       customerForm.customer_email.trim().length > 0 &&
       !/^\S+@\S+\.\S+$/.test(customerForm.customer_email.trim())
     ) {
-      setErrorMessage("El email del cliente no es valido.");
+      setErrorMessage("El correo del cliente no es válido.");
       return;
     }
     const phoneValidationError = validateOptionalPhoneValue({
       countryIso2: customerForm.customer_phone_country_iso2,
       nationalNumber: customerForm.customer_phone_national_number,
-      label: "telefono",
+      label: "teléfono",
     });
     if (phoneValidationError) {
       setErrorMessage(phoneValidationError);
       return;
     }
     if (isTurnstileEnabled && !captchaToken) {
-      setErrorMessage("Completa la verificacion de seguridad para confirmar.");
+      setErrorMessage("Completa la verificación de seguridad para confirmar.");
       return;
     }
 
@@ -678,7 +678,7 @@ export default function TenantPublicBookingFlow({
                 </div>
 
                 <div>
-                  <p className="text-xs text-muted">Duracion</p>
+                  <p className="text-xs text-muted">Duración</p>
                   <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-fg">
                     <Clock3 className="h-4 w-4 text-fg-icon" />
                     {formatDuration(requiredDurationMinutes)}
@@ -710,7 +710,7 @@ export default function TenantPublicBookingFlow({
                 <p className="text-sm text-muted">Cargando servicios...</p>
               ) : activeServices.length === 0 ? (
                 <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-3 text-sm text-muted">
-                  Este negocio no tiene servicios publicos disponibles.
+                  Este negocio no tiene servicios públicos disponibles.
                 </p>
               ) : (
                 <div key={currentStep} className="booking-step-enter space-y-4">
@@ -763,7 +763,7 @@ export default function TenantPublicBookingFlow({
                         <p className="text-sm text-muted">Buscando profesionales...</p>
                       ) : eligibleEmployees.length === 0 ? (
                         <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-3 text-sm text-muted">
-                          No hay profesionales disponibles para esta seleccion.
+                          No hay profesionales disponibles para esta selección.
                         </p>
                       ) : (
                         <div className="grid gap-2 sm:grid-cols-2">
@@ -822,7 +822,7 @@ export default function TenantPublicBookingFlow({
                         <label className="mb-2 block text-xs font-medium text-fg-label">Fecha</label>
                         {selectedEmployeeWorkingDays.length === 0 ? (
                           <p className="rounded-2xl border border-border-soft bg-surface px-3 py-3 text-sm text-muted">
-                            Este profesional aun no tiene dias laborables publicados.
+                            Este profesional aún no tiene días laborables publicados.
                           </p>
                         ) : (
                           <>
@@ -1056,3 +1056,4 @@ export default function TenantPublicBookingFlow({
     </div>
   );
 }
+

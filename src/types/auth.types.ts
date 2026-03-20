@@ -74,3 +74,8 @@ export interface CompleteTenantAdminOnboardingResponse {
     success: true;
     email: string;
 }
+
+export interface CompleteTenantDashboardTourResponse {
+    success: true;
+    completed_at: string | null;
+}

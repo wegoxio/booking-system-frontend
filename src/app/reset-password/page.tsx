@@ -12,7 +12,7 @@ function ResetPasswordFallback() {
   return (
     <section className="flex min-h-screen items-center justify-center bg-app px-4 py-6">
       <div className="w-full max-w-lg rounded-[28px] border border-border bg-surface p-6 shadow-theme-soft sm:p-8">
-        <h1 className="text-2xl font-semibold text-fg-strong">Restablecer contrasena</h1>
+        <h1 className="text-2xl font-semibold text-fg-strong">Restablecer contraseña</h1>
         <div className="mt-6 rounded-2xl border border-border bg-surface-soft px-4 py-5 text-sm text-fg-secondary">
           Preparando el enlace seguro...
         </div>
@@ -40,7 +40,7 @@ function ResetPasswordContent() {
 
     const rawToken = searchParams.get("token")?.trim() ?? "";
     if (!rawToken) {
-      setResolveError("El enlace no es valido o ya no esta disponible.");
+      setResolveError("El enlace no es válido o ya no está disponible.");
       setIsResolving(false);
       didResolveRef.current = true;
       return;
@@ -76,13 +76,13 @@ function ResetPasswordContent() {
 
     if (!isStrongPassword(password)) {
       setSubmitError(
-        "La contrasena debe tener 8+ caracteres, mayuscula, minuscula, numero y simbolo.",
+        "La contraseña debe tener 8+ caracteres, mayúscula, minúscula, número y símbolo.",
       );
       return;
     }
 
     if (password !== confirmPassword) {
-      setSubmitError("Las contrasenas no coinciden.");
+      setSubmitError("Las contraseñas no coinciden.");
       return;
     }
 
@@ -100,7 +100,7 @@ function ResetPasswordContent() {
       setSubmitError(
         error instanceof Error
           ? error.message
-          : "No se pudo actualizar la contrasena.",
+          : "No se pudo actualizar la contraseña.",
       );
     } finally {
       setIsSubmitting(false);
@@ -120,10 +120,10 @@ function ResetPasswordContent() {
         </button>
 
         <h1 className="text-2xl font-semibold text-fg-strong">
-          Restablecer contrasena
+          Restablecer contraseña
         </h1>
         <p className="mt-2 text-sm text-fg-secondary">
-          Define una nueva contrasena segura para volver a entrar al panel.
+          Define una nueva contraseña segura para volver a entrar al panel.
         </p>
 
         {isResolving ? (
@@ -151,7 +151,7 @@ function ResetPasswordContent() {
             </div>
 
             <Input
-              label="Nueva contrasena"
+              label="Nueva contraseña"
               id="reset-password-password"
               type="password"
               value={password}
@@ -162,7 +162,7 @@ function ResetPasswordContent() {
             />
 
             <Input
-              label="Confirmar contrasena"
+              label="Confirmar contraseña"
               id="reset-password-confirm-password"
               type="password"
               value={confirmPassword}
@@ -176,7 +176,7 @@ function ResetPasswordContent() {
               <div className="flex items-start gap-2">
                 <KeyRound className="mt-0.5 h-4 w-4" />
                 <p>
-                  La nueva contrasena debe ser fuerte y sustituira la anterior en todas tus sesiones.
+                  La nueva contraseña debe ser fuerte y sustituirá la anterior en todas tus sesiones.
                 </p>
               </div>
             </div>
@@ -192,7 +192,7 @@ function ResetPasswordContent() {
               disabled={isSubmitting}
               className="h-12 w-full rounded-xl bg-accent text-accent-text hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Actualizando..." : "Guardar nueva contrasena"}
+              {isSubmitting ? "Actualizando..." : "Guardar nueva contraseña"}
             </Button>
           </form>
         )}

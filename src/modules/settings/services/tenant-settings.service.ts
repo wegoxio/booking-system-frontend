@@ -95,12 +95,12 @@ export async function validateTenantSettingsAssetFile(
   const maxSizeBytes = ASSET_MAX_SIZE_BYTES[assetType];
   if (file.size > maxSizeBytes) {
     throw new Error(
-      `Archivo demasiado grande para ${assetType}. Maximo permitido: ${getTenantAssetMaxSizeLabel(assetType)}.`,
+      `Archivo demasiado grande para ${assetType}. Máximo permitido: ${getTenantAssetMaxSizeLabel(assetType)}.`,
     );
   }
 
   if (includesSvgExtension(file.name) || file.type.trim().toLowerCase() === "image/svg+xml") {
-    throw new Error("SVG no esta permitido. Usa PNG, JPG, WEBP o ICO.");
+    throw new Error("SVG no está permitido. Usa PNG, JPG, WEBP o ICO.");
   }
 
   const declaredMimeType = file.type.trim().toLowerCase();

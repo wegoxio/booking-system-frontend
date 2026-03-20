@@ -16,41 +16,41 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 const ACTION_OPTIONS: SelectOption[] = [
   { value: "", label: "Todas las acciones" },
-  { value: "AUTH_LOGIN_SUCCESS", label: "Login correcto" },
-  { value: "TENANT_CREATED", label: "Tenant creado" },
-  { value: "TENANT_UPDATED", label: "Tenant actualizado" },
-  { value: "TENANT_DELETED", label: "Tenant eliminado" },
-  { value: "TENANT_ADMIN_CREATED", label: "Tenant admin creado" },
-  { value: "TENANT_ADMIN_UPDATED", label: "Tenant admin actualizado" },
-  { value: "TENANT_ADMIN_DELETED", label: "Tenant admin eliminado" },
-  { value: "EMPLOYEE_CREATED", label: "Employee creado" },
-  { value: "EMPLOYEE_UPDATED", label: "Employee actualizado" },
-  { value: "SERVICE_CREATED", label: "Service creado" },
-  { value: "SERVICE_UPDATED", label: "Service actualizado" },
-  { value: "SERVICE_ENABLED", label: "Service habilitado" },
-  { value: "SERVICE_DISABLED", label: "Service deshabilitado" },
+  { value: "AUTH_LOGIN_SUCCESS", label: "Inicio de sesión correcto" },
+  { value: "TENANT_CREATED", label: "Negocio creado" },
+  { value: "TENANT_UPDATED", label: "Negocio actualizado" },
+  { value: "TENANT_DELETED", label: "Negocio eliminado" },
+  { value: "TENANT_ADMIN_CREATED", label: "Administrador creado" },
+  { value: "TENANT_ADMIN_UPDATED", label: "Administrador actualizado" },
+  { value: "TENANT_ADMIN_DELETED", label: "Administrador eliminado" },
+  { value: "EMPLOYEE_CREATED", label: "Empleado creado" },
+  { value: "EMPLOYEE_UPDATED", label: "Empleado actualizado" },
+  { value: "SERVICE_CREATED", label: "Servicio creado" },
+  { value: "SERVICE_UPDATED", label: "Servicio actualizado" },
+  { value: "SERVICE_ENABLED", label: "Servicio habilitado" },
+  { value: "SERVICE_DISABLED", label: "Servicio deshabilitado" },
   { value: "EMPLOYEE_SCHEDULE_CREATED", label: "Horario creado" },
   { value: "EMPLOYEE_SCHEDULE_UPDATED", label: "Horario actualizado" },
   { value: "EMPLOYEE_TIME_OFF_CREATED", label: "Bloqueo creado" },
   { value: "EMPLOYEE_TIME_OFF_REMOVED", label: "Bloqueo eliminado" },
-  { value: "BOOKING_CREATED", label: "Booking creado" },
-  { value: "BOOKING_STATUS_UPDATED", label: "Estado booking actualizado" },
-  { value: "TENANT_SETTINGS_UPDATED", label: "Settings tenant actualizados" },
-  { value: "TENANT_SETTINGS_ASSET_UPLOADED", label: "Asset tenant subido" },
-  { value: "PLATFORM_SETTINGS_UPDATED", label: "Settings plataforma actualizados" },
-  { value: "PLATFORM_SETTINGS_ASSET_UPLOADED", label: "Asset plataforma subido" },
+  { value: "BOOKING_CREATED", label: "Cita creada" },
+  { value: "BOOKING_STATUS_UPDATED", label: "Estado de cita actualizado" },
+  { value: "TENANT_SETTINGS_UPDATED", label: "Configuración de negocio actualizada" },
+  { value: "TENANT_SETTINGS_ASSET_UPLOADED", label: "Recurso de negocio subido" },
+  { value: "PLATFORM_SETTINGS_UPDATED", label: "Configuración de plataforma actualizada" },
+  { value: "PLATFORM_SETTINGS_ASSET_UPLOADED", label: "Recurso de plataforma subido" },
 ];
 
 const ENTITY_OPTIONS: SelectOption[] = [
   { value: "", label: "Todas las entidades" },
-  { value: "auth", label: "Auth" },
-  { value: "tenant", label: "Tenant" },
+  { value: "auth", label: "Autenticación" },
+  { value: "tenant", label: "Negocio" },
   { value: "user", label: "Usuario" },
-  { value: "employee", label: "Employee" },
-  { value: "service", label: "Service" },
-  { value: "booking", label: "Booking" },
-  { value: "tenant_settings", label: "Tenant settings" },
-  { value: "platform_settings", label: "Platform settings" },
+  { value: "employee", label: "Empleado" },
+  { value: "service", label: "Servicio" },
+  { value: "booking", label: "Cita" },
+  { value: "tenant_settings", label: "Configuración de negocio" },
+  { value: "platform_settings", label: "Configuración de plataforma" },
 ];
 
 function formatActionLabel(action: string) {
@@ -83,7 +83,7 @@ function getActionBadgeClass(action: string) {
 
 function formatMetadataJson(metadata: Record<string, unknown> | null): string {
   if (!metadata || Object.keys(metadata).length === 0) {
-    return "Sin detalle tecnico.";
+    return "Sin detalle técnico.";
   }
   return JSON.stringify(metadata, null, 2);
 }
@@ -118,7 +118,7 @@ export default function AuditLogsManagement(): React.ReactNode {
 
   const tenantOptions = useMemo<SelectOption[]>(
     () => [
-      { value: "", label: "Todos los tenants" },
+      { value: "", label: "Todos los negocios" },
       ...tenants.map((tenant) => ({
         value: tenant.id,
         label: `${tenant.name} (${tenant.slug})`,
@@ -129,7 +129,7 @@ export default function AuditLogsManagement(): React.ReactNode {
 
   const employeeOptions = useMemo<SelectOption[]>(
     () => [
-      { value: "", label: "Todos los employees" },
+      { value: "", label: "Todos los empleados" },
       ...employees.map((employee) => ({
         value: employee.id,
         label: employee.name,
@@ -245,10 +245,10 @@ export default function AuditLogsManagement(): React.ReactNode {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
-              Audit Logs
+              Bitácora de auditoría
             </h2>
             <p className="mt-4 max-w-3xl text-sm text-muted">
-              Trazabilidad completa de acciones criticas en plataforma, tenant y operaciones.
+              Trazabilidad completa de acciones críticas en plataforma, negocio y operaciones.
             </p>
           </div>
 
@@ -264,7 +264,7 @@ export default function AuditLogsManagement(): React.ReactNode {
           <div>
             <h3 className="text-lg font-semibold text-fg-strong">Filtros</h3>
             <p className="text-sm text-muted">
-              Refina por accion, entidad, fecha y alcance operativo.
+              Refina por acción, entidad, fecha y alcance operativo.
             </p>
           </div>
 
@@ -285,7 +285,7 @@ export default function AuditLogsManagement(): React.ReactNode {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               className="h-10 w-full rounded-xl border border-border bg-surface py-2.5 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-accent"
-              placeholder="Buscar en accion, actor o mensaje..."
+              placeholder="Buscar en acción, actor o mensaje..."
             />
           </label>
 
@@ -304,7 +304,7 @@ export default function AuditLogsManagement(): React.ReactNode {
           <CalendarDatePicker
             value={dateFilter}
             onChange={setDateFilter}
-            placeholder="Filtrar por dia"
+            placeholder="Filtrar por día"
           />
 
           <CalendarDatePicker
@@ -342,9 +342,9 @@ export default function AuditLogsManagement(): React.ReactNode {
           <TableSkeleton />
         ) : logs.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
-            <p className="text-base font-medium text-fg">No hay logs para los filtros aplicados.</p>
+            <p className="text-base font-medium text-fg">No hay eventos para los filtros aplicados.</p>
             <p className="mt-2 text-sm text-muted">
-              Ajusta el rango de fechas o la accion para encontrar resultados.
+              Ajusta el rango de fechas o la acción para encontrar resultados.
             </p>
           </div>
         ) : (
@@ -355,9 +355,9 @@ export default function AuditLogsManagement(): React.ReactNode {
                   <th className="px-4 pb-2 font-medium">Fecha</th>
                   <th className="px-4 pb-2 font-medium">Evento</th>
                   <th className="px-4 pb-2 font-medium">Actor</th>
-                  <th className="px-4 pb-2 font-medium">Tenant</th>
+                  <th className="px-4 pb-2 font-medium">Negocio</th>
                   <th className="px-4 pb-2 font-medium">Entidad</th>
-                  <th className="px-4 pb-2 font-medium">Tecnico</th>
+                  <th className="px-4 pb-2 font-medium">Técnico</th>
                 </tr>
               </thead>
 
@@ -398,7 +398,7 @@ export default function AuditLogsManagement(): React.ReactNode {
                     <td className="rounded-r-3xl border-y border-r border-border-soft bg-surface px-4 py-4">
                       <details className="max-w-[360px] rounded-lg border border-border-soft bg-surface-soft p-2">
                         <summary className="cursor-pointer text-xs font-medium text-fg-secondary">
-                          Ver detalle tecnico
+                          Ver detalle técnico
                         </summary>
                         <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words text-[11px] text-fg-soft">
                           {formatMetadataJson(log.metadata)}
@@ -414,7 +414,7 @@ export default function AuditLogsManagement(): React.ReactNode {
 
         <div className="mt-4 flex items-center justify-between">
           <p className="text-xs text-muted">
-            Mostrando pagina {page} de {totalPages}.
+            Mostrando página {page} de {totalPages}.
           </p>
           <div className="flex items-center gap-2">
             <button

@@ -102,7 +102,7 @@ export function validateOptionalPhoneValue(input: {
   legacyDisplay?: string | null;
   label?: string;
 }): string | null {
-  const label = input.label ?? "telefono";
+  const label = input.label ?? "teléfono";
   const normalizedCountryIso2 = normalizePhoneCountryIso2(input.countryIso2 ?? "");
   const normalizedNationalNumber = normalizePhoneDigits(input.nationalNumber ?? "");
   const normalizedLegacyDisplay = normalizeText(input.legacyDisplay);
@@ -112,15 +112,15 @@ export function validateOptionalPhoneValue(input: {
   }
 
   if (!normalizedCountryIso2 && normalizedNationalNumber) {
-    return `Selecciona un pais o prefijo para el ${label}.`;
+    return `Selecciona un país o prefijo para el ${label}.`;
   }
 
   if (normalizedCountryIso2 && !normalizedNationalNumber) {
-    return `Ingresa el numero del ${label}.`;
+    return `Ingresa el número del ${label}.`;
   }
 
   if (normalizedNationalNumber.length < 4 || normalizedNationalNumber.length > 15) {
-    return `El ${label} debe tener entre 4 y 15 digitos.`;
+    return `El ${label} debe tener entre 4 y 15 dígitos.`;
   }
 
   if (normalizedLegacyDisplay && !normalizedCountryIso2 && !normalizedNationalNumber) {

@@ -10,7 +10,7 @@ export default function ProfilePage() {
   }
 
   if (!isAuthenticated) {
-    return <p>No estas autenticado.</p>;
+    return <p>No estás autenticado.</p>;
   }
 
   return (
@@ -35,7 +35,7 @@ export default function ProfilePage() {
           void logout();
         }}
       >
-        Cerrar sesion
+        Cerrar sesión
       </button>
     </main>
   );

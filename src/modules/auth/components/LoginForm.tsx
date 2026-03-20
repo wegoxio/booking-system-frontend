@@ -36,7 +36,7 @@ const LOGIN_HIGHLIGHTS: HighlightItem[] = [
   },
   {
     title: "Trazabilidad completa",
-    description: "Auditoria de cambios criticos para equipo y plataforma.",
+    description: "Auditoría de cambios críticos para equipo y plataforma.",
     icon: ShieldCheck,
   },
 ];
@@ -61,11 +61,11 @@ export default function LoginForm() {
   const noticeMessage = useMemo(() => {
     const notice = searchParams.get("notice");
     if (notice === "access-ready") {
-      return "Tu acceso quedó configurado. Ya puedes iniciar sesion.";
+      return "Tu acceso quedó configurado. Ya puedes iniciar sesión.";
     }
 
     if (notice === "password-reset") {
-      return "Tu contraseña fue actualizada. Ya puedes iniciar sesion.";
+      return "Tu contraseña fue actualizada. Ya puedes iniciar sesión.";
     }
 
     return "";
@@ -83,7 +83,7 @@ export default function LoginForm() {
     setErrorMessage("");
 
     if (isTurnstileEnabled && !captchaToken) {
-      setErrorMessage("Completa la verificacion de seguridad para continuar.");
+      setErrorMessage("Completa la verificación de seguridad para continuar.");
       return;
     }
 
@@ -95,7 +95,7 @@ export default function LoginForm() {
       });
       router.push("/dashboard");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al iniciar sesion";
+      const message = error instanceof Error ? error.message : "Error al iniciar sesión";
       setErrorMessage(message);
       if (isTurnstileEnabled) {
         setCaptchaRefreshKey((prev) => prev + 1);
@@ -116,12 +116,12 @@ export default function LoginForm() {
             <div className="mb-12 inline-flex items-center gap-3 rounded-2xl border border-inverse-15 bg-inverse-10 px-4 py-2">
               <img className="h-7 w-7" src="/wegox-logo.svg" alt="Wegox logo" />
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-inverse-80">
-                Booking Suite
+                Plataforma de Reservas
               </p>
             </div>
 
             <h2 className="max-w-sm text-3xl font-semibold leading-tight">
-              Gestiona tu operacion diaria desde un solo panel.
+              Gestiona tu operación diaria desde un solo panel.
             </h2>
             <p className="mt-4 max-w-md text-sm text-inverse-75">
               Reserva citas, controla horarios del equipo y monitorea resultados en tiempo real.
@@ -165,7 +165,7 @@ export default function LoginForm() {
 
             <div className="rounded-[30px] border border-border bg-surface p-6 shadow-theme-soft sm:p-8">
               <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-fg-strong">Iniciar sesion</h1>
+                <h1 className="text-2xl font-semibold text-fg-strong">Iniciar sesión</h1>
                 <p className="mt-2 text-sm text-fg-secondary">
                   Accede a tu panel para administrar citas, equipo y configuraciones.
                 </p>
@@ -181,7 +181,7 @@ export default function LoginForm() {
                   type="email"
                   id="email"
                   name="email"
-                  label="Correo electronico"
+                  label="Correo electrónico"
                   placeholder="alguien@ejemplo.com"
                   required
                   value={email}
@@ -191,7 +191,7 @@ export default function LoginForm() {
 
                 <div>
                   <label htmlFor="password" className="mb-2 block text-sm font-medium text-fg-strong">
-                    Contrasena
+                    Contraseña
                   </label>
                   <div className="relative">
                     <input
@@ -208,7 +208,7 @@ export default function LoginForm() {
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-fg-strong"
-                      aria-label={showPassword ? "Ocultar contrasena" : "Mostrar contrasena"}
+                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
@@ -225,7 +225,7 @@ export default function LoginForm() {
                     onClick={() => router.push("/forgot-password")}
                     className="font-medium text-fg-strong transition-colors hover:text-accent"
                   >
-                    Olvide mi contrasena
+                    Olvidé mi contraseña
                   </button>
                 </div>
 
@@ -246,7 +246,7 @@ export default function LoginForm() {
                   disabled={isLoading}
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent text-accent-text transition-all hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isLoading ? "Entrando..." : "Entrar al panel"}
+                  {isLoading ? "Ingresando..." : "Entrar al panel"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
 

@@ -19,7 +19,7 @@ export default function DashboardTenantsTableCard({
     <Card className="overflow-hidden p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3 className="text-[30px] font-semibold leading-none text-fg-strong">
-          {isSuperAdmin ? "Tenants" : "Profesionales"}
+          {isSuperAdmin ? "Negocios" : "Profesionales"}
         </h3>
       </div>
 
@@ -29,21 +29,21 @@ export default function DashboardTenantsTableCard({
             <tr className="text-[10px] font-semibold uppercase tracking-[0.08em] text-fg-soft">
               {isSuperAdmin ? (
                 <>
-                  <th className="px-4 py-3">Tenant</th>
-                  <th className="px-4 py-3">Admin</th>
-                  <th className="px-4 py-3">Staff</th>
-                  <th className="px-4 py-3">Bookings mes</th>
-                  <th className="px-4 py-3">Revenue mes</th>
-                  <th className="px-4 py-3 text-right">Status</th>
+                  <th className="px-4 py-3">Negocio</th>
+                  <th className="px-4 py-3">Admin principal</th>
+                  <th className="px-4 py-3">Personal</th>
+                  <th className="px-4 py-3">Citas del mes</th>
+                  <th className="px-4 py-3">Ingresos del mes</th>
+                  <th className="px-4 py-3 text-right">Estado</th>
                 </>
               ) : (
                 <>
                   <th className="px-4 py-3">Profesional</th>
                   <th className="px-4 py-3">Contacto</th>
-                  <th className="px-4 py-3">Bookings mes</th>
-                  <th className="px-4 py-3">Revenue mes</th>
-                  <th className="px-4 py-3">Ultima cita</th>
-                  <th className="px-4 py-3 text-right">Status</th>
+                  <th className="px-4 py-3">Citas del mes</th>
+                  <th className="px-4 py-3">Ingresos del mes</th>
+                  <th className="px-4 py-3">Última cita</th>
+                  <th className="px-4 py-3 text-right">Estado</th>
                 </>
               )}
             </tr>
@@ -95,7 +95,7 @@ export default function DashboardTenantsTableCard({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <StatusPill
-                          label={tenant.tenant_is_active ? "Active" : "Inactive"}
+                          label={tenant.tenant_is_active ? "Activo" : "Inactivo"}
                           variant={tenant.tenant_is_active ? "active" : "inactive"}
                         />
                       </td>
@@ -137,7 +137,7 @@ export default function DashboardTenantsTableCard({
                       </td>
                       <td className="px-4 py-3 text-right">
                         <StatusPill
-                          label={employee.employee_is_active ? "Active" : "Inactive"}
+                          label={employee.employee_is_active ? "Activo" : "Inactivo"}
                           variant={employee.employee_is_active ? "active" : "inactive"}
                         />
                       </td>
@@ -148,7 +148,7 @@ export default function DashboardTenantsTableCard({
             <tbody>
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-sm text-muted">
-                  No hay datos suficientes para mostrar esta tabla todavia.
+                  No hay datos suficientes para mostrar esta tabla todavía.
                 </td>
               </tr>
             </tbody>

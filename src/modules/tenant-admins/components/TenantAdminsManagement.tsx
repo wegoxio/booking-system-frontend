@@ -80,7 +80,7 @@ export default function TenantAdminsManagement() {
       setTenantAdmins(tenantAdminsData);
       setTenants(tenantsData);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo cargar informacion.";
+      const message = error instanceof Error ? error.message : "No se pudo cargar información.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -155,11 +155,11 @@ export default function TenantAdminsManagement() {
     try {
       await tenantAdminsService.remove(tenantAdminToDelete.id, token);
       await loadData();
-      toast.success("Tenant admin eliminado correctamente.");
+      toast.success("Administrador eliminado correctamente.");
       setTenantAdminToDelete(null);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "No se pudo eliminar tenant admin.";
+        error instanceof Error ? error.message : "No se pudo eliminar el administrador.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -195,20 +195,20 @@ export default function TenantAdminsManagement() {
         };
 
         await tenantAdminsService.update(editingId, payload, token);
-        toast.success("Tenant admin actualizado correctamente.");
+        toast.success("Administrador actualizado correctamente.");
       } else {
         const payload: CreateTenantAdminPayload = {
           ...basePayload,
         };
         await tenantAdminsService.create(payload, token);
-        toast.success("Invitacion enviada correctamente.");
+        toast.success("Invitación enviada correctamente.");
       }
 
       await loadData();
       closeModal();
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "No se pudo guardar tenant admin.";
+        error instanceof Error ? error.message : "No se pudo guardar el administrador.";
       setFormError(message);
       toast.error(message);
     } finally {
@@ -218,15 +218,15 @@ export default function TenantAdminsManagement() {
 
   const TenantsAdminStats = [
     {
-      label: 'Admins',
+      label: "Admins",
       value: tenantAdmins.length
     },
     {
-      label: 'activos',
+      label: "Activos",
       value: activeTenantAdminsCount
     },
     {
-      label: 'Cubiertos',
+      label: "Negocios cubiertos",
       value: managedTenantsCount
     },
   ]
@@ -234,8 +234,8 @@ export default function TenantAdminsManagement() {
   return (
     <section className="space-y-4">
       <SectionHeader
-        headerTitle="Tenants Admins"
-        headerDescription="Gestiona cuentas administrativas por tenant y su estado de acceso."
+        headerTitle="Administradores de negocio"
+        headerDescription="Gestiona cuentas administrativas por negocio y su estado de acceso."
         stats={TenantsAdminStats}
       />
 
@@ -246,11 +246,11 @@ export default function TenantAdminsManagement() {
         <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
           <TableHeader
             title="Listado"
-            subtitle="Usuarios con rol tenant admin y tenant asignado."
+            subtitle="Usuarios con rol administrador y negocio asignado."
             inputStateValue={searchQuery}
             inputOnchange={setSearchQuery}
             buttonOnOpen={openCreateModal}
-            buttonLabel="Crear tenant admin"
+            buttonLabel="Invitar administrador"
           />
 
           {errorMessage ? (
@@ -259,15 +259,15 @@ export default function TenantAdminsManagement() {
             <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
               <p className="text-base font-medium text-fg">
                 {tenantAdmins.length === 0
-                  ? "No hay tenant admins registrados todavia."
-                  : "No hay resultados para esa busqueda."}
+                  ? "No hay administradores registrados todavía."
+                  : "No hay resultados para esa búsqueda."}
               </p>
               <p className="mt-2 text-sm text-muted">
                 {tenants.length === 0
-                  ? "Primero debes crear al menos un tenant."
+                  ? "Primero debes crear al menos un negocio."
                   : tenantAdmins.length === 0
-                    ? "Crea el primero para delegar administracion por tenant."
-                    : "Prueba otro termino o limpia el filtro actual."}
+                    ? "Crea el primero para delegar administración por negocio."
+                    : "Prueba otro término o limpia el filtro actual."}
               </p>
             </div>
           ) : (
@@ -278,13 +278,13 @@ export default function TenantAdminsManagement() {
 
       <TableEditModal
         isOpen={isModalOpen}
-        badgeLabel={editingId ? "Edit Tenant Admin" : "New Tenant Admin"}
+        badgeLabel={editingId ? "Editar administrador" : "Nuevo administrador"}
         badgeIcon={<Users2 className="h-3.5 w-3.5" />}
-        title={editingId ? "Editar tenant admin" : "Crear tenant admin"}
-        description="Asigna el tenant y el correo desde el que el cliente activará su acceso."
+        title={editingId ? "Editar administrador" : "Crear administrador"}
+        description="Asigna el negocio y el correo desde el que el cliente activará su acceso."
         helperText="La contraseña inicial no la define Wegox: el cliente la crea desde un enlace seguro."
         errorMessage={formError}
-        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Enviar invitacion"}
+        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Enviar invitación"}
         isSubmitting={isSaving}
         onClose={closeModal}
         onSubmit={handleSubmit}
@@ -302,11 +302,11 @@ export default function TenantAdminsManagement() {
 
       <ConfirmDeleteModal
         isOpen={!!tenantAdminToDelete}
-        title="Eliminar tenant admin"
-        description="Esta accion eliminara la cuenta administrativa seleccionada. No se puede deshacer."
+        title="Eliminar administrador"
+        description="Esta acción eliminará la cuenta administrativa seleccionada. No se puede deshacer."
         itemName={tenantAdminToDelete?.name}
-        checkboxLabel="Confirmo que deseo eliminar este tenant admin de forma permanente."
-        confirmText="Eliminar tenant admin"
+        checkboxLabel="Confirmo que deseo eliminar este administrador de forma permanente."
+        confirmText="Eliminar administrador"
         isConfirming={isDeleting}
         onClose={closeDeleteModal}
         onConfirm={() => void handleConfirmDelete()}

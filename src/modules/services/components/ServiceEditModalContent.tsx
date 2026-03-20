@@ -106,7 +106,7 @@ export default function ServiceEditModalContent({
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="space-y-1.5">
           <label htmlFor="service-duration" className="text-sm font-medium text-fg-label">
-            Duracion (min)
+            Duración (min)
           </label>
           <SelectField
             value={String(form.duration_minutes)}
@@ -167,7 +167,7 @@ export default function ServiceEditModalContent({
 
       <div className="space-y-1.5">
         <label htmlFor="service-description" className="text-sm font-medium text-fg-label">
-          Descripcion
+          Descripción
         </label>
         <textarea
           id="service-description"
@@ -192,11 +192,11 @@ export default function ServiceEditModalContent({
             onFormChange((prev) => ({ ...prev, instructions: event.target.value }))
           }
           className="min-h-24 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
-          placeholder="Ej: llegar con 10 minutos de antelacion, traer referencia, evitar lavado previo..."
+          placeholder="Ej: llegar con 10 minutos de antelación, traer referencia, evitar lavado previo..."
           maxLength={2000}
         />
         <p className="text-xs text-muted">
-          Campo opcional. Se mostrara en el flujo de reserva y tambien se enviara por correo.
+          Campo opcional. Se mostrará en el flujo de reserva y también se enviará por correo.
         </p>
       </div>
 
@@ -209,7 +209,7 @@ export default function ServiceEditModalContent({
               onFormChange((prev) => ({ ...prev, is_active: event.target.checked }))
             }
           />
-          Service activo
+          Servicio activo
         </label>
       ) : null}
     </div>

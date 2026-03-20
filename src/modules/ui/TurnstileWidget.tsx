@@ -62,7 +62,7 @@ function loadTurnstileScript(): Promise<TurnstileInstance> {
           return;
         }
 
-        reject(new Error("Turnstile no se inicializo correctamente."));
+        reject(new Error("Turnstile no se inicializó correctamente."));
       };
 
       const existingScript = document.querySelector(
@@ -114,7 +114,7 @@ export default function TurnstileWidget({
     const normalizedSiteKey = siteKey.trim();
 
     if (!normalizedSiteKey) {
-      setErrorMessage("Falta configurar la clave publica de captcha.");
+      setErrorMessage("Falta configurar la clave pública de captcha.");
       onTokenChange(null);
       return;
     }
@@ -146,7 +146,7 @@ export default function TurnstileWidget({
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "No se pudo inicializar la verificacion de seguridad.",
+            : "No se pudo inicializar la verificación de seguridad.",
         );
         onTokenChange(null);
       });
@@ -174,4 +174,3 @@ export default function TurnstileWidget({
     </div>
   );
 }
-

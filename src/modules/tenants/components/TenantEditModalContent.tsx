@@ -58,16 +58,16 @@ export default function TenantEditModalContent({
               checked={form.is_active}
               onChange={(event) => onIsActiveChange(event.target.checked)}
             />
-            Tenant activo
+            Negocio activo
           </label>
         )}
       </div>
 
       <div className="space-y-4 rounded-[28px] border border-border bg-inverse-80 p-5">
         <div className="flex items-center gap-3">
-          <Avatar name={form.name || "Nuevo Tenant"} />
+          <Avatar name={form.name || "Nuevo negocio"} />
           <div>
-            <p className="font-semibold text-fg-strong">{form.name.trim() || "Nuevo Tenant"}</p>
+            <p className="font-semibold text-fg-strong">{form.name.trim() || "Nuevo negocio"}</p>
             <p className="text-sm text-muted">
               {normalizeSlug(form.slug) || "tenant-slug"}
             </p>
@@ -78,7 +78,7 @@ export default function TenantEditModalContent({
           <div className="rounded-2xl border border-border-soft bg-surface-panel-strong p-4">
             <div className="inline-flex items-center gap-2 text-sm font-medium text-fg">
               <Building2 className="h-4 w-4 text-fg-icon" />
-              Identidad del tenant
+              Identidad del negocio
             </div>
             <p className="mt-2 text-sm text-muted">
               El slug se usa como identificador estable para integraciones y enlaces.
@@ -88,14 +88,14 @@ export default function TenantEditModalContent({
           <div className="rounded-2xl border border-border-soft bg-surface-panel-strong p-4">
             <div className="inline-flex items-center gap-2 text-sm font-medium text-fg">
               <ShieldCheck className="h-4 w-4 text-fg-icon" />
-              Estado del tenant
+              Estado del negocio
             </div>
             <p className="mt-2 text-sm text-muted">
               {isEditing
                 ? form.is_active
-                  ? "El tenant seguira habilitado para iniciar sesion."
-                  : "El tenant quedara inactivo para usuarios tenant admin."
-                : "El tenant se creara como activo por defecto."}
+                  ? "El negocio seguirá habilitado para iniciar sesión."
+                  : "El negocio quedará inactivo para administradores."
+                : "El negocio se creará como activo por defecto."}
             </p>
           </div>
         </div>

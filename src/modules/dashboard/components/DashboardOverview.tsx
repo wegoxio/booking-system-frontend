@@ -25,7 +25,7 @@ export default function DashboardOverview() {
       setOverview(data);
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "No se pudo cargar el dashboard.",
+        error instanceof Error ? error.message : "No se pudo cargar el panel.",
       );
     } finally {
       setIsLoading(false);
@@ -37,15 +37,29 @@ export default function DashboardOverview() {
     void loadOverview();
   }, [token, loadOverview]);
 
-  const dashboardTitle = user?.role === "TENANT_ADMIN" ? "Tenant Admin" : "Super Admin";
+  const normalizedUserName = user?.name?.trim() ?? "";
+  const normalizedTenantName = user?.tenant?.name?.trim() ?? "";
+  const welcomeTarget = normalizedUserName || normalizedTenantName;
+  const dashboardTitle = welcomeTarget
+    ? `Bienvenido, ${welcomeTarget}`
+    : "Bienvenido";
+  const dashboardSubtitle =
+    user?.role === "TENANT_ADMIN"
+      ? normalizedTenantName
+        ? `Resumen operativo de ${normalizedTenantName}.`
+        : "Resumen operativo de tu negocio."
+      : "Resumen general de la plataforma.";
   const isSuperAdmin = overview?.role === "SUPER_ADMIN" || user?.role === "SUPER_ADMIN";
 
   return (
     <section data-tour="dashboard-overview" className="space-y-3">
       <div className="flex items-center justify-between gap-2 px-1">
-        <h2 className="text-[42px] font-semibold leading-none text-fg-strong">
-          {dashboardTitle}
-        </h2>
+        <div>
+          <h2 className="text-[42px] font-semibold leading-none text-fg-strong">
+            {dashboardTitle}
+          </h2>
+          <p className="mt-2 text-sm text-muted">{dashboardSubtitle}</p>
+        </div>
 
         <button
           type="button"
@@ -70,12 +84,12 @@ export default function DashboardOverview() {
 
           <div className="grid gap-3 xl:grid-cols-[1.6fr_0.85fr]">
             <DashboardRevenueChartCard
-              title={isSuperAdmin ? "Revenue y Bookings por mes" : "Rendimiento mensual del tenant"}
+              title={isSuperAdmin ? "Ingresos y citas por mes" : "Rendimiento mensual del negocio"}
               data={overview.chart}
               currency={overview.currency}
             />
             <RecentAuditLogsCard
-              title="Logs recientes"
+              title="Bitácora reciente"
               logs={overview.recent_logs}
               withRanges={false}
             />
@@ -90,7 +104,7 @@ export default function DashboardOverview() {
         </>
       ) : (
         <div className="rounded-2xl border border-border-soft bg-surface p-6 text-sm text-muted">
-          {isLoading ? "Cargando datos del dashboard..." : "No hay datos para mostrar."}
+          {isLoading ? "Cargando datos del panel..." : "No hay datos para mostrar."}
         </div>
       )}
 

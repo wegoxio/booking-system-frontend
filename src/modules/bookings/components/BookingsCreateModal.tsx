@@ -67,7 +67,7 @@ export default function BookingsCreateModal({
               Registrar cita
             </h3>
             <p className="mt-1 text-sm text-muted">
-              Completa el servicio, profesional y datos del cliente en un flujo mas simple.
+              Completa el servicio, profesional y datos del cliente en un flujo más simple.
             </p>
           </div>
 

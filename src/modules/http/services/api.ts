@@ -16,6 +16,7 @@ if (!API_URL) {
 type RequestOptions = RequestInit & {
   token?: string;
   skipAuthRefresh?: boolean;
+  responseType?: "auto" | "json" | "text" | "blob";
 };
 
 let refreshInFlight: Promise<string | null> | null = null;
@@ -97,7 +98,13 @@ export async function apiFetch<t>(
   endpoint: string,
   options: RequestOptions = {},
 ): Promise<t> {
-  const { token, headers, skipAuthRefresh, ...restOptions } = options;
+  const {
+    token,
+    headers,
+    skipAuthRefresh,
+    responseType = "auto",
+    ...restOptions
+  } = options;
   const isFormData =
     typeof FormData !== "undefined" && restOptions.body instanceof FormData;
 
@@ -133,6 +140,18 @@ export async function apiFetch<t>(
 
   if (response.status === 204) {
     return undefined as t;
+  }
+
+  if (responseType === "blob") {
+    return response.blob() as t;
+  }
+
+  if (responseType === "text") {
+    return response.text() as t;
+  }
+
+  if (responseType === "json") {
+    return response.json();
   }
 
   const contentType = response.headers.get("content-type");

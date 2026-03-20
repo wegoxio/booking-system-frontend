@@ -63,7 +63,7 @@ export default function TenantsManagement() {
       await wait(600);
       setTenants(data);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo cargar tenants.";
+      const message = error instanceof Error ? error.message : "No se pudieron cargar los negocios.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -130,10 +130,10 @@ export default function TenantsManagement() {
     try {
       await tenantsService.remove(tenantToDelete.id, token);
       await loadTenants();
-      toast.success("Tenant eliminado correctamente.");
+      toast.success("Negocio eliminado correctamente.");
       setTenantToDelete(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo eliminar el tenant.";
+      const message = error instanceof Error ? error.message : "No se pudo eliminar el negocio.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -168,16 +168,16 @@ export default function TenantsManagement() {
           is_active: form.is_active,
         };
         await tenantsService.update(editingId, updatePayload, token);
-        toast.success("Tenant actualizado correctamente.");
+        toast.success("Negocio actualizado correctamente.");
       } else {
         await tenantsService.create(createPayload, token);
-        toast.success("Tenant creado correctamente.");
+        toast.success("Negocio creado correctamente.");
       }
 
       await loadTenants();
       closeModal();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo guardar tenant.";
+      const message = error instanceof Error ? error.message : "No se pudo guardar el negocio.";
       setFormError(message);
       toast.error(message);
     } finally {
@@ -187,11 +187,11 @@ export default function TenantsManagement() {
 
   const viewStats = [
     {
-      label: "Tenants Totales",
+      label: "Negocios totales",
       value: tenants.length
     },
     {
-      label: "Tenants Activos",
+      label: "Negocios activos",
       value: activeTenantsCount
     }
   ]
@@ -199,8 +199,8 @@ export default function TenantsManagement() {
   return (
     <section className="space-y-4">
       <SectionHeader
-        headerTitle="Tenants"
-        headerDescription="Administra organizaciones, identificadores y estado general de cada tenant."
+        headerTitle="Negocios"
+        headerDescription="Administra organizaciones, identificadores y estado general de cada negocio."
         stats={viewStats}
       />
 
@@ -210,11 +210,11 @@ export default function TenantsManagement() {
         <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
           <TableHeader
             title="Listado"
-            subtitle="Vista operativa de tenants registrados en la plataforma."
+            subtitle="Vista operativa de negocios registrados en la plataforma."
             inputStateValue={searchQuery}
             inputOnchange={setSearchQuery}
             buttonOnOpen={openCreateModal}
-            buttonLabel="Crear Tenant"
+            buttonLabel="Crear negocio"
           />
 
           {errorMessage ? (
@@ -223,13 +223,13 @@ export default function TenantsManagement() {
             <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
               <p className="text-base font-medium text-fg">
                 {tenants.length === 0
-                  ? "No hay tenants registrados todavia."
-                  : "No hay resultados para esa busqueda."}
+                  ? "No hay negocios registrados todavía."
+                  : "No hay resultados para esa búsqueda."}
               </p>
               <p className="mt-2 text-sm text-muted">
                 {tenants.length === 0
-                  ? "Crea el primero para empezar a gestionar tenant admins."
-                  : "Prueba otro termino o limpia el filtro actual."}
+                  ? "Crea el primero para empezar a gestionar administradores."
+                  : "Prueba otro término o limpia el filtro actual."}
               </p>
             </div>
           ) : (
@@ -244,13 +244,13 @@ export default function TenantsManagement() {
 
       <TableEditModal
         isOpen={isModalOpen}
-        badgeLabel={editingId ? "Edit Tenant" : "New Tenant"}
+        badgeLabel={editingId ? "Editar negocio" : "Nuevo negocio"}
         badgeIcon={<Building2 className="h-3.5 w-3.5" />}
-        title={editingId ? "Editar tenant" : "Crear tenant"}
-        description="Define el nombre comercial y slug tecnico del tenant."
-        helperText="Esta accion impacta el acceso y contexto de usuarios del tenant."
+        title={editingId ? "Editar negocio" : "Crear negocio"}
+        description="Define el nombre comercial y el slug técnico del negocio."
+        helperText="Esta acción impacta el acceso y el contexto de usuarios del negocio."
         errorMessage={formError}
-        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear tenant"}
+        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear negocio"}
         isSubmitting={isSaving}
         onClose={closeModal}
         onSubmit={handleSubmit}
@@ -265,11 +265,11 @@ export default function TenantsManagement() {
 
       <ConfirmDeleteModal
         isOpen={!!tenantToDelete}
-        title="Eliminar tenant"
-        description="Esta accion eliminara el tenant y su informacion relacionada. No se puede deshacer."
+        title="Eliminar negocio"
+        description="Esta acción eliminará el negocio y su información relacionada. No se puede deshacer."
         itemName={tenantToDelete?.name}
-        checkboxLabel="Confirmo que deseo eliminar este tenant de forma permanente."
-        confirmText="Eliminar tenant"
+        checkboxLabel="Confirmo que deseo eliminar este negocio de forma permanente."
+        confirmText="Eliminar negocio"
         isConfirming={isDeleting}
         onClose={closeDeleteModal}
         onConfirm={() => void handleConfirmDelete()}

@@ -19,7 +19,7 @@ export default function TenantsTable({
       <table className="w-full min-w-220 border-separate border-spacing-y-3 text-left text-sm">
         <thead>
           <tr className="text-muted">
-            <th className="px-4 pb-2 font-medium">Tenant</th>
+            <th className="px-4 pb-2 font-medium">Negocio</th>
             <th className="px-4 pb-2 font-medium">Slug</th>
             <th className="px-4 pb-2 font-medium">Estado</th>
             <th className="px-4 pb-2 font-medium">Creado</th>
@@ -37,7 +37,7 @@ export default function TenantsTable({
                   <Avatar name={tenant.name} />
                   <div className="min-w-0">
                     <p className="font-semibold text-fg-strong">{tenant.name}</p>
-                    <p className="text-xs text-muted">Tenant ID: {tenant.id}</p>
+                    <p className="text-xs text-muted">ID del negocio: {tenant.id}</p>
                   </div>
                 </div>
               </td>

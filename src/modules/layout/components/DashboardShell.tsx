@@ -19,7 +19,7 @@ type DashboardShellProps = {
 export default function DashboardShell({ children }: DashboardShellProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, markTenantDashboardTourCompleted } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tourRunNonce, setTourRunNonce] = useState(0);
 
@@ -74,7 +74,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
       </div>
       <TenantAdminDashboardTourController
         isEnabled={isTenantAdminDashboard}
-        userId={user.id}
+        tourCompletedAt={user.tenant_dashboard_tour_completed_at}
+        onTourCompleted={markTenantDashboardTourCompleted}
         runNonce={tourRunNonce}
       />
     </div>

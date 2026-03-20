@@ -2,6 +2,7 @@ import { apiFetch } from "@/modules/http/services/api";
 import {
     CompletePasswordResetPayload,
     CompletePasswordResetResponse,
+    CompleteTenantDashboardTourResponse,
     CompleteTenantAdminOnboardingPayload,
     CompleteTenantAdminOnboardingResponse,
     GenericSuccessResponse,
@@ -99,6 +100,17 @@ export const authService = {
                 method: "POST",
                 body: JSON.stringify(payload),
                 skipAuthRefresh: true,
+            },
+        );
+    },
+    completeTenantDashboardTour: async(
+        token: string,
+    ): Promise<CompleteTenantDashboardTourResponse> => {
+        return apiFetch<CompleteTenantDashboardTourResponse>(
+            "/auth/me/tours/tenant-dashboard/complete",
+            {
+                method: "POST",
+                token,
             },
         );
     },

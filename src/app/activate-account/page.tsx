@@ -42,7 +42,7 @@ function ActivateAccountContent() {
 
     const rawToken = searchParams.get("token")?.trim() ?? "";
     if (!rawToken) {
-      setResolveError("El enlace no es valido o ya no esta disponible.");
+      setResolveError("El enlace no es válido o ya no está disponible.");
       setIsResolving(false);
       didResolveRef.current = true;
       return;
@@ -86,13 +86,13 @@ function ActivateAccountContent() {
 
     if (!isStrongPassword(password)) {
       setSubmitError(
-        "La contrasena debe tener 8+ caracteres, mayuscula, minuscula, numero y simbolo.",
+        "La contraseña debe tener 8+ caracteres, mayúscula, minúscula, número y símbolo.",
       );
       return;
     }
 
     if (password !== confirmPassword) {
-      setSubmitError("Las contrasenas no coinciden.");
+      setSubmitError("Las contraseñas no coinciden.");
       return;
     }
 
@@ -134,7 +134,7 @@ function ActivateAccountContent() {
           Activar acceso
         </h1>
         <p className="mt-2 text-sm text-fg-secondary">
-          Verificaremos tu correo y despues definiras la contrasena con la que entraras al panel.
+          Verificaremos tu correo y después definirás la contraseña con la que entrarás al panel.
         </p>
 
         {isResolving ? (
@@ -162,7 +162,7 @@ function ActivateAccountContent() {
                 <div>
                   <p className="font-medium">Correo verificado</p>
                   <p className="mt-1 text-sm text-success">
-                    Completa tu acceso para administrar {tenantName || "tu tenant"}.
+                    Completa tu acceso para administrar {tenantName || "tu negocio"}.
                   </p>
                 </div>
               </div>
@@ -177,7 +177,7 @@ function ActivateAccountContent() {
                 <span className="font-medium text-fg-strong">Correo:</span> {email}
               </p>
               <p>
-                <span className="font-medium text-fg-strong">Tenant:</span> {tenantName}
+                <span className="font-medium text-fg-strong">Negocio:</span> {tenantName}
               </p>
             </div>
 
@@ -218,7 +218,7 @@ function ActivateAccountContent() {
               <div className="flex items-start gap-2">
                 <KeyRound className="mt-0.5 h-4 w-4" />
                 <p>
-                  Usa una contraseña robusta con mayuscula, minuscula, numero y simbolo.
+                  Usa una contraseña robusta con mayúscula, minúscula, número y símbolo.
                 </p>
               </div>
             </div>

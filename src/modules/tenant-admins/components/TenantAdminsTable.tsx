@@ -51,7 +51,7 @@ export default function TenantsAdminsTable({
           <tr className="text-muted">
             <th className="px-4 pb-2 font-medium">Nombre</th>
             <th className="px-4 pb-2 font-medium">Correo</th>
-            <th className="px-4 pb-2 font-medium">Tenant</th>
+            <th className="px-4 pb-2 font-medium">Negocio</th>
             <th className="px-4 pb-2 font-medium">Estado</th>
             <th className="px-4 pb-2 font-medium">Acciones</th>
           </tr>
@@ -67,7 +67,7 @@ export default function TenantsAdminsTable({
                     <Avatar name={tenant.name} />
                     <div className="min-w-0">
                       <p className="font-semibold text-fg-strong">{tenant.name}</p>
-                      <p className="text-xs text-muted">Role: {tenant.role}</p>
+                      <p className="text-xs text-muted">Rol: {tenant.role}</p>
                     </div>
                   </div>
                 </td>
@@ -80,7 +80,7 @@ export default function TenantsAdminsTable({
                 <td className="border-y border-border-soft bg-surface px-4 py-4">
                   <div className="inline-flex items-center gap-2 rounded-full bg-surface-muted px-3 py-1.5 text-xs font-medium text-fg-secondary">
                     <UserRound className="h-3.5 w-3.5" />
-                    {tenant.tenant?.name ?? "Tenant no disponible"}
+                    {tenant.tenant?.name ?? "Negocio no disponible"}
                   </div>
                 </td>
                 <td className="border-y border-border-soft bg-surface px-4 py-4">

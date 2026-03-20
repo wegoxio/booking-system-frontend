@@ -6,21 +6,15 @@ import { toast } from "react-hot-toast";
 import {
   TENANT_ADMIN_DASHBOARD_TOUR_STEPS,
   TENANT_ADMIN_DASHBOARD_TOUR_TARGETS,
-  TENANT_ADMIN_DASHBOARD_TOUR_VERSION,
 } from "@/modules/tour/config/tenant-admin-dashboard-tour";
-import {
-  buildTourStorageKey,
-  isTourCompleted,
-  markTourCompleted,
-} from "@/modules/tour/services/tour-storage";
 
 type TenantAdminDashboardTourControllerProps = {
   isEnabled: boolean;
-  userId: string;
+  tourCompletedAt: string | null;
+  onTourCompleted?: () => Promise<void> | void;
   runNonce: number;
 };
 
-const TOUR_SCOPE = "tenant-admin-dashboard";
 const DESKTOP_MEDIA_QUERY = "(min-width: 1024px)";
 
 function isDesktopViewport(): boolean {
@@ -29,7 +23,7 @@ function isDesktopViewport(): boolean {
 }
 
 async function waitForTourTargets(selectors: string[]): Promise<boolean> {
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 12; attempt += 1) {
     const hasAllTargets = selectors.every((selector) =>
       Boolean(document.querySelector(selector)),
     );
@@ -46,19 +40,19 @@ async function waitForTourTargets(selectors: string[]): Promise<boolean> {
 
 export default function TenantAdminDashboardTourController({
   isEnabled,
-  userId,
+  tourCompletedAt,
+  onTourCompleted,
   runNonce,
 }: TenantAdminDashboardTourControllerProps) {
   const driverRef = useRef<Driver | null>(null);
   const isRunningRef = useRef(false);
   const lastManualRunRef = useRef(0);
   const autoStartedRef = useRef(false);
+  const completedAtRef = useRef<string | null>(tourCompletedAt);
 
-  const storageKey = buildTourStorageKey({
-    scope: TOUR_SCOPE,
-    version: TENANT_ADMIN_DASHBOARD_TOUR_VERSION,
-    userId,
-  });
+  useEffect(() => {
+    completedAtRef.current = tourCompletedAt;
+  }, [tourCompletedAt]);
 
   useEffect(() => {
     return () => {
@@ -77,7 +71,7 @@ export default function TenantAdminDashboardTourController({
       return;
     }
 
-    if (autoStartedRef.current || isTourCompleted(storageKey)) {
+    if (autoStartedRef.current || Boolean(tourCompletedAt)) {
       return;
     }
 
@@ -85,13 +79,30 @@ export default function TenantAdminDashboardTourController({
       return;
     }
 
-    autoStartedRef.current = true;
+    let cancelled = false;
     const timeoutId = window.setTimeout(() => {
-      void startTour("auto");
+      void (async () => {
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          if (cancelled || autoStartedRef.current) {
+            return;
+          }
+
+          const started = await startTour("auto");
+          if (started) {
+            autoStartedRef.current = true;
+            return;
+          }
+
+          await new Promise((resolve) => window.setTimeout(resolve, 280));
+        }
+      })();
     }, 420);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [isEnabled, storageKey]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [isEnabled, tourCompletedAt]);
 
   useEffect(() => {
     if (!isEnabled || runNonce === 0 || runNonce === lastManualRunRef.current) {
@@ -102,21 +113,21 @@ export default function TenantAdminDashboardTourController({
     void startTour("manual");
   }, [isEnabled, runNonce]);
 
-  async function startTour(mode: "auto" | "manual"): Promise<void> {
+  async function startTour(mode: "auto" | "manual"): Promise<boolean> {
     if (isRunningRef.current) {
-      return;
+      return false;
     }
 
     if (!isDesktopViewport()) {
       if (mode === "manual") {
-        toast("El tour guiado por ahora esta optimizado para escritorio.");
+        toast("El tour guiado por ahora está optimizado para escritorio.");
       }
-      return;
+      return false;
     }
 
     const hasTargets = await waitForTourTargets(TENANT_ADMIN_DASHBOARD_TOUR_TARGETS);
     if (!hasTargets) {
-      return;
+      return false;
     }
 
     const { driver } = await import("driver.js");
@@ -137,15 +148,18 @@ export default function TenantAdminDashboardTourController({
       prevBtnText: "Anterior",
       doneBtnText: "Listo",
       onDestroyed: () => {
-        markTourCompleted(storageKey);
         driverRef.current = null;
         isRunningRef.current = false;
+        if (!completedAtRef.current) {
+          void onTourCompleted?.();
+        }
       },
     });
 
     driverRef.current = instance;
     isRunningRef.current = true;
     instance.drive();
+    return true;
   }
 
   return null;

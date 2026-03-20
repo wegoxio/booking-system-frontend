@@ -8,7 +8,7 @@ const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   IN_PROGRESS: "En progreso",
   COMPLETED: "Completada",
   CANCELLED: "Cancelada",
-  NO_SHOW: "No asistio",
+  NO_SHOW: "No asistió",
 };
 
 const BOOKING_STATUS_STYLES: Record<BookingStatus, string> = {
@@ -74,7 +74,7 @@ export default function BookingsTable({
             <th className="px-4 pb-2 font-medium">Fecha y hora</th>
             <th className="px-4 pb-2 font-medium">Resumen</th>
             <th className="px-4 pb-2 font-medium">Estado</th>
-            <th className="px-4 pb-2 font-medium">Accion</th>
+            <th className="px-4 pb-2 font-medium">Acción</th>
           </tr>
         </thead>
 

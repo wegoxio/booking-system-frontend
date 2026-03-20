@@ -104,7 +104,7 @@ export default function PhoneField({
 
       {showLegacyNote ? (
         <p className={`text-xs text-muted ${noteClassName}`.trim()}>
-          Telefono actual legado: {normalizedLegacyValue}. Completa pais y numero para migrarlo.
+          Teléfono actual legado: {normalizedLegacyValue}. Completa país y número para migrarlo.
         </p>
       ) : null}
     </div>

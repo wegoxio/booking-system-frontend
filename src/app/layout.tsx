@@ -6,8 +6,8 @@ import { TenantSettingsProvider } from "@/context/TenantSettingsContext";
 import AppToaster from "@/modules/ui/AppToaster";
 
 export const metadata: Metadata = {
-  title: "Wegox Booking System",
-  description: "Wegox Booking system",
+  title: "Sistema de Reservas Wegox",
+  description: "Plataforma de reservas y gestión operativa de Wegox",
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body>
         <AuthProvider>
           <TenantSettingsProvider>

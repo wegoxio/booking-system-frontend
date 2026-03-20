@@ -96,7 +96,7 @@ export default function ServicesManagement() {
       setServices(servicesData);
       setEmployees(employeesData);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo cargar informacion.";
+      const message = error instanceof Error ? error.message : "No se pudo cargar información.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -203,14 +203,14 @@ export default function ServicesManagement() {
   const servicesStats = [
     { label: "Servicios", value: services.length },
     { label: "Activos", value: activeServicesCount },
-    { label: "Employees activos", value: activeEmployees.length },
+    { label: "Empleados activos", value: activeEmployees.length },
   ];
 
   return (
     <section className="space-y-4">
       <SectionHeader
-        headerTitle="Services"
-        headerDescription="Crea y edita servicios del tenant. Cada servicio debe tener al menos un employee asignado."
+        headerTitle="Servicios"
+        headerDescription="Crea y edita servicios del negocio. Cada servicio debe tener al menos un empleado asignado."
         stats={servicesStats}
       />
 
@@ -220,12 +220,12 @@ export default function ServicesManagement() {
         <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
           <TableHeader
             title="Listado"
-            subtitle="Vista operativa de precios, tiempo y staff asignado."
+            subtitle="Vista operativa de precios, tiempos y equipo asignado."
             inputStateValue={searchQuery}
             inputOnchange={setSearchQuery}
             buttonOnOpen={openCreateModal}
             buttonLabel="Crear servicio"
-            searchPlaceholder="Buscar por nombre, descripcion o staff"
+            searchPlaceholder="Buscar por nombre, descripción o equipo"
           />
 
           {errorMessage ? (
@@ -235,7 +235,7 @@ export default function ServicesManagement() {
               <p className="text-base font-medium text-fg">
                 {services.length === 0
                   ? "No hay servicios registrados."
-                  : "No hay resultados para esa busqueda."}
+                  : "No hay resultados para esa búsqueda."}
               </p>
               <p className="mt-2 text-sm text-muted">
                 {services.length === 0
@@ -256,13 +256,13 @@ export default function ServicesManagement() {
 
       <TableEditModal
         isOpen={isModalOpen}
-        badgeLabel={editingId ? "Edit Service" : "New Service"}
+        badgeLabel={editingId ? "Editar servicio" : "Nuevo servicio"}
         badgeIcon={<Sparkles className="h-3.5 w-3.5" />}
         title={editingId ? "Editar servicio" : "Crear servicio"}
-        description="Configura nombre, precio, duracion y el equipo asignado desde un solo lugar."
+        description="Configura nombre, precio, duración y el equipo asignado desde un solo lugar."
         helperText="Los cambios se guardan en el mismo flujo actual."
         errorMessage={formError}
-        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear service"}
+        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear servicio"}
         isSubmitting={isSaving}
         maxWidthClassName="max-w-4xl"
         onClose={closeModal}

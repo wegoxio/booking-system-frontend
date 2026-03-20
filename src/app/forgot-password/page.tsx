@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
             type="email"
             id="recovery-email"
             name="recovery-email"
-            label="Correo electronico"
+            label="Correo electrónico"
             placeholder="alguien@ejemplo.com"
             required
             value={email}

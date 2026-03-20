@@ -30,7 +30,7 @@ export default function RecentAuditLogsCard({
 
         {withViewAll ? (
           <button className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-neutral">
-            View All
+            Ver todo
             <ChevronDown className="h-3.5 w-3.5 -rotate-90" />
           </button>
         ) : null}
@@ -63,7 +63,7 @@ export default function RecentAuditLogsCard({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted">No hay logs recientes para mostrar.</p>
+        <p className="text-sm text-muted">No hay eventos recientes para mostrar.</p>
       )}
     </Card>
   );

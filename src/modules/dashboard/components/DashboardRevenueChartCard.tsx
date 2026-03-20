@@ -59,15 +59,15 @@ export default function DashboardRevenueChartCard({
         <div className="flex items-center gap-3 text-xs text-muted">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-accent" />
-            Revenue
+            Ingresos
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-chart-secondary" />
-            Bookings
+            Citas
           </span>
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-chart-tertiary" />
-            Cancelled
+            Canceladas
           </span>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function DashboardRevenueChartCard({
             />
             <Tooltip
               formatter={(value, name) => {
-                if (name === "Revenue") {
+                if (name === "Ingresos") {
                   return [formatCompactCurrency(Number(value), currency), name];
                 }
                 return [Number(value), name];
@@ -122,7 +122,7 @@ export default function DashboardRevenueChartCard({
             />
             <Area
               yAxisId="right"
-              name="Revenue"
+              name="Ingresos"
               type="monotone"
               dataKey="revenue"
               stroke={chart.primary}
@@ -133,7 +133,7 @@ export default function DashboardRevenueChartCard({
             />
             <Line
               yAxisId="left"
-              name="Bookings"
+              name="Citas"
               type="monotone"
               dataKey="bookings"
               stroke={chart.secondary}
@@ -143,7 +143,7 @@ export default function DashboardRevenueChartCard({
             />
             <Line
               yAxisId="left"
-              name="Cancelled"
+              name="Canceladas"
               type="monotone"
               dataKey="cancelled"
               stroke={chart.tertiary}

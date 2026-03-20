@@ -1,6 +1,7 @@
 import {
   Building2,
   CalendarClock,
+  ChartNoAxesCombined,
   LayoutDashboard,
   ReceiptText,
   Settings,
@@ -13,25 +14,28 @@ import type { User } from "@/types/user.types";
 type Role = User["role"];
 
 const superAdminItems: DashboardNavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/tenants", label: "Tenants", icon: Building2 },
-  { href: "/users", label: "Tenant Admins", icon: Users },
-  { href: "/audit-logs", label: "Audit Logs", icon: ReceiptText },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+  { href: "/reports", label: "Reportes", icon: ChartNoAxesCombined },
+  { href: "/tenants", label: "Negocios", icon: Building2 },
+  { href: "/users", label: "Admins de negocio", icon: Users },
+  { href: "/audit-logs", label: "Bitácora de auditoría", icon: ReceiptText },
+  { href: "/settings", label: "Configuración", icon: Settings },
 ];
 
 const tenantAdminItems: DashboardNavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/services", label: "Services", icon: BriefcaseBusiness },
-  { href: "/employees", label: "Employees", icon: Users },
-  { href: "/bookings", label: "Bookings", icon: CalendarClock },
-  { href: "/audit-logs", label: "Audit Logs", icon: ReceiptText },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+  { href: "/reports", label: "Reportes", icon: ChartNoAxesCombined },
+  { href: "/services", label: "Servicios", icon: BriefcaseBusiness },
+  { href: "/employees", label: "Empleados", icon: Users },
+  { href: "/bookings", label: "Citas", icon: CalendarClock },
+  { href: "/audit-logs", label: "Bitácora de auditoría", icon: ReceiptText },
+  { href: "/settings", label: "Configuración", icon: Settings },
 ];
 
 const allowedPathsByRole: Record<Role, string[]> = {
   SUPER_ADMIN: [
     "/dashboard",
+    "/reports",
     "/tenants",
     "/users",
     "/audit-logs",
@@ -39,6 +43,7 @@ const allowedPathsByRole: Record<Role, string[]> = {
   ],
   TENANT_ADMIN: [
     "/dashboard",
+    "/reports",
     "/services",
     "/employees",
     "/bookings",

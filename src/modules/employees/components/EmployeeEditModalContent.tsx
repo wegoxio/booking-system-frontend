@@ -69,7 +69,7 @@ export default function EmployeeEditModalContent({
             value={form.name}
             onChange={(event) => onNameChange(event.target.value)}
             className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
-            placeholder="Ej: Ana Lopez"
+            placeholder="Ej: Ana López"
             required
             maxLength={120}
           />
@@ -93,13 +93,13 @@ export default function EmployeeEditModalContent({
 
         <PhoneField
           idPrefix="employee-phone"
-          label="Telefono"
+          label="Teléfono"
           countryIso2={form.phone_country_iso2}
           nationalNumber={form.phone_national_number}
           onCountryChange={onPhoneCountryChange}
           onNationalNumberChange={onPhoneNationalNumberChange}
           onClear={onClearPhone}
-          helperText="Selecciona un pais y escribe el numero sin el prefijo internacional."
+          helperText="Selecciona un país y escribe el número sin el prefijo internacional."
           legacyValue={form.phone_legacy}
           selectTriggerClassName="border-border bg-surface"
           inputClassName="border-border bg-surface"
@@ -117,7 +117,7 @@ export default function EmployeeEditModalContent({
             className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
           />
           <p className="text-xs text-muted">
-            PNG, JPG o WEBP. Maximo 2 MB. Si no subes imagen se usara el avatar con iniciales.
+            PNG, JPG o WEBP. Máximo 2 MB. Si no subes imagen se usará el avatar con iniciales.
           </p>
         </label>
 
@@ -128,7 +128,7 @@ export default function EmployeeEditModalContent({
               checked={form.is_active}
               onChange={(event) => onIsActiveChange(event.target.checked)}
             />
-            Employee activo
+            Empleado activo
           </label>
         ) : null}
       </div>
@@ -136,11 +136,11 @@ export default function EmployeeEditModalContent({
       <div className="space-y-4 rounded-[28px] border border-border bg-inverse-80 p-5">
         <div className="flex items-center gap-3">
           <EmployeeAvatar
-            name={form.name || "Nuevo Employee"}
+            name={form.name || "Nuevo empleado"}
             imageUrl={localAvatarPreviewUrl ?? form.avatar_url}
           />
           <div>
-            <p className="font-semibold text-fg-strong">{form.name.trim() || "Nuevo Employee"}</p>
+            <p className="font-semibold text-fg-strong">{form.name.trim() || "Nuevo empleado"}</p>
             <p className="text-sm text-muted">{form.email.trim() || "correo@empresa.com"}</p>
           </div>
         </div>
@@ -159,10 +159,10 @@ export default function EmployeeEditModalContent({
           <div className="rounded-2xl border border-border-soft bg-surface-panel-strong p-4">
             <div className="inline-flex items-center gap-2 text-sm font-medium text-fg">
               <Phone className="h-4 w-4 text-fg-icon" />
-              Telefono de soporte
+              Teléfono de soporte
             </div>
             <p className="mt-2 text-sm text-muted">
-              {phoneDisplay || "Aun no se ha definido un telefono para este perfil."}
+              {phoneDisplay || "Aún no se ha definido un teléfono para este perfil."}
             </p>
           </div>
 
@@ -174,9 +174,9 @@ export default function EmployeeEditModalContent({
             <p className="mt-2 text-sm text-muted">
               {isEditing
                 ? form.is_active
-                  ? "Este employee aparecera disponible para asignaciones."
-                  : "Este employee quedara oculto de los flujos activos."
-                : "El nuevo employee se creara como activo por defecto."}
+                  ? "Este empleado aparecerá disponible para asignaciones."
+                  : "Este empleado quedará oculto de los flujos activos."
+                : "El nuevo empleado se creará como activo por defecto."}
             </p>
           </div>
         </div>

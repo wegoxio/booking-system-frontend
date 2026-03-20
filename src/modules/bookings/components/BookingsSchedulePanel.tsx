@@ -49,10 +49,10 @@ const DAY_OPTIONS = [
   { value: 0, label: "Domingo" },
   { value: 1, label: "Lunes" },
   { value: 2, label: "Martes" },
-  { value: 3, label: "Miercoles" },
+  { value: 3, label: "Miércoles" },
   { value: 4, label: "Jueves" },
   { value: 5, label: "Viernes" },
-  { value: 6, label: "Sabado" },
+  { value: 6, label: "Sábado" },
 ] as const;
 
 const DAY_SELECT_OPTIONS: SelectOption[] = DAY_OPTIONS.map((day) => ({
@@ -139,7 +139,7 @@ type ScheduleIntervalLike = Pick<
 
 function getDayLabel(dayOfWeek: number): string {
   const day = DAY_OPTIONS.find((option) => option.value === dayOfWeek);
-  return day?.label ?? `Dia ${dayOfWeek}`;
+  return day?.label ?? `Día ${dayOfWeek}`;
 }
 
 function groupIntervalsByDay(intervals: ScheduleIntervalLike[]) {
@@ -381,16 +381,16 @@ export default function BookingsSchedulePanel({
     const baseEnd = normalizeTime(template.end_time_local);
 
     if (!baseStart || !baseEnd) {
-      setErrorMessage("Define hora de inicio y fin para aplicar el helper L-V.");
+      setErrorMessage("Define hora de inicio y fin para aplicar el atajo L-V.");
       setSuccessMessage("");
-      toast.error("Define hora de inicio y fin para aplicar el helper L-V.");
+      toast.error("Define hora de inicio y fin para aplicar el atajo L-V.");
       return;
     }
 
     if (baseEnd <= baseStart) {
-      setErrorMessage("La hora fin del helper debe ser mayor que la hora inicio.");
+      setErrorMessage("La hora final del atajo debe ser mayor que la hora inicial.");
       setSuccessMessage("");
-      toast.error("La hora fin del helper debe ser mayor que la hora inicio.");
+      toast.error("La hora final del atajo debe ser mayor que la hora inicial.");
       return;
     }
 
@@ -409,7 +409,7 @@ export default function BookingsSchedulePanel({
     setSuccessMessage(
       type === "working"
         ? "Horario L-V aplicado. Revisa y guarda."
-        : "Break L-V aplicado. Revisa y guarda.",
+        : "Descanso L-V aplicado. Revisa y guarda.",
     );
     toast.success(
       type === "working"
@@ -454,8 +454,8 @@ export default function BookingsSchedulePanel({
     const startIso = parseLocalInputToIso(timeOffForm.start_local);
     const endIso = parseLocalInputToIso(timeOffForm.end_local);
     if (!startIso || !endIso) {
-      setErrorMessage("Debes definir una fecha/hora valida para el bloqueo.");
-      toast.error("Debes definir una fecha/hora valida para el bloqueo.");
+      setErrorMessage("Debes definir una fecha/hora válida para el bloqueo.");
+      toast.error("Debes definir una fecha/hora válida para el bloqueo.");
       return;
     }
     if (new Date(endIso).getTime() <= new Date(startIso).getTime()) {
@@ -517,7 +517,7 @@ export default function BookingsSchedulePanel({
     <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-fg-strong">Configuracion de horarios</h3>
+          <h3 className="text-lg font-semibold text-fg-strong">Configuración de horarios</h3>
           <p className="text-sm text-muted">
             Define agenda por profesional: horas de trabajo, descansos y bloqueos.
           </p>
@@ -558,7 +558,7 @@ export default function BookingsSchedulePanel({
               <div>
                 <p className="text-sm font-semibold text-fg-strong">Agenda guardada actualmente</p>
                 <p className="text-xs text-muted">
-                  Resumen de lo que esta activo para este profesional antes de guardar cambios.
+                  Resumen de lo que está activo para este profesional antes de guardar cambios.
                 </p>
               </div>
               <span
@@ -618,7 +618,7 @@ export default function BookingsSchedulePanel({
               </div>
             ) : (
               <div className="rounded-xl border border-border-warning bg-surface-warning-soft px-3 py-2.5 text-xs text-warning">
-                Este profesional aun no tiene horario guardado. Usa la seccion de abajo para crear la
+                Este profesional aún no tiene horario guardado. Usa la sección de abajo para crear la
                 agenda y pulsa "Guardar horario".
               </div>
             )}
@@ -626,7 +626,7 @@ export default function BookingsSchedulePanel({
 
           <div className="grid gap-3 md:grid-cols-1">
             <label className="space-y-1.5">
-              <span className="text-xs font-medium text-fg-label">Timezone</span>
+              <span className="text-xs font-medium text-fg-label">Zona horaria</span>
               <input
                 list="timezone-options"
                 value={scheduleTimezone}
@@ -734,7 +734,7 @@ export default function BookingsSchedulePanel({
 
           <div className="space-y-3 rounded-2xl border border-border-soft bg-surface p-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-fg-strong">Descansos / break</p>
+              <p className="text-sm font-semibold text-fg-strong">Descansos</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -742,7 +742,7 @@ export default function BookingsSchedulePanel({
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border-strong bg-surface px-2.5 py-1.5 text-xs text-neutral"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Agregar break
+                  Agregar descanso
                 </button>
               </div>
             </div>
@@ -784,7 +784,7 @@ export default function BookingsSchedulePanel({
                   <div>
                     <p className="text-xs font-medium text-fg">Sin descansos en edicion</p>
                     <p className="text-xs text-muted">
-                      Si el profesional no hace pausas, puedes dejarlo vacio. Si tiene break fijo,
+                      Si el profesional no hace pausas, puedes dejarlo vacío. Si tiene descanso fijo,
                       agrega al menos un bloque.
                     </p>
                   </div>

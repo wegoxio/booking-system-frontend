@@ -25,7 +25,7 @@ export default function TenantAdminModalContent({
   onIsActiveChange,
 }: TenantAdminModalContentProps): React.ReactNode {
   const selectedTenantName =
-    tenants.find((tenant) => tenant.id === form.tenant_id)?.name ?? "el tenant seleccionado";
+    tenants.find((tenant) => tenant.id === form.tenant_id)?.name ?? "el negocio seleccionado";
 
   return (
     <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -39,7 +39,7 @@ export default function TenantAdminModalContent({
             value={form.name}
             onChange={(event) => onNameChange(event.target.value)}
             className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
-            placeholder="Ej: Ana Lopez"
+            placeholder="Ej: Ana López"
             required
             maxLength={120}
           />
@@ -63,7 +63,7 @@ export default function TenantAdminModalContent({
 
         <div className="space-y-1.5">
           <label htmlFor="tenant-admin-tenant" className="text-sm font-medium text-fg-label">
-            Tenant
+            Negocio
           </label>
           <select
             id="tenant-admin-tenant"
@@ -73,7 +73,7 @@ export default function TenantAdminModalContent({
             required
           >
             <option value="" disabled>
-              Selecciona un tenant
+              Selecciona un negocio
             </option>
             {tenants.map((tenant) => (
               <option key={tenant.id} value={tenant.id}>
@@ -90,7 +90,7 @@ export default function TenantAdminModalContent({
               checked={form.is_active}
               onChange={(event) => onIsActiveChange(event.target.checked)}
             />
-            Tenant admin activo
+            Administrador activo
           </label>
         )}
       </div>
@@ -108,12 +108,12 @@ export default function TenantAdminModalContent({
           <div className="rounded-2xl border border-border-soft bg-surface-panel-strong p-4">
             <div className="inline-flex items-center gap-2 text-sm font-medium text-fg">
               <UserRound className="h-4 w-4 text-fg-icon" />
-              Contexto del tenant
+              Contexto del negocio
             </div>
             <p className="mt-2 text-sm text-muted">
               {form.tenant_id
-                ? `Este admin tendra acceso sobre ${selectedTenantName}.`
-                : "Selecciona el tenant para asignar permisos."}
+                ? `Este administrador tendrá acceso sobre ${selectedTenantName}.`
+                : "Selecciona el negocio para asignar permisos."}
             </p>
           </div>
 

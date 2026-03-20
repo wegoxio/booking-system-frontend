@@ -15,9 +15,9 @@ export function ServicesList({
         <thead>
           <tr className="text-muted">
             <th className="px-4 pb-2 font-medium">Nombre</th>
-            <th className="px-4 pb-2 font-medium">Duracion</th>
+            <th className="px-4 pb-2 font-medium">Duración</th>
             <th className="px-4 pb-2 font-medium">Precio</th>
-            <th className="px-4 pb-2 font-medium">Employees</th>
+            <th className="px-4 pb-2 font-medium">Empleados</th>
             <th className="px-4 pb-2 font-medium">Estado</th>
             <th className="px-4 pb-2 font-medium">Acciones</th>
           </tr>
@@ -26,12 +26,12 @@ export function ServicesList({
           {services.map((service) => (
             <tr key={service.id} className="text-primary shadow-theme-row">
               <td className="rounded-l-3xl border-y border-l border-border-soft bg-surface px-4 py-4">
-                <div className="space-y-1">
-                  <div className="font-semibold text-fg-strong">{service.name}</div>
-                  <p className="line-clamp-2 text-xs text-muted">
-                    {service.description || "Sin descripcion adicional."}
-                  </p>
-                </div>
+                  <div className="space-y-1">
+                    <div className="font-semibold text-fg-strong">{service.name}</div>
+                    <p className="line-clamp-2 text-xs text-muted">
+                      {service.description || "Sin descripción adicional."}
+                    </p>
+                  </div>
               </td>
               <td className="border-y border-border-soft bg-surface px-4 py-4">
                 <div className="inline-flex items-center gap-2 rounded-full bg-surface-muted px-3 py-1.5 text-xs font-medium text-fg-secondary">

@@ -301,14 +301,14 @@ export default function BookingsCreatePanel({
       strictCustomerForm.customer_email.trim().length > 0 &&
       !/^\S+@\S+\.\S+$/.test(strictCustomerForm.customer_email.trim())
     ) {
-      setStrictErrorMessage("El email del cliente no es valido.");
+      setStrictErrorMessage("El correo del cliente no es válido.");
       return;
     }
 
     const phoneValidationError = validateOptionalPhoneValue({
       countryIso2: strictCustomerForm.customer_phone_country_iso2,
       nationalNumber: strictCustomerForm.customer_phone_national_number,
-      label: "telefono",
+      label: "teléfono",
     });
     if (phoneValidationError) {
       setStrictErrorMessage(phoneValidationError);
@@ -353,14 +353,14 @@ export default function BookingsCreatePanel({
       manualCustomerForm.customer_email.trim().length > 0 &&
       !/^\S+@\S+\.\S+$/.test(manualCustomerForm.customer_email.trim())
     ) {
-      setManualErrorMessage("El email del cliente no es valido.");
+      setManualErrorMessage("El correo del cliente no es válido.");
       return;
     }
 
     const phoneValidationError = validateOptionalPhoneValue({
       countryIso2: manualCustomerForm.customer_phone_country_iso2,
       nationalNumber: manualCustomerForm.customer_phone_national_number,
-      label: "telefono",
+      label: "teléfono",
     });
     if (phoneValidationError) {
       setManualErrorMessage(phoneValidationError);
@@ -368,13 +368,13 @@ export default function BookingsCreatePanel({
     }
 
     if (isCancellationStatus(manualStatus) && manualCancellationReason.trim().length === 0) {
-      setManualErrorMessage("Debes indicar un motivo para cancelar o marcar como no asistio.");
+      setManualErrorMessage("Debes indicar un motivo para cancelar o marcar como no asistió.");
       return;
     }
 
     const startAtUtc = buildLocalDateTimeToIso(manualDate, manualTime);
     if (!startAtUtc) {
-      setManualErrorMessage("Debes indicar una fecha y hora validas.");
+      setManualErrorMessage("Debes indicar una fecha y hora válidas.");
       return;
     }
 
@@ -467,10 +467,10 @@ export default function BookingsCreatePanel({
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-medium text-fg-strong">
-              Elige como registrar la cita.
+              Elige cómo registrar la cita.
             </p>
             <p className="mt-1 text-xs text-muted">
-              Usa disponibilidad real para agenda limpia o manual para walk-ins y carga historica.
+              Usa disponibilidad real para agenda limpia o manual para walk-ins y carga histórica.
             </p>
           </div>
 
@@ -478,7 +478,7 @@ export default function BookingsCreatePanel({
             {tabSwitcher}
             <div className="inline-flex items-center gap-2 rounded-2xl border border-border-soft bg-surface px-3 py-2 text-xs text-fg-secondary">
               <Clock3 className="h-4 w-4 text-fg-icon" />
-              Manual recomendado para walk-ins e historial pasado. El override de agenda queda apagado por defecto.
+              Manual recomendado para walk-ins e historial pasado. La sobreescritura de agenda queda apagada por defecto.
             </div>
           </div>
         </div>
@@ -492,7 +492,7 @@ export default function BookingsCreatePanel({
               Nueva cita
             </div>
             <h3 className="mt-3 text-lg font-semibold text-fg-strong">
-              Crea bookings por disponibilidad o en modo manual
+              Crea citas por disponibilidad o en modo manual
             </h3>
             <p className="mt-2 max-w-3xl text-sm text-muted">
               Usa disponibilidad real para no salirte de agenda, o registro manual cuando el negocio necesite flexibilidad operativa.
@@ -504,7 +504,7 @@ export default function BookingsCreatePanel({
 
         <div className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-xs text-fg-secondary">
           <Clock3 className="h-4 w-4 text-fg-icon" />
-          Manual recomendado para walk-ins e historial pasado. El override de agenda queda apagado por defecto.
+          Manual recomendado para walk-ins e historial pasado. La sobreescritura de agenda queda apagada por defecto.
         </div>
       </div>
     );

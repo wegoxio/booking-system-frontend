@@ -8,7 +8,7 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
     popover: {
       title: "Este es tu panel principal",
       description:
-        "Aqui ves el resumen del negocio, sus metricas mas importantes y la actividad reciente para que empieces el dia con contexto.",
+        "Aquí ves el resumen del negocio, sus métricas más importantes y la actividad reciente para que empieces el día con contexto.",
       side: "bottom",
       align: "start",
     },
@@ -16,9 +16,9 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
   {
     element: "[data-tour='dashboard-nav-dashboard']",
     popover: {
-      title: "Dashboard",
+      title: "Panel",
       description:
-        "Vuelve aqui cuando quieras revisar el estado general del negocio y la actividad mas reciente.",
+        "Vuelve aquí cuando quieras revisar el estado general del negocio y la actividad más reciente.",
       side: "right",
       align: "center",
     },
@@ -26,9 +26,9 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
   {
     element: "[data-tour='dashboard-nav-services']",
     popover: {
-      title: "Services",
+      title: "Servicios",
       description:
-        "Aqui defines lo que ofreces: nombre, duracion, precio, buffers y el personal que puede atender cada servicio.",
+        "Aquí defines lo que ofreces: nombre, duración, precio, buffers y el personal que puede atender cada servicio.",
       side: "right",
       align: "center",
     },
@@ -36,7 +36,7 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
   {
     element: "[data-tour='dashboard-nav-employees']",
     popover: {
-      title: "Employees",
+      title: "Empleados",
       description:
         "Desde esta vista administras el equipo, sus datos y la disponibilidad operativa de cada profesional.",
       side: "right",
@@ -46,9 +46,9 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
   {
     element: "[data-tour='dashboard-nav-bookings']",
     popover: {
-      title: "Bookings",
+      title: "Citas",
       description:
-        "Aqui controlas las citas, revisas el calendario operativo y cambias estados cuando una reserva avanza o se cancela.",
+        "Aquí controlas las citas, revisas el calendario operativo y cambias estados cuando una reserva avanza o se cancela.",
       side: "right",
       align: "center",
     },
@@ -56,9 +56,9 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
   {
     element: "[data-tour='dashboard-nav-audit-logs']",
     popover: {
-      title: "Audit Logs",
+      title: "Bitácora de auditoría",
       description:
-        "Este historial te ayuda a entender que cambios se hicieron y quien los realizo dentro del tenant.",
+        "Este historial te ayuda a entender qué cambios se hicieron y quién los realizó dentro del negocio.",
       side: "right",
       align: "center",
     },
@@ -66,9 +66,9 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
   {
     element: "[data-tour='dashboard-nav-settings']",
     popover: {
-      title: "Settings",
+      title: "Configuración",
       description:
-        "Aqui ajustas branding, apariencia y configuraciones visuales del negocio para el panel y la reserva publica.",
+        "Aquí ajustas branding, apariencia y configuraciones visuales del negocio para el panel y la reserva pública.",
       side: "right",
       align: "center",
     },
@@ -78,7 +78,7 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
     popover: {
       title: "Repite el recorrido cuando quieras",
       description:
-        "Si necesitas volver a orientarte, usa este boton para abrir de nuevo el tour guiado.",
+        "Si necesitas volver a orientarte, usa este botón para abrir de nuevo el tour guiado.",
       side: "bottom",
       align: "end",
     },

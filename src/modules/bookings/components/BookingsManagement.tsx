@@ -22,7 +22,7 @@ const STATUS_FILTERS: Array<{ value: "" | BookingStatus; label: string }> = [
   { value: "IN_PROGRESS", label: "En progreso" },
   { value: "COMPLETED", label: "Completada" },
   { value: "CANCELLED", label: "Cancelada" },
-  { value: "NO_SHOW", label: "No asistio" },
+  { value: "NO_SHOW", label: "No asistió" },
 ];
 
 function getTodayDateInput() {
@@ -102,7 +102,7 @@ export default function BookingsManagement() {
       setBookings(data);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "No se pudieron cargar bookings.";
+        error instanceof Error ? error.message : "No se pudieron cargar las citas.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -151,7 +151,7 @@ export default function BookingsManagement() {
   );
 
   const bookingsStats = [
-    { label: "Bookings", value: bookings.length },
+    { label: "Citas", value: bookings.length },
     { label: "Hoy", value: bookingsTodayCount },
     { label: "Activos", value: pendingBookingsCount },
   ];
@@ -174,7 +174,7 @@ export default function BookingsManagement() {
     try {
       await bookingsService.updateStatus(booking.id, { status }, token);
       await loadBookings();
-      toast.success("Estado de booking actualizado.");
+      toast.success("Estado de cita actualizado.");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "No se pudo actualizar el estado.";
@@ -209,7 +209,7 @@ export default function BookingsManagement() {
       isCancellationStatus(pendingStatusChange.status) &&
       cancellationReason.trim().length === 0
     ) {
-      setModalError("Debes indicar un motivo para cancelar o marcar como no asistio.");
+      setModalError("Debes indicar un motivo para cancelar o marcar como no asistió.");
       return;
     }
 
@@ -231,8 +231,8 @@ export default function BookingsManagement() {
       await loadBookings();
       toast.success(
         pendingStatusChange.status === "COMPLETED"
-          ? "Booking marcada como completada."
-          : "Estado de booking actualizado.",
+          ? "Cita marcada como completada."
+          : "Estado de cita actualizado.",
       );
       closeStatusModal();
     } catch (error) {
@@ -248,8 +248,8 @@ export default function BookingsManagement() {
   return (
     <section className="space-y-4">
       <SectionHeader
-        headerTitle="Bookings"
-        headerDescription="Agenda citas por profesional con slots reales segun servicios y disponibilidad."
+        headerTitle="Citas"
+        headerDescription="Agenda citas por profesional con slots reales según servicios y disponibilidad."
         stats={bookingsStats}
       />
 
@@ -279,7 +279,7 @@ export default function BookingsManagement() {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className="w-full rounded-2xl border border-border bg-surface py-2.5 pl-9 pr-3 text-sm text-fg outline-none transition focus:border-accent"
-                placeholder="Buscar booking..."
+                placeholder="Buscar cita..."
               />
             </label>
 
@@ -324,11 +324,11 @@ export default function BookingsManagement() {
           <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
             <p className="text-base font-medium text-fg">
               {bookings.length === 0
-                ? "No hay bookings registrados todavia."
+                ? "No hay citas registradas todavía."
                 : "No hay resultados para los filtros actuales."}
             </p>
               <p className="mt-2 text-sm text-muted">
-                Agenda una cita o ajusta filtros para visualizar la informacion.
+                Agenda una cita o ajusta filtros para visualizar la información.
               </p>
           </div>
         ) : (
@@ -353,7 +353,7 @@ export default function BookingsManagement() {
         isOpen={pendingStatusChange !== null}
         badgeLabel={
           pendingStatusChange?.status === "COMPLETED"
-            ? "Cerrar booking"
+            ? "Cerrar cita"
             : "Actualizar estado"
         }
         badgeIcon={
@@ -367,7 +367,7 @@ export default function BookingsManagement() {
           pendingStatusChange?.status === "COMPLETED"
             ? "Marcar cita como completada"
             : pendingStatusChange?.status === "NO_SHOW"
-              ? "Marcar cita como no asistio"
+              ? "Marcar cita como no asistió"
               : "Cancelar cita"
         }
         description={
@@ -378,7 +378,7 @@ export default function BookingsManagement() {
         helperText={
           pendingStatusChange?.status === "COMPLETED"
             ? "Confirma solo cuando el servicio ya fue realizado."
-            : "Este motivo quedara guardado y visible en la gestion de bookings."
+            : "Este motivo quedará guardado y visible en la gestión de citas."
         }
         errorMessage={modalError}
         submitText={
@@ -401,14 +401,14 @@ export default function BookingsManagement() {
                 {pendingStatusChange?.status === "COMPLETED"
                   ? "Completada"
                   : pendingStatusChange?.status === "NO_SHOW"
-                    ? "No asistio"
+                    ? "No asistió"
                     : "Cancelada"}
               </span>
             </p>
             <p className="mt-2 text-sm text-muted">
               {pendingStatusChange?.status === "COMPLETED"
-                ? "Esta cita dejara de estar activa y contara como atendida."
-                : "La cita dejara de bloquear agenda y el motivo quedara trazado."}
+                ? "Esta cita dejará de estar activa y contará como atendida."
+                : "La cita dejará de bloquear agenda y el motivo quedará trazado."}
             </p>
           </div>
 
@@ -426,7 +426,7 @@ export default function BookingsManagement() {
                 className="w-full rounded-3xl border border-border bg-surface px-4 py-3 text-sm text-fg outline-none transition focus:border-accent"
                 placeholder={
                   pendingStatusChange.status === "NO_SHOW"
-                    ? "Ej: el cliente no se presento a la cita."
+                    ? "Ej: el cliente no se presentó a la cita."
                     : "Ej: el cliente canceló, hubo un problema operativo, reagendado, etc."
                 }
               />

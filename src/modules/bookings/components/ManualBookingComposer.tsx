@@ -37,13 +37,13 @@ type ManualBookingComposerProps = {
 };
 
 const STATUS_OPTIONS: Array<{ value: ManualBookingStatusSelection; label: string }> = [
-  { value: "", label: "Automatico" },
+  { value: "", label: "Automático" },
   { value: "PENDING", label: "Pendiente" },
   { value: "CONFIRMED", label: "Confirmada" },
   { value: "IN_PROGRESS", label: "En progreso" },
   { value: "COMPLETED", label: "Completada" },
   { value: "CANCELLED", label: "Cancelada" },
-  { value: "NO_SHOW", label: "No asistio" },
+  { value: "NO_SHOW", label: "No asistió" },
 ];
 
 function formatDuration(minutes: number | null) {
@@ -103,7 +103,7 @@ export default function ManualBookingComposer({
       <div className="mb-5">
         <h3 className="text-lg font-semibold text-fg-strong">Registro manual</h3>
         <p className="text-sm text-muted">
-          Para walk-ins, citas telefonicas o historial pasado cargado por el comercio.
+          Para walk-ins, citas telefónicas o historial pasado cargado por el comercio.
         </p>
       </div>
 
@@ -173,7 +173,7 @@ export default function ManualBookingComposer({
               <p className="text-sm text-muted">Buscando profesionales...</p>
             ) : eligibleEmployees.length === 0 ? (
               <p className="text-sm text-muted">
-                No hay profesionales activos para esta combinacion de servicios.
+                No hay profesionales activos para esta combinación de servicios.
               </p>
             ) : (
               <div className="grid gap-2 sm:grid-cols-2">
@@ -262,8 +262,8 @@ export default function ManualBookingComposer({
 
             <p className="mt-3 text-xs text-muted">
               {manualStatus
-                ? `Se guardara como ${STATUS_OPTIONS.find((option) => option.value === manualStatus)?.label?.toLowerCase()}.`
-                : "Automatico: futuras como pendientes y pasadas como completadas."}
+                ? `Se guardará como ${STATUS_OPTIONS.find((option) => option.value === manualStatus)?.label?.toLowerCase()}.`
+                : "Automático: futuras como pendientes y pasadas como completadas."}
             </p>
 
             <label className="mt-3 flex items-start gap-2 rounded-2xl border border-border-warning bg-surface-warning-soft px-4 py-3 text-sm text-warning">
@@ -275,7 +275,7 @@ export default function ManualBookingComposer({
               <span>
                 Forzar registro si choca con agenda.
                 <span className="mt-1 block text-xs text-warning">
-                  Util solo para walk-ins, atrasos operativos o carga historica.
+                  Útil solo para walk-ins, atrasos operativos o carga histórica.
                 </span>
               </span>
             </label>
@@ -292,7 +292,7 @@ export default function ManualBookingComposer({
                   rows={4}
                   maxLength={500}
                   className="w-full rounded-3xl border border-border bg-surface px-4 py-3 text-sm text-fg outline-none transition focus:border-accent"
-                  placeholder="Ej: cliente cancelo de ultima hora, no asistio, se reagendo..."
+                  placeholder="Ej: cliente canceló de última hora, no asistió, se reagendó..."
                 />
               </label>
             ) : null}
@@ -339,7 +339,7 @@ export default function ManualBookingComposer({
 
             <PhoneField
               idPrefix="manual-booking-customer-phone"
-              label="Telefono"
+              label="Teléfono"
               countryIso2={customerForm.customer_phone_country_iso2}
               nationalNumber={customerForm.customer_phone_national_number}
               onCountryChange={(value) =>
@@ -387,7 +387,7 @@ export default function ManualBookingComposer({
 
         <div className="flex flex-col gap-3 border-t border-border-soft pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted">
-            Por defecto valida agenda real. Activa el override solo cuando realmente necesites forzar el registro.
+            Por defecto valida agenda real. Activa la sobreescritura solo cuando realmente necesites forzar el registro.
           </p>
           <button
             type="button"

@@ -16,6 +16,7 @@ export type DashboardNavItem = {
 
 const navTourIdByHref: Record<string, string> = {
   "/dashboard": "dashboard-nav-dashboard",
+  "/reports": "dashboard-nav-reports",
   "/services": "dashboard-nav-services",
   "/employees": "dashboard-nav-employees",
   "/bookings": "dashboard-nav-bookings",
@@ -39,7 +40,7 @@ export default function DashboardSidebar({
   const { user, logout } = useAuth();
   const { settings } = useTenantSettings();
   const logoUrl = settings.branding.logoUrl.trim() || "/wegox-logo.svg";
-  const appName = settings.branding.appName.trim() || "wegox";
+  const appName = settings.branding.appName.trim() || "Wegox";
 
   const handleLogout = async () => {
     await logout();
@@ -50,7 +51,7 @@ export default function DashboardSidebar({
     <>
       <button
         type="button"
-        aria-label="Close sidebar overlay"
+        aria-label="Cerrar navegación lateral"
         className={`absolute inset-0 z-30 bg-overlay-soft lg:hidden ${
           isOpen ? "block" : "hidden"
         }`}
@@ -117,10 +118,13 @@ export default function DashboardSidebar({
               type="button"
               className="flex w-full items-center gap-2 rounded-lg bg-overlay-muted px-2.5 py-2.5 text-left text-inverse-95"
             >
-              <Avatar name={user?.name ?? "Super Admin"} className="h-8 w-8 text-[10px]" />
+              <Avatar
+                name={user?.name ?? "Superadministrador"}
+                className="h-8 w-8 text-[10px]"
+              />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-xs font-semibold leading-none">
-                  {user?.name ?? "Super Admin"}
+                  {user?.name ?? "Superadministrador"}
                 </span>
                 <span className="mt-1 block truncate text-[10px] text-inverse-60">
                   {user?.email ?? "admin@wegox.com"}

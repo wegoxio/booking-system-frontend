@@ -32,6 +32,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   logoutAllSessions: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  markTenantDashboardTourCompleted: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearSessionTokens();
       setUser(null);
       setIsLoggingOut(false);
-      toast.success("Sesion cerrada.");
+      toast.success("Sesión cerrada.");
     }
   }, []);
 
@@ -74,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const message =
         error instanceof Error
           ? error.message
-          : "No se pudo cerrar todas las sesiones.";
+          : "No se pudieron cerrar todas las sesiones.";
       toast.error(message);
       throw error;
     } finally {
@@ -94,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       toast.success(`Bienvenido, ${me.name}.`);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "No se pudo iniciar sesion.";
+        error instanceof Error ? error.message : "No se pudo iniciar sesión.";
       toast.error(message);
       throw error;
     } finally {
@@ -108,6 +109,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const me = await authService.getAuthenticatedUser(activeToken);
     setUser(me);
+  }, []);
+
+  const markTenantDashboardTourCompleted = useCallback(async () => {
+    const activeToken = getAccessToken();
+    if (!activeToken) return;
+
+    const response = await authService.completeTenantDashboardTour(activeToken);
+    if (!response.completed_at) return;
+
+    setUser((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        tenant_dashboard_tour_completed_at: response.completed_at,
+      };
+    });
   }, []);
 
   useEffect(() => {
@@ -134,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const me = await authService.getAuthenticatedUser(refreshedAccessToken);
         setUser(me);
       } catch (error) {
-        console.error("Error restaurando sesion:", error);
+        console.error("Error restaurando sesión:", error);
         clearSessionTokens();
         setUser(null);
       } finally {
@@ -151,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoading || isLoggingOut) return;
     if (!token && user) {
       setUser(null);
-      toast.error("Sesion expirada. Inicia sesion nuevamente.");
+      toast.error("Sesión expirada. Inicia sesión nuevamente.");
     }
   }, [isLoading, isLoggingOut, token, user]);
 
@@ -165,8 +182,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       logoutAllSessions,
       refreshUser,
+      markTenantDashboardTourCompleted,
     }),
-    [user, token, isLoading, login, logout, logoutAllSessions, refreshUser],
+    [
+      user,
+      token,
+      isLoading,
+      login,
+      logout,
+      logoutAllSessions,
+      refreshUser,
+      markTenantDashboardTourCompleted,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -8,10 +8,32 @@ import CalendarDatePicker from "@/modules/ui/CalendarDatePicker";
 import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
 import TableStatsCard from "@/modules/ui/TableStatsCard";
+import Avatar from "@/modules/ui/Avatar";
 import type { AuditLogItem } from "@/types/audit-log.types";
 import type { Employee } from "@/types/employee.types";
 import type { Tenant } from "@/types/tenant.types";
-import { Filter, Search } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Activity,
+  Building2,
+  CalendarClock,
+  CalendarCheck2,
+  CircleUserRound,
+  FileCog,
+  Filter,
+  Hash,
+  LockKeyhole,
+  PencilLine,
+  PlusCircle,
+  Search,
+  Settings2,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  UserCog,
+  UserRound,
+  Wrench,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const ACTION_OPTIONS: SelectOption[] = [
@@ -43,24 +65,33 @@ const ACTION_OPTIONS: SelectOption[] = [
 
 const ENTITY_OPTIONS: SelectOption[] = [
   { value: "", label: "Todas las entidades" },
-  { value: "auth", label: "Autenticación" },
+  { value: "auth", label: "Autenticacion" },
   { value: "tenant", label: "Negocio" },
   { value: "user", label: "Usuario" },
   { value: "employee", label: "Empleado" },
   { value: "service", label: "Servicio" },
   { value: "booking", label: "Cita" },
-  { value: "tenant_settings", label: "Configuración de negocio" },
-  { value: "platform_settings", label: "Configuración de plataforma" },
+  { value: "tenant_settings", label: "Configuracion de negocio" },
+  { value: "platform_settings", label: "Configuracion de plataforma" },
 ];
 
-function formatActionLabel(action: string) {
-  return action
-    .toLowerCase()
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
+const ENTITY_LABELS: Record<string, string> = {
+  auth: "Autenticacion",
+  tenant: "Negocio",
+  user: "Usuario",
+  employee: "Empleado",
+  service: "Servicio",
+  booking: "Cita",
+  tenant_settings: "Configuracion de negocio",
+  platform_settings: "Configuracion de plataforma",
+  employee_schedule: "Horario de empleado",
+  employee_time_off: "Bloqueo de empleado",
+};
 
+function formatEntityLabel(entity: string | null) {
+  if (!entity) return "Sin entidad";
+  return ENTITY_LABELS[entity] ?? entity.replaceAll("_", " ");
+}
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("es-ES", {
     dateStyle: "medium",
@@ -81,13 +112,71 @@ function getActionBadgeClass(action: string) {
   return "bg-surface-warning-soft text-warning border-border-warning";
 }
 
-function formatMetadataJson(metadata: Record<string, unknown> | null): string {
-  if (!metadata || Object.keys(metadata).length === 0) {
-    return "Sin detalle técnico.";
-  }
-  return JSON.stringify(metadata, null, 2);
+function getActionIcon(action: string): LucideIcon {
+  if (action.includes("LOGIN")) return LockKeyhole;
+  if (action.includes("DELETED") || action.includes("DISABLED")) return Trash2;
+  if (action.includes("UPDATED") || action.includes("STATUS")) return PencilLine;
+  if (action.includes("UPLOADED")) return Upload;
+  if (action.includes("CREATED")) return PlusCircle;
+  return Activity;
 }
 
+function getEntityIcon(entity: string | null): LucideIcon {
+  switch (entity) {
+    case "auth":
+      return ShieldCheck;
+    case "tenant":
+      return Building2;
+    case "user":
+      return CircleUserRound;
+    case "employee":
+      return UserRound;
+    case "service":
+      return Wrench;
+    case "booking":
+      return CalendarCheck2;
+    case "tenant_settings":
+    case "platform_settings":
+      return Settings2;
+    case "employee_schedule":
+      return UserCog;
+    default:
+      return FileCog;
+  }
+}
+
+function pickString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function resolveActorImageUrl(log: AuditLogItem): string | null {
+  const actor = log.actor as (NonNullable<AuditLogItem["actor"]> & {
+    avatar_url?: string | null;
+    image_url?: string | null;
+    profile_image_url?: string | null;
+    photo_url?: string | null;
+  }) | null;
+
+  const fromActor =
+    pickString(actor?.avatar_url) ??
+    pickString(actor?.image_url) ??
+    pickString(actor?.profile_image_url) ??
+    pickString(actor?.photo_url);
+
+  const metadata = log.metadata ?? {};
+  const fromMetadata =
+    pickString(metadata["actor_avatar_url"]) ??
+    pickString(metadata["actor_image_url"]) ??
+    pickString(metadata["avatar_url"]);
+
+  if (log.actor?.role === "SUPER_ADMIN") {
+    return "/wegox-logo.svg";
+  }
+
+  return fromActor ?? fromMetadata;
+}
 export default function AuditLogsManagement(): React.ReactNode {
   const { token, user } = useAuth();
 
@@ -241,7 +330,7 @@ export default function AuditLogsManagement(): React.ReactNode {
 
   return (
     <section className="space-y-4">
-      <div className="rounded-[28px] border border-card-border bg-gradient-to-br from-surface-warm to-surface-soft p-6 shadow-theme-soft">
+      <div className="rounded-[28px] border border-card-border bg-linear-to-br from-surface-warm to-surface-soft p-6 shadow-theme-soft">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
@@ -348,68 +437,175 @@ export default function AuditLogsManagement(): React.ReactNode {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1300px] border-separate border-spacing-y-3 text-left text-sm">
-              <thead>
-                <tr className="text-muted">
-                  <th className="px-4 pb-2 font-medium">Fecha</th>
-                  <th className="px-4 pb-2 font-medium">Evento</th>
-                  <th className="px-4 pb-2 font-medium">Actor</th>
-                  <th className="px-4 pb-2 font-medium">Negocio</th>
-                  <th className="px-4 pb-2 font-medium">Entidad</th>
-                  <th className="px-4 pb-2 font-medium">Técnico</th>
-                </tr>
-              </thead>
+          <>
+            <div className="space-y-3 md:hidden">
+              {logs.map((log) => {
+                const ActionIcon = getActionIcon(log.action);
+                const EntityIcon = getEntityIcon(log.entity);
+                const actionBadgeClass = getActionBadgeClass(log.action);
+                const actorName = log.actor?.name ?? "Sistema";
+                const actorImageUrl = resolveActorImageUrl(log);
 
-              <tbody>
-                {logs.map((log) => (
-                  <tr key={log.id} className="text-primary shadow-theme-row">
-                    <td className="rounded-l-3xl border-y border-l border-border-soft bg-surface px-4 py-4">
-                      <p className="font-medium text-fg">{formatDateTime(log.created_at)}</p>
-                      <p className="mt-1 text-xs text-muted">{log.id.slice(0, 8)}</p>
-                    </td>
-
-                    <td className="border-y border-border-soft bg-surface px-4 py-4">
-                      <p className="max-w-[360px] text-sm font-medium text-fg">{log.message}</p>
+                return (
+                  <article
+                    key={log.id}
+                    className="rounded-3xl border border-border-soft bg-surface p-4 shadow-theme-row"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="inline-flex items-center gap-1.5 text-sm font-medium text-fg">
+                          <CalendarClock className="h-3.5 w-3.5 text-fg-soft" />
+                          {formatDateTime(log.created_at)}
+                        </p>
+                        <p className="mt-1 text-xs text-muted" title={log.id}>
+                          <span className="inline-flex items-start gap-1.5">
+                            <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                            <span className="font-mono break-all">{log.id}</span>
+                          </span>
+                        </p>
+                      </div>
                       <span
-                        className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${getActionBadgeClass(log.action)}`}
+                        className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border ${actionBadgeClass}`}
                       >
-                        {formatActionLabel(log.action)}
+                        <ActionIcon className="h-3.5 w-3.5" />
                       </span>
-                    </td>
+                    </div>
 
-                    <td className="border-y border-border-soft bg-surface px-4 py-4">
-                      <p className="font-medium text-fg">{log.actor?.name ?? "Sistema"}</p>
-                      <p className="mt-1 text-xs text-muted">{log.actor?.email ?? "-"}</p>
-                    </td>
+                    <p className="mt-3 text-sm font-medium text-fg">{log.message}</p>
 
-                    <td className="border-y border-border-soft bg-surface px-4 py-4">
-                      <p className="font-medium text-fg">{log.tenant?.name ?? "Global"}</p>
-                      <p className="mt-1 text-xs text-muted">{log.tenant?.slug ?? "-"}</p>
-                    </td>
+                    <div className="mt-3 space-y-2 rounded-2xl border border-border-soft bg-surface-soft p-3">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar
+                          name={actorName}
+                          imageUrl={actorImageUrl}
+                          className="h-8 w-8"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-fg">{actorName}</p>
+                          <p className="truncate text-xs text-muted">{log.actor?.email ?? "-"}</p>
+                        </div>
+                      </div>
 
-                    <td className="border-y border-border-soft bg-surface px-4 py-4">
-                      <p className="text-sm font-medium text-fg">{log.entity ?? "N/A"}</p>
-                      <p className="mt-1 max-w-[220px] break-all text-xs text-muted">
-                        {log.entity_id ?? "-"}
+                      <p className="inline-flex items-center gap-2 text-xs text-fg-secondary">
+                        <Building2 className="h-3.5 w-3.5 text-fg-soft" />
+                        {log.tenant?.name ?? "Global"} ({log.tenant?.slug ?? "-"})
                       </p>
-                    </td>
 
-                    <td className="rounded-r-3xl border-y border-r border-border-soft bg-surface px-4 py-4">
-                      <details className="max-w-[360px] rounded-lg border border-border-soft bg-surface-soft p-2">
-                        <summary className="cursor-pointer text-xs font-medium text-fg-secondary">
-                          Ver detalle técnico
-                        </summary>
-                        <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-words text-[11px] text-fg-soft">
-                          {formatMetadataJson(log.metadata)}
-                        </pre>
-                      </details>
-                    </td>
+                      <p className="inline-flex items-center gap-2 text-xs font-medium text-fg">
+                        <EntityIcon className="h-3.5 w-3.5 text-fg-soft" />
+                        {formatEntityLabel(log.entity)}
+                      </p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-325 border-separate border-spacing-y-3 text-left text-sm">
+                <thead>
+                  <tr className="text-muted">
+                    <th className="px-4 pb-2 font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarClock className="h-3.5 w-3.5" />
+                        Fecha
+                      </span>
+                    </th>
+                    <th className="px-4 pb-2 font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Activity className="h-3.5 w-3.5" />
+                        Evento
+                      </span>
+                    </th>
+                    <th className="px-4 pb-2 font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <CircleUserRound className="h-3.5 w-3.5" />
+                        Actor
+                      </span>
+                    </th>
+                    <th className="px-4 pb-2 font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5" />
+                        Negocio
+                      </span>
+                    </th>
+                    <th className="px-4 pb-2 font-medium">
+                      <span className="inline-flex items-center gap-1.5">
+                        <FileCog className="h-3.5 w-3.5" />
+                        Entidad
+                      </span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {logs.map((log) => {
+                    const ActionIcon = getActionIcon(log.action);
+                    const EntityIcon = getEntityIcon(log.entity);
+                    const actionBadgeClass = getActionBadgeClass(log.action);
+                    const actorName = log.actor?.name ?? "Sistema";
+                    const actorImageUrl = resolveActorImageUrl(log);
+
+                    return (
+                      <tr key={log.id} className="text-primary shadow-theme-row">
+                        <td className="rounded-l-3xl border-y border-l border-border-soft bg-surface px-4 py-4">
+                          <p className="inline-flex items-center gap-1.5 font-medium text-fg">
+                            <CalendarClock className="h-3.5 w-3.5 text-fg-soft" />
+                            {formatDateTime(log.created_at)}
+                          </p>
+                          <p className="mt-1 text-xs text-muted" title={log.id}>
+                            <span className="inline-flex items-center gap-1.5">
+                              <Hash className="h-3.5 w-3.5 shrink-0" />
+                              <span className="font-mono">{log.id.slice(0, 8)}</span>
+                            </span>
+                          </p>
+                        </td>
+
+                        <td className="border-y border-border-soft bg-surface px-4 py-4">
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border ${actionBadgeClass}`}
+                            >
+                              <ActionIcon className="h-3.5 w-3.5" />
+                            </span>
+                            <div>
+                              <p className="max-w-90 text-sm font-medium text-fg">{log.message}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="border-y border-border-soft bg-surface px-4 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar
+                              name={actorName}
+                              imageUrl={actorImageUrl}
+                              className="h-9 w-9"
+                            />
+                            <div>
+                              <p className="font-medium text-fg">{actorName}</p>
+                              <p className="mt-1 text-xs text-muted">{log.actor?.email ?? "-"}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="border-y border-border-soft bg-surface px-4 py-4">
+                          <p className="font-medium text-fg">{log.tenant?.name ?? "Global"}</p>
+                          <p className="mt-1 text-xs text-muted">{log.tenant?.slug ?? "-"}</p>
+                        </td>
+
+                        <td className="border-y border-border-soft bg-surface px-4 py-4">
+                          <span className="inline-flex items-center gap-2 text-sm font-medium text-fg">
+                            <EntityIcon className="h-4 w-4 text-fg-soft" />
+                            {formatEntityLabel(log.entity)}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         <div className="mt-4 flex items-center justify-between">
@@ -439,5 +635,3 @@ export default function AuditLogsManagement(): React.ReactNode {
     </section>
   );
 }
-
-

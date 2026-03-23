@@ -1,6 +1,7 @@
 import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
 import type { Employee } from "@/types/employee.types";
 import type { ServiceFormState } from "@/types/service.types";
+import { useEffect, useState } from "react";
 import { ServiceEmployeesSelector } from "./ServiceEmployeesSelector";
 
 type ServiceEditModalContentProps = {
@@ -72,6 +73,13 @@ export default function ServiceEditModalContent({
     (value) => `${value} persona${value === 1 ? "" : "s"}`,
   );
   const currencyOptions = buildCurrencyOptions(form.currency);
+  const [priceInput, setPriceInput] = useState(
+    Number.isFinite(form.price) ? String(form.price) : "",
+  );
+
+  useEffect(() => {
+    setPriceInput(Number.isFinite(form.price) ? String(form.price) : "");
+  }, [form.price]);
 
   return (
     <div className="space-y-4">
@@ -142,10 +150,29 @@ export default function ServiceEditModalContent({
             type="number"
             min={0}
             step={0.01}
-            value={form.price}
-            onChange={(event) =>
-              onFormChange((prev) => ({ ...prev, price: Number(event.target.value) }))
-            }
+            value={priceInput}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setPriceInput(nextValue);
+
+              if (nextValue === "") {
+                onFormChange((prev) => ({ ...prev, price: Number.NaN }));
+                return;
+              }
+
+              const parsedValue = Number(nextValue);
+              onFormChange((prev) => ({
+                ...prev,
+                price: Number.isFinite(parsedValue) ? parsedValue : Number.NaN,
+              }));
+            }}
+            onBlur={() => {
+              if (priceInput === "") return;
+              const parsedValue = Number(priceInput);
+              if (!Number.isFinite(parsedValue)) return;
+              setPriceInput(String(parsedValue));
+              onFormChange((prev) => ({ ...prev, price: parsedValue }));
+            }}
             className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
             required
           />

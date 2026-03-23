@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Building2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { tenantsService } from "@/modules/tenants/services/tenants.service";
+import { tenantAdminsService } from "@/modules/tenant-admins/services/tenant-admins.service";
 import TenantEditModalContent from "@/modules/tenants/components/TenantEditModalContent";
 import TenantsTable from "@/modules/tenants/components/TenantsTable";
 import ConfirmDeleteModal from "@/modules/ui/ConfirmDeleteModal";
@@ -31,6 +32,9 @@ export default function TenantsManagement() {
   const [errorMessage, setErrorMessage] = useState("");
   const [formError, setFormError] = useState("");
   const [form, setForm] = useState<TenantFormState>(emptyForm);
+  const [inviteAdminEnabled, setInviteAdminEnabled] = useState(false);
+  const [inviteAdminName, setInviteAdminName] = useState("");
+  const [inviteAdminEmail, setInviteAdminEmail] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,6 +83,9 @@ export default function TenantsManagement() {
     setEditingId(null);
     setForm(emptyForm);
     setFormError("");
+    setInviteAdminEnabled(false);
+    setInviteAdminName("");
+    setInviteAdminEmail("");
   }, []);
 
   const closeModal = useCallback(() => {
@@ -152,6 +159,26 @@ export default function TenantsManagement() {
       return;
     }
 
+    if (!editingId && inviteAdminEnabled) {
+      const normalizedInviteName = inviteAdminName.trim();
+      const normalizedInviteEmail = inviteAdminEmail.trim();
+
+      if (normalizedInviteName.length < 1 || normalizedInviteName.length > 120) {
+        const inviteValidationError =
+          "El nombre del administrador debe tener entre 1 y 120 caracteres.";
+        setFormError(inviteValidationError);
+        toast.error(inviteValidationError);
+        return;
+      }
+
+      if (!/^\S+@\S+\.\S+$/.test(normalizedInviteEmail)) {
+        const inviteValidationError = "Debes ingresar un correo valido para la invitacion.";
+        setFormError(inviteValidationError);
+        toast.error(inviteValidationError);
+        return;
+      }
+    }
+
     const normalizedSlug = normalizeSlug(form.slug);
     const createPayload: CreateTenantPayload = {
       name: form.name.trim(),
@@ -170,8 +197,28 @@ export default function TenantsManagement() {
         await tenantsService.update(editingId, updatePayload, token);
         toast.success("Negocio actualizado correctamente.");
       } else {
-        await tenantsService.create(createPayload, token);
+        const createdTenant = await tenantsService.create(createPayload, token);
         toast.success("Negocio creado correctamente.");
+
+        if (inviteAdminEnabled) {
+          try {
+            await tenantAdminsService.create(
+              {
+                name: inviteAdminName.trim(),
+                email: inviteAdminEmail.trim(),
+                tenant_id: createdTenant.id,
+              },
+              token,
+            );
+            toast.success("Invitacion del administrador enviada.");
+          } catch (inviteError) {
+            const inviteErrorMessage =
+              inviteError instanceof Error
+                ? inviteError.message
+                : "No se pudo enviar la invitacion del administrador.";
+            toast.error(`Negocio creado, pero la invitacion fallo: ${inviteErrorMessage}`);
+          }
+        }
       }
 
       await loadTenants();
@@ -250,7 +297,15 @@ export default function TenantsManagement() {
         description="Define el nombre comercial y el slug técnico del negocio."
         helperText="Esta acción impacta el acceso y el contexto de usuarios del negocio."
         errorMessage={formError}
-        submitText={isSaving ? "Guardando..." : editingId ? "Guardar cambios" : "Crear negocio"}
+        submitText={
+          isSaving
+            ? "Guardando..."
+            : editingId
+              ? "Guardar cambios"
+              : inviteAdminEnabled
+                ? "Crear negocio e invitar"
+                : "Crear negocio"
+        }
         isSubmitting={isSaving}
         onClose={closeModal}
         onSubmit={handleSubmit}
@@ -258,8 +313,14 @@ export default function TenantsManagement() {
         <TenantEditModalContent
           form={form}
           isEditing={!!editingId}
+          inviteAdminEnabled={inviteAdminEnabled}
+          inviteAdminName={inviteAdminName}
+          inviteAdminEmail={inviteAdminEmail}
           onNameChange={handleNameChange}
           onIsActiveChange={handleIsActiveChange}
+          onInviteAdminEnabledChange={setInviteAdminEnabled}
+          onInviteAdminNameChange={setInviteAdminName}
+          onInviteAdminEmailChange={setInviteAdminEmail}
         />
       </TableEditModal>
 

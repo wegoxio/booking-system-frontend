@@ -4,8 +4,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import DashboardNavbar from "@/modules/layout/components/DashboardNavbar";
-import DashboardSidebar, {
-} from "@/modules/layout/components/DashboardSidebar";
+import DashboardSidebar from "@/modules/layout/components/DashboardSidebar";
 import TenantAdminDashboardTourController from "@/modules/tour/components/TenantAdminDashboardTourController";
 import {
   getDashboardNavItems,
@@ -22,6 +21,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const { user, isAuthenticated, isLoading, markTenantDashboardTourCompleted } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tourRunNonce, setTourRunNonce] = useState(0);
+  const isTenantAdminDashboard =
+    user?.role === "TENANT_ADMIN" && pathname === "/dashboard";
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -34,6 +35,19 @@ export default function DashboardShell({ children }: DashboardShellProps) {
       router.replace("/dashboard");
     }
   }, [isLoading, user, pathname, router]);
+
+  useEffect(() => {
+    if (!isTenantAdminDashboard) return;
+
+    const handleStartTour = () => {
+      setTourRunNonce((current) => current + 1);
+    };
+
+    window.addEventListener("tenant-dashboard-tour:start", handleStartTour);
+    return () => {
+      window.removeEventListener("tenant-dashboard-tour:start", handleStartTour);
+    };
+  }, [isTenantAdminDashboard]);
 
   if (isLoading) {
     return (
@@ -48,7 +62,6 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   if (!isRoleAllowedPath(user.role, pathname)) return null;
 
   const navItems = getDashboardNavItems(user.role);
-  const isTenantAdminDashboard = user.role === "TENANT_ADMIN" && pathname === "/dashboard";
 
   return (
     <div className="min-h-screen bg-app">
@@ -60,15 +73,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
         />
 
         <div className="relative flex min-w-0 flex-1 flex-col p-3">
-          <DashboardNavbar
-            onMenuClick={() => setSidebarOpen(true)}
-            isTourAvailable={isTenantAdminDashboard}
-            onTourClick={
-              isTenantAdminDashboard
-                ? () => setTourRunNonce((current) => current + 1)
-                : undefined
-            }
-          />
+          <DashboardNavbar onMenuClick={() => setSidebarOpen(true)} />
           <main className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">{children}</main>
         </div>
       </div>

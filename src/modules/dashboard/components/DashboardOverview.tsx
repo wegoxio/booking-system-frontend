@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { CircleHelp, LoaderCircle, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { DashboardOverviewResponse } from "@/types/dashboard.types";
 import DashboardStatsGrid from "./DashboardStatsGrid";
@@ -50,6 +50,12 @@ export default function DashboardOverview() {
         : "Resumen operativo de tu negocio."
       : "Resumen general de la plataforma.";
   const isSuperAdmin = overview?.role === "SUPER_ADMIN" || user?.role === "SUPER_ADMIN";
+  const canRunTour = user?.role === "TENANT_ADMIN";
+
+  const handleStartTour = () => {
+    if (!canRunTour) return;
+    window.dispatchEvent(new CustomEvent("tenant-dashboard-tour:start"));
+  };
 
   return (
     <section data-tour="dashboard-overview" className="space-y-3">
@@ -61,15 +67,45 @@ export default function DashboardOverview() {
           <p className="mt-2 text-sm text-muted">{dashboardSubtitle}</p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => void loadOverview()}
-          disabled={isLoading || !token}
-          className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-soft px-3 py-2 text-xs text-muted disabled:opacity-60"
-        >
-          {isLoading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-          Actualizar
-        </button>
+        <div className="inline-flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleStartTour}
+            disabled={!canRunTour}
+            data-tour={canRunTour ? "dashboard-tour-trigger" : undefined}
+            className={`grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface-soft text-muted ${
+              canRunTour
+                ? "hover:bg-surface"
+                : "cursor-not-allowed opacity-50"
+            }`}
+            aria-label={
+              canRunTour
+                ? "Iniciar tour guiado"
+                : "Tour no disponible para este perfil"
+            }
+            title={
+              canRunTour
+                ? "Iniciar tour guiado"
+                : "Tour disponible solo para admin de negocio"
+            }
+          >
+            <CircleHelp className="h-3.5 w-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void loadOverview()}
+            disabled={isLoading || !token}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-soft px-3 py-2 text-xs text-muted disabled:opacity-60"
+          >
+            {isLoading ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {errorMessage ? (

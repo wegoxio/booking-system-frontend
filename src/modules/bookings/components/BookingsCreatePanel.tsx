@@ -228,6 +228,10 @@ export default function BookingsCreatePanel({
     let isCancelled = false;
     setIsLoadingStrictSlots(true);
     setStrictErrorMessage("");
+    setStrictSlots([]);
+    setStrictRequiredDurationMinutes(null);
+    setStrictAvailabilityTimezone(null);
+    setStrictSelectedSlotStart(null);
 
     (async () => {
       try {
@@ -521,6 +525,9 @@ export default function BookingsCreatePanel({
             setStrictSelectedServiceIds((prev) =>
               prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId],
             );
+            setStrictSlots([]);
+            setStrictRequiredDurationMinutes(null);
+            setStrictAvailabilityTimezone(null);
             setStrictSelectedSlotStart(null);
           }}
           eligibleEmployees={strictEligibleEmployees}
@@ -528,11 +535,17 @@ export default function BookingsCreatePanel({
           selectedEmployeeId={strictSelectedEmployeeId}
           onSelectEmployee={(employeeId) => {
             setStrictSelectedEmployeeId(employeeId);
+            setStrictSlots([]);
+            setStrictRequiredDurationMinutes(null);
+            setStrictAvailabilityTimezone(null);
             setStrictSelectedSlotStart(null);
           }}
           selectedDate={strictDate}
           onDateChange={(date) => {
             setStrictDate(date);
+            setStrictSlots([]);
+            setStrictRequiredDurationMinutes(null);
+            setStrictAvailabilityTimezone(null);
             setStrictSelectedSlotStart(null);
           }}
           slots={strictSlots}
@@ -552,6 +565,7 @@ export default function BookingsCreatePanel({
             Boolean(strictSelectedSlotStart) &&
             strictCustomerForm.customer_name.trim().length > 0
           }
+          wizardMode={variant === "modal"}
         />
       ) : (
         <ManualBookingComposer
@@ -583,6 +597,7 @@ export default function BookingsCreatePanel({
           errorMessage={manualErrorMessage}
           estimatedDurationMinutes={manualEstimatedDurationMinutes}
           estimatedTotalPrice={manualEstimatedTotal}
+          wizardMode={variant === "modal"}
         />
       )}
     </div>

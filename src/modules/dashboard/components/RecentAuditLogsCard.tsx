@@ -47,7 +47,6 @@ export default function RecentAuditLogsCard({
 
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-primary">{log.message}</p>
-                <p className="text-xs font-semibold text-warning">{log.action}</p>
                 <p className="truncate text-[10px] text-fg-soft">
                   {compactSubtitle
                     ? log.tenant_name || log.actor_email || log.actor_name || "Sistema"

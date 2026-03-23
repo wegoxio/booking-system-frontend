@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { Bell, ChevronDown, Home, LogOut, Settings, Star } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTenantSettings } from "@/context/TenantSettingsContext";
 import Avatar from "@/modules/ui/Avatar";
@@ -51,7 +51,7 @@ export default function DashboardSidebar({
     <>
       <button
         type="button"
-        aria-label="Cerrar navegación lateral"
+        aria-label="Cerrar navegacion lateral"
         className={`absolute inset-0 z-30 bg-overlay-soft lg:hidden ${
           isOpen ? "block" : "hidden"
         }`}
@@ -130,30 +130,16 @@ export default function DashboardSidebar({
                   {user?.email ?? "admin@wegox.com"}
                 </span>
               </span>
-              <ChevronDown className="h-3.5 w-3.5 text-inverse-70" />
             </button>
 
-            <div className="flex items-center justify-center gap-1 rounded-lg bg-overlay-muted p-1">
-              <button className="grid h-7 w-7 place-items-center rounded-md text-inverse-75 hover:bg-inverse-10">
-                <Home className="h-3.5 w-3.5" />
-              </button>
-              <button className="grid h-7 w-7 place-items-center rounded-md text-inverse-75 hover:bg-inverse-10">
-                <Bell className="h-3.5 w-3.5" />
-              </button>
-              <button className="grid h-7 w-7 place-items-center rounded-md text-inverse-75 hover:bg-inverse-10">
-                <Star className="h-3.5 w-3.5" />
-              </button>
-              <button className="grid h-7 w-7 place-items-center rounded-md text-inverse-75 hover:bg-inverse-10">
-                <Settings className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="grid h-7 w-7 place-items-center rounded-md text-inverse-80 hover:bg-inverse-10"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-inverse-15 bg-overlay-muted px-3 py-2 text-xs font-semibold text-inverse-95 hover:bg-inverse-10"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Cerrar sesion</span>
+            </button>
           </div>
         </div>
       </aside>

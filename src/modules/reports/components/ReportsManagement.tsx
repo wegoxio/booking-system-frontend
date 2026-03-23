@@ -63,7 +63,7 @@ const STATUS_FILTERS = [
 const SOURCE_FILTERS = [
   { value: "", label: "Todos los canales" },
   { value: "WEB", label: "Web" },
-  { value: "ADMIN", label: "Admin" },
+  { value: "ADMIN", label: "Administrador" },
   { value: "MANUAL", label: "Manual" },
   { value: "API", label: "API" },
 ];
@@ -82,8 +82,22 @@ function formatTenantLabel(input: {
 }): string {
   if (input.tenant_name) return input.tenant_name;
   if (input.tenant_slug) return input.tenant_slug;
-  if (input.tenant_id) return `ID ${input.tenant_id.slice(0, 8)}`;
-  return "Sin tenant";
+  return "Sin negocio";
+}
+
+function formatSourceLabel(source: string): string {
+  switch (source) {
+    case "ADMIN":
+      return "Administrador";
+    case "WEB":
+      return "Web";
+    case "MANUAL":
+      return "Manual";
+    case "API":
+      return "API";
+    default:
+      return source;
+  }
 }
 
 function toDateInput(value: Date): string {
@@ -247,19 +261,19 @@ export default function ReportsManagement() {
         iconToneClass: "bg-surface-success text-success",
       },
       {
-        label: "Finalización",
+        label: "Tasa de completados",
         value: formatRate(overview.summary.completion_rate),
         icon: CheckCircle2,
         iconToneClass: "bg-surface-success text-success",
       },
       {
-        label: "Cancelación",
+        label: "Tasa de cancelaciones",
         value: formatRate(overview.summary.cancellation_rate),
         icon: XCircle,
         iconToneClass: "bg-surface-danger text-danger",
       },
       {
-        label: "Inasistencia",
+        label: "Tasa de inasistencia",
         value: formatRate(overview.summary.no_show_rate),
         icon: UserX,
         iconToneClass: "bg-surface-warning text-warning",
@@ -546,12 +560,48 @@ export default function ReportsManagement() {
                 <Wrench className="h-4 w-4 text-accent" />
                 Top servicios
               </h3>
-              <div className="mt-3 overflow-x-auto">
+              <div className="mt-3 space-y-2 md:hidden">
+                {overview.top_services.map((row) => (
+                  <article
+                    key={row.service_id}
+                    className="rounded-2xl border border-border-soft bg-surface-soft p-3"
+                  >
+                    <p className="inline-flex items-center gap-2 text-sm font-semibold text-fg">
+                      <Wrench className="h-3.5 w-3.5 text-fg-soft" />
+                      {row.service_name}
+                    </p>
+                    {showServiceTenantColumn ? (
+                      <p className="mt-2 inline-flex items-center gap-2 text-xs text-muted">
+                        <Building2 className="h-3.5 w-3.5" />
+                        {formatTenantLabel(row)}
+                      </p>
+                    ) : null}
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                      <p className="text-muted">
+                        Items: <span className="font-medium text-fg">{formatInteger(row.sold_items_count)}</span>
+                      </p>
+                      <p className="text-muted">
+                        Citas: <span className="font-medium text-fg">{formatInteger(row.bookings_count)}</span>
+                      </p>
+                      <p className="text-muted">
+                        Ingresos: <span className="font-medium text-fg">{formatUsd(row.revenue_total_usd)}</span>
+                      </p>
+                    </div>
+                  </article>
+                ))}
+                {overview.top_services.length === 0 ? (
+                  <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-4 text-sm text-muted">
+                    Sin datos para este filtro.
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-3 hidden overflow-x-auto md:block">
                 <table className="min-w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-border-soft text-xs uppercase tracking-[0.08em] text-muted">
                       <th className="px-2 py-2">Servicio</th>
-                      {showServiceTenantColumn ? <th className="px-2 py-2">Tenant</th> : null}
+                      {showServiceTenantColumn ? <th className="px-2 py-2">Negocio</th> : null}
                       <th className="px-2 py-2">Items</th>
                       <th className="px-2 py-2">Citas</th>
                       <th className="px-2 py-2">Ingresos</th>
@@ -596,13 +646,47 @@ export default function ReportsManagement() {
                 <Users className="h-4 w-4 text-accent" />
                 Top profesionales
               </h3>
-              <div className="mt-3 overflow-x-auto">
+              <div className="mt-3 space-y-2 md:hidden">
+                {overview.top_employees.map((row) => (
+                  <article
+                    key={row.employee_id}
+                    className="rounded-2xl border border-border-soft bg-surface-soft p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        name={row.employee_name}
+                        imageUrl={row.avatar_url}
+                        className="h-8 w-8 text-[10px]"
+                      />
+                      <p className="text-sm font-semibold text-fg">{row.employee_name}</p>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                      <p className="text-muted">
+                        Citas: <span className="font-medium text-fg">{formatInteger(row.bookings_count)}</span>
+                      </p>
+                      <p className="text-muted">
+                        Completados: <span className="font-medium text-fg">{formatInteger(row.completed_count)}</span>
+                      </p>
+                      <p className="text-muted">
+                        Ingresos: <span className="font-medium text-fg">{formatUsd(row.revenue_total_usd)}</span>
+                      </p>
+                    </div>
+                  </article>
+                ))}
+                {overview.top_employees.length === 0 ? (
+                  <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-4 text-sm text-muted">
+                    Sin datos para este filtro.
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-3 hidden overflow-x-auto md:block">
                 <table className="min-w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-border-soft text-xs uppercase tracking-[0.08em] text-muted">
                       <th className="px-2 py-2">Profesional</th>
                       <th className="px-2 py-2">Citas</th>
-                      <th className="px-2 py-2">Completadas</th>
+                      <th className="px-2 py-2">Completados</th>
                       <th className="px-2 py-2">Ingresos</th>
                     </tr>
                   </thead>
@@ -643,13 +727,43 @@ export default function ReportsManagement() {
                 <Radio className="h-4 w-4 text-accent" />
                 Canales
               </h3>
-              <div className="mt-3 overflow-x-auto">
+              <div className="mt-3 space-y-2 md:hidden">
+                {overview.source_breakdown.map((row) => (
+                  <article
+                    key={row.source}
+                    className="rounded-2xl border border-border-soft bg-surface-soft p-3"
+                  >
+                    <p className="text-sm font-semibold text-fg">{formatSourceLabel(row.source)}</p>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                      <p className="text-muted">
+                        Citas: <span className="font-medium text-fg">{formatInteger(row.bookings_count)}</span>
+                      </p>
+                      <p className="text-muted">
+                        Completados: <span className="font-medium text-fg">{formatInteger(row.completed_count)}</span>
+                      </p>
+                      <p className="text-muted">
+                        Canceladas: <span className="font-medium text-fg">{formatInteger(row.cancelled_count)}</span>
+                      </p>
+                      <p className="text-muted">
+                        Ingresos: <span className="font-medium text-fg">{formatUsd(row.revenue_total_usd)}</span>
+                      </p>
+                    </div>
+                  </article>
+                ))}
+                {overview.source_breakdown.length === 0 ? (
+                  <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-4 text-sm text-muted">
+                    Sin datos para este filtro.
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-3 hidden overflow-x-auto md:block">
                 <table className="min-w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-border-soft text-xs uppercase tracking-[0.08em] text-muted">
                       <th className="px-2 py-2">Canal</th>
                       <th className="px-2 py-2">Citas</th>
-                      <th className="px-2 py-2">Completadas</th>
+                      <th className="px-2 py-2">Completados</th>
                       <th className="px-2 py-2">Canceladas</th>
                       <th className="px-2 py-2">Ingresos</th>
                     </tr>
@@ -657,7 +771,7 @@ export default function ReportsManagement() {
                   <tbody>
                     {overview.source_breakdown.map((row) => (
                       <tr key={row.source} className="border-b border-border-soft">
-                        <td className="px-2 py-2 text-fg">{row.source}</td>
+                        <td className="px-2 py-2 text-fg">{formatSourceLabel(row.source)}</td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.bookings_count)}</td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.completed_count)}</td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.cancelled_count)}</td>
@@ -708,3 +822,4 @@ export default function ReportsManagement() {
     </section>
   );
 }
+

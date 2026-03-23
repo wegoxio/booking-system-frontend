@@ -8,6 +8,8 @@ import {
 import type { RefreshResponse } from "@/types/auth.types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const CSRF_HEADER_NAME =
+  process.env.NEXT_PUBLIC_AUTH_CSRF_HEADER_NAME?.trim() || "x-csrf-token";
 
 if (!API_URL) {
   throw new Error("Falta NEXT_PUBLIC_API_URL en las variables de entorno");
@@ -30,7 +32,7 @@ function buildHeaders(
   return {
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(csrfToken ? { "X-CSRF-Token": csrfToken } : {}),
+    ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
     ...headers,
   };
 }
@@ -46,10 +48,10 @@ async function requestFreshTokens(): Promise<string | null> {
       method: "POST",
       credentials: "include",
       cache: "no-store",
-      headers: csrfToken ? { "X-CSRF-Token": csrfToken } : undefined,
+      headers: csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : undefined,
     });
 
-  const initialCsrfToken = getCsrfToken();
+  const initialCsrfToken = syncCsrfTokenFromCookie() ?? getCsrfToken();
   let response = await executeRefresh(initialCsrfToken);
 
   if (!response.ok && (response.status === 401 || response.status === 403)) {

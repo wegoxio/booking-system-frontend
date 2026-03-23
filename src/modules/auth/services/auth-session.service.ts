@@ -1,6 +1,6 @@
 let inMemoryAccessToken: string | null = null;
 const tokenListeners = new Set<(token: string | null) => void>();
-const CSRF_COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_CSRF_COOKIE_NAME ?? "weegox_csrf";
+const CSRF_COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_CSRF_COOKIE_NAME ?? "wegox_csrf";
 const CSRF_STORAGE_KEY = `${CSRF_COOKIE_NAME}_current`;
 
 function notifyTokenChange(nextToken: string | null): void {
@@ -69,7 +69,13 @@ export function syncCsrfTokenFromCookie(): string | null {
 }
 
 export function getCsrfToken(): string | null {
-  return readStoredCsrfToken() ?? getCsrfTokenFromCookie();
+  const cookieToken = getCsrfTokenFromCookie();
+  if (cookieToken) {
+    writeStoredCsrfToken(cookieToken);
+    return cookieToken;
+  }
+
+  return readStoredCsrfToken();
 }
 
 export function onAccessTokenChange(

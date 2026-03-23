@@ -1,10 +1,10 @@
 "use client";
 
+import PasswordRequirements from "@/modules/auth/components/PasswordRequirements";
 import { authService } from "@/modules/auth/services/auth.service";
 import Button from "@/modules/ui/Button";
-import Input from "@/modules/ui/Input";
 import { isStrongPassword } from "@/utils/validation";
-import { ArrowLeft, KeyRound } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 
@@ -30,6 +30,8 @@ function ResetPasswordContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isResolving, setIsResolving] = useState(true);
   const [resolveError, setResolveError] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -40,7 +42,7 @@ function ResetPasswordContent() {
 
     const rawToken = searchParams.get("token")?.trim() ?? "";
     if (!rawToken) {
-      setResolveError("El enlace no es válido o ya no está disponible.");
+      setResolveError("El enlace no es valido o ya no esta disponible.");
       setIsResolving(false);
       didResolveRef.current = true;
       return;
@@ -60,9 +62,7 @@ function ResetPasswordContent() {
       })
       .catch((error) => {
         setResolveError(
-          error instanceof Error
-            ? error.message
-            : "No se pudo validar este enlace.",
+          error instanceof Error ? error.message : "No se pudo validar este enlace.",
         );
       })
       .finally(() => {
@@ -75,14 +75,12 @@ function ResetPasswordContent() {
     setSubmitError("");
 
     if (!isStrongPassword(password)) {
-      setSubmitError(
-        "La contraseña debe tener 8+ caracteres, mayúscula, minúscula, número y símbolo.",
-      );
+      setSubmitError("La contraseña no cumple los requisitos de seguridad.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setSubmitError("Las contraseñas no coinciden.");
+      setSubmitError("Las contrasenas no coinciden.");
       return;
     }
 
@@ -93,14 +91,10 @@ function ResetPasswordContent() {
         password,
       });
 
-      router.push(
-        `/?notice=password-reset&email=${encodeURIComponent(response.email)}`,
-      );
+      router.push(`/?notice=password-reset&email=${encodeURIComponent(response.email)}`);
     } catch (error) {
       setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo actualizar la contraseña.",
+        error instanceof Error ? error.message : "No se pudo actualizar la contraseña.",
       );
     } finally {
       setIsSubmitting(false);
@@ -119,9 +113,7 @@ function ResetPasswordContent() {
           Volver al login
         </button>
 
-        <h1 className="text-2xl font-semibold text-fg-strong">
-          Restablecer contraseña
-        </h1>
+        <h1 className="text-2xl font-semibold text-fg-strong">Restablecer contraseña</h1>
         <p className="mt-2 text-sm text-fg-secondary">
           Define una nueva contraseña segura para volver a entrar al panel.
         </p>
@@ -150,34 +142,67 @@ function ResetPasswordContent() {
               <span className="font-medium text-fg-strong">{email}</span>.
             </div>
 
-            <Input
-              label="Nueva contraseña"
-              id="reset-password-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="********"
-              required
-              className="h-12 border-border bg-surface-soft text-fg"
-            />
+            <div>
+              <label
+                htmlFor="reset-password-password"
+                className="mb-2 block text-sm font-medium text-fg-strong"
+              >
+                Nueva contraseña
+              </label>
+              <div className="relative">
+                <input
+                  id="reset-password-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="********"
+                  required
+                  className="h-12 w-full rounded-lg border border-border bg-surface-soft px-3 pr-11 text-fg"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-fg-strong"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
 
-            <Input
-              label="Confirmar contraseña"
-              id="reset-password-confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              placeholder="********"
-              required
-              className="h-12 border-border bg-surface-soft text-fg"
-            />
+            <PasswordRequirements password={password} />
 
-            <div className="rounded-2xl border border-border-info bg-surface-info px-4 py-3 text-sm text-info">
-              <div className="flex items-start gap-2">
-                <KeyRound className="mt-0.5 h-4 w-4" />
-                <p>
-                  La nueva contraseña debe ser fuerte y sustituirá la anterior en todas tus sesiones.
-                </p>
+            <div>
+              <label
+                htmlFor="reset-password-confirm-password"
+                className="mb-2 block text-sm font-medium text-fg-strong"
+              >
+                Confirmar contraseña
+              </label>
+              <div className="relative">
+                <input
+                  id="reset-password-confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="********"
+                  required
+                  className="h-12 w-full rounded-lg border border-border bg-surface-soft px-3 pr-11 text-fg"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-fg-strong"
+                  aria-label={
+                    showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                  }
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 

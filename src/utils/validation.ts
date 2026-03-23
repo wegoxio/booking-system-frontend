@@ -53,7 +53,8 @@ export function validateTenantCreateForm(form: TenantFormState): string | null {
     return null;
 }
 
-export function validateTenantAdminCreateForm(form: TenantAdminFormState, isEditing: boolean): string | null {
+export function validateTenantAdminCreateForm(form: TenantAdminFormState, _isEditing: boolean): string | null {
+    void _isEditing;
     const normalizedName = form.name.trim();
     const normalizedEmail = form.email.trim();
 
@@ -98,11 +99,24 @@ export function validateEmployeeCreateForm(form: EmployeeFormState): string | nu
 }
 
 export function isStrongPassword(value: string) {
-    return (
-        value.length >= 8 &&
-        /[a-z]/.test(value) &&
-        /[A-Z]/.test(value) &&
-        /\d/.test(value) &&
-        /[^A-Za-z0-9]/.test(value)
-    );
+    const requirements = getPasswordRequirementStatus(value);
+    return Object.values(requirements).every(Boolean);
+}
+
+export type PasswordRequirementStatus = {
+    minLength: boolean;
+    lowercase: boolean;
+    uppercase: boolean;
+    number: boolean;
+    symbol: boolean;
+};
+
+export function getPasswordRequirementStatus(value: string): PasswordRequirementStatus {
+    return {
+        minLength: value.length >= 8,
+        lowercase: /[a-z]/.test(value),
+        uppercase: /[A-Z]/.test(value),
+        number: /\d/.test(value),
+        symbol: /[^A-Za-z0-9]/.test(value),
+    };
 }

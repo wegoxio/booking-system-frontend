@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { getPhoneSearchValue } from "@/modules/phone/utils/phone";
 import BookingsCreateModal from "@/modules/bookings/components/BookingsCreateModal";
 import BookingsTable from "@/modules/bookings/components/BookingsTable";
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
@@ -11,7 +10,15 @@ import TableEditModal from "@/modules/ui/TableEditModal";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
 import type { Booking, BookingStatus } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
-import { CheckCircle2, CircleAlert, Plus, Search, XCircle } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  CircleAlert,
+  Copy,
+  Plus,
+  Search,
+  XCircle,
+} from "lucide-react";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -24,6 +31,24 @@ const STATUS_FILTERS: Array<{ value: "" | BookingStatus; label: string }> = [
   { value: "CANCELLED", label: "Cancelada" },
   { value: "NO_SHOW", label: "No asistió" },
 ];
+
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN?.trim() ?? "";
+const PUBLIC_BOOKING_PREFIX = "/book";
+
+function trimTrailingSlashes(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+function buildTenantBookingUrl(baseDomain: string, tenantSlug: string) {
+  const normalizedDomain = trimTrailingSlashes(baseDomain.trim());
+  const normalizedSlug = tenantSlug.trim();
+
+  if (!normalizedDomain || !normalizedSlug) return "";
+
+  return `${normalizedDomain}${PUBLIC_BOOKING_PREFIX}/${encodeURIComponent(
+    normalizedSlug,
+  )}`;
+}
 
 function getTodayDateInput() {
   const now = new Date();
@@ -43,7 +68,7 @@ function isCancellationStatus(status: BookingStatus) {
 }
 
 export default function BookingsManagement() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -62,11 +87,43 @@ export default function BookingsManagement() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
+  const [runtimeAppDomain, setRuntimeAppDomain] = useState("");
+  const [isBookingLinkCopied, setIsBookingLinkCopied] = useState(false);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(25);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const activeEmployees = useMemo(
     () => employees.filter((employee) => employee.is_active),
     [employees],
   );
+  const isTenantAdmin = user?.role === "TENANT_ADMIN";
+  const tenantSlug = user?.tenant?.slug?.trim() ?? "";
+  const bookingAppDomain = APP_DOMAIN || runtimeAppDomain;
+  const tenantBookingPublicUrl = useMemo(
+    () => buildTenantBookingUrl(bookingAppDomain, tenantSlug),
+    [bookingAppDomain, tenantSlug],
+  );
+  const shouldShowTenantBookingClipboard =
+    isTenantAdmin && tenantSlug.length > 0;
+
+  useEffect(() => {
+    if (APP_DOMAIN) return;
+    if (typeof window === "undefined") return;
+    setRuntimeAppDomain(window.location.origin);
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery.trim());
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [searchQuery]);
 
   const loadMeta = useCallback(async () => {
     if (!token) return;
@@ -91,51 +148,56 @@ export default function BookingsManagement() {
     setErrorMessage("");
 
     try {
-      const data = await bookingsService.findAll(
+      const response = await bookingsService.findAll(
         {
           status: statusFilter || undefined,
           employee_id: employeeFilter || undefined,
           date: dateFilter || undefined,
+          q: debouncedSearchQuery || undefined,
+          page,
+          limit,
         },
         token,
       );
-      setBookings(data);
+      setBookings(response.data);
+      setTotalBookings(response.pagination.total);
+      setTotalPages(response.pagination.total_pages);
+
+      if (page > response.pagination.total_pages) {
+        setPage(response.pagination.total_pages);
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "No se pudieron cargar las citas.";
+      setBookings([]);
+      setTotalBookings(0);
+      setTotalPages(1);
       setErrorMessage(message);
       toast.error(message);
     } finally {
       setIsLoadingBookings(false);
     }
-  }, [dateFilter, employeeFilter, statusFilter, token]);
+  }, [
+    dateFilter,
+    debouncedSearchQuery,
+    employeeFilter,
+    limit,
+    page,
+    statusFilter,
+    token,
+  ]);
 
   useEffect(() => {
     void loadMeta();
   }, [loadMeta]);
 
   useEffect(() => {
+    setPage(1);
+  }, [statusFilter, employeeFilter, dateFilter, debouncedSearchQuery]);
+
+  useEffect(() => {
     void loadBookings();
   }, [loadBookings]);
-
-  const filteredBookings = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    if (!normalizedQuery) return bookings;
-
-    return bookings.filter((booking) => {
-      const servicesText = booking.items
-        .map((item) => item.service_name_snapshot)
-        .join(" ");
-      const customerPhoneText = getPhoneSearchValue({
-        display: booking.customer_phone,
-        nationalNumber: booking.customer_phone_national_number,
-        e164: booking.customer_phone_e164,
-      });
-      const haystack =
-        `${booking.customer_name} ${booking.customer_email ?? ""} ${customerPhoneText} ${booking.employee?.name ?? ""} ${servicesText}`.toLowerCase();
-      return haystack.includes(normalizedQuery);
-    });
-  }, [bookings, searchQuery]);
 
   const bookingsTodayCount = useMemo(() => {
     const today = getTodayDateInput();
@@ -151,10 +213,47 @@ export default function BookingsManagement() {
   );
 
   const bookingsStats = [
-    { label: "Citas", value: bookings.length },
+    { label: "Citas", value: totalBookings },
     { label: "Hoy", value: bookingsTodayCount },
     { label: "Activos", value: pendingBookingsCount },
   ];
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    statusFilter.length > 0 ||
+    employeeFilter.length > 0 ||
+    dateFilter.length > 0;
+
+  const handleCopyTenantBookingUrl = useCallback(async () => {
+    if (!tenantBookingPublicUrl) {
+      toast.error("No se pudo construir la URL publica para compartir.");
+      return;
+    }
+
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      toast.error("Tu navegador no permite copiar al portapapeles.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(tenantBookingPublicUrl);
+      setIsBookingLinkCopied(true);
+      toast.success("URL de reservas copiada.");
+    } catch {
+      toast.error("No se pudo copiar la URL.");
+    }
+  }, [tenantBookingPublicUrl]);
+
+  useEffect(() => {
+    if (!isBookingLinkCopied) return;
+
+    const timeout = window.setTimeout(() => {
+      setIsBookingLinkCopied(false);
+    }, 2000);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [isBookingLinkCopied]);
 
   const handleBookingStatusChange = async (booking: Booking, status: BookingStatus) => {
     if (!token) return;
@@ -262,14 +361,38 @@ export default function BookingsManagement() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent transition hover:brightness-[0.98]"
-          >
-            <Plus className="h-4 w-4" />
-            Registrar cita
-          </button>
+          <div className="flex flex-wrap items-center gap-2 self-start">
+            {shouldShowTenantBookingClipboard ? (
+              <button
+                type="button"
+                disabled={!tenantBookingPublicUrl}
+                onClick={() => {
+                  void handleCopyTenantBookingUrl();
+                }}
+                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition ${
+                  tenantBookingPublicUrl
+                    ? "border-border-strong bg-surface text-fg hover:bg-surface-hover"
+                    : "cursor-not-allowed border-border bg-surface text-muted"
+                }`}
+              >
+                {isBookingLinkCopied ? (
+                  <Check className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+                {isBookingLinkCopied ? "URL copiada" : "Copiar URL booking"}
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent transition hover:brightness-[0.98]"
+            >
+              <Plus className="h-4 w-4" />
+              Registrar cita
+            </button>
+          </div>
         </div>
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -320,12 +443,12 @@ export default function BookingsManagement() {
 
         {isLoadingMeta || isLoadingBookings ? (
           <TableSkeleton />
-        ) : filteredBookings.length === 0 ? (
+        ) : bookings.length === 0 ? (
           <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
             <p className="text-base font-medium text-fg">
-              {bookings.length === 0
-                ? "No hay citas registradas todavía."
-                : "No hay resultados para los filtros actuales."}
+              {hasActiveFilters
+                ? "No hay resultados para los filtros actuales."
+                : "No hay citas registradas todavia."}
             </p>
               <p className="mt-2 text-sm text-muted">
                 Agenda una cita o ajusta filtros para visualizar la información.
@@ -333,13 +456,40 @@ export default function BookingsManagement() {
           </div>
         ) : (
           <BookingsTable
-            bookings={filteredBookings}
+            bookings={bookings}
             updatingBookingId={updatingBookingId}
             onStatusChange={(booking, status) => {
               void handleBookingStatusChange(booking, status);
             }}
           />
         )}
+
+        {!isLoadingBookings && totalBookings > 0 ? (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-xs text-muted">
+              Mostrando {(page - 1) * limit + 1}-{(page - 1) * limit + bookings.length} de{" "}
+              {totalBookings} citas.
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page <= 1 || isLoadingBookings}
+                className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral disabled:opacity-50"
+              >
+                Anterior
+              </button>
+              <button
+                type="button"
+                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={page >= totalPages || isLoadingBookings}
+                className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral disabled:opacity-50"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <BookingsCreateModal

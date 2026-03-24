@@ -180,6 +180,19 @@ export type ListBookingsQuery = {
   employee_id?: string;
   date?: string;
   status?: BookingStatus;
+  q?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type ListBookingsResponse = {
+  data: Booking[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
 };
 
 export type CreateBookingPayload = {

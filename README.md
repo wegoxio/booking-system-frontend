@@ -56,6 +56,7 @@ pnpm install
 2. Configura `.env` con al menos:
 
 - `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_APP_DOMAIN` (ejemplo: `https://app.tudominio.com`)
 
 3. Levanta el entorno de desarrollo:
 
@@ -106,4 +107,4 @@ Para la primera salida publica del MVP, este frontend esta pensado para empareja
 - no hay pagos integrados
 - no hay WhatsApp o SMS nativo
 - no hay calendar sync
-- la app depende de una configuracion correcta de `NEXT_PUBLIC_API_URL`, cookies y CORS
+- la app depende de una configuracion correcta de `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_DOMAIN`, cookies y CORS

@@ -5,7 +5,6 @@ import type {
   Booking,
   CreateEmployeeTimeOffPayload,
   CreateBookingPayload,
-  CreateManualBookingPayload,
   EmployeeTimeOffRecord,
   EmployeeScheduleResponse,
   ListBookingsQuery,
@@ -108,18 +107,8 @@ export const bookingsService = {
   },
 
   create: async (payload: CreateBookingPayload, token: string): Promise<Booking> => {
-    return apiFetch<Booking>("/bookings", {
-      method: "POST",
-      token,
-      body: JSON.stringify(payload),
-    });
-  },
-
-  createManual: async (
-    payload: CreateManualBookingPayload,
-    token: string,
-  ): Promise<Booking> => {
-    return apiFetch<Booking>("/bookings/manual", {
+    const endpoint = payload.source === "MANUAL" ? "/bookings/manual" : "/bookings";
+    return apiFetch<Booking>(endpoint, {
       method: "POST",
       token,
       body: JSON.stringify(payload),

@@ -9,6 +9,7 @@ import type {
   EmployeeTimeOffRecord,
   EmployeeScheduleResponse,
   ListBookingsQuery,
+  ListBookingsResponse,
   PublicBookingConfirmation,
   PublicBookingEmployee,
   PublicBookingService,
@@ -125,13 +126,19 @@ export const bookingsService = {
     });
   },
 
-  findAll: async (query: ListBookingsQuery, token: string): Promise<Booking[]> => {
+  findAll: async (
+    query: ListBookingsQuery,
+    token: string,
+  ): Promise<ListBookingsResponse> => {
     const queryString = toQueryString({
       employee_id: query.employee_id,
       date: query.date,
       status: query.status,
+      q: query.q,
+      page: query.page ? String(query.page) : undefined,
+      limit: query.limit ? String(query.limit) : undefined,
     });
-    return apiFetch<Booking[]>(`/bookings${queryString}`, {
+    return apiFetch<ListBookingsResponse>(`/bookings${queryString}`, {
       method: "GET",
       token,
     });

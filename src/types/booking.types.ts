@@ -206,22 +206,10 @@ export type CreateBookingPayload = {
   customer_phone_national_number?: string | null;
   notes?: string;
   source?: BookingSource;
-  captcha_token?: string;
-};
-
-export type CreateManualBookingPayload = {
-  employee_id: string;
-  service_ids: string[];
-  start_at_utc: string;
-  customer_name: string;
-  customer_email?: string;
-  customer_phone?: string | null;
-  customer_phone_country_iso2?: string | null;
-  customer_phone_national_number?: string | null;
-  notes?: string;
   status?: BookingStatus;
   cancellation_reason?: string;
   allow_overlap?: boolean;
+  captcha_token?: string;
 };
 
 export type UpdateBookingStatusPayload = {

@@ -373,7 +373,7 @@ export default function TenantPublicBookingFlow({
   }, [loadMeta]);
 
   useEffect(() => {
-    if (typeof document === "undefined") return;
+    if (isLoadingMeta || typeof document === "undefined") return;
     const previousTitle = readDocumentTitle();
     const previousFavicon = readDocumentFaviconHref();
 
@@ -388,7 +388,7 @@ export default function TenantPublicBookingFlow({
         faviconUrl: previousFavicon,
       });
     };
-  }, [branding.faviconUrl, branding.windowTitle]);
+  }, [branding.faviconUrl, branding.windowTitle, isLoadingMeta]);
 
   useEffect(() => {
     if (selectedServiceIds.length === 0) {
@@ -468,9 +468,7 @@ export default function TenantPublicBookingFlow({
   }, [selectedDate, selectedEmployeeId, selectedEmployeeWorkingDays]);
 
   const handleToggleService = (serviceId: string) => {
-    setSelectedServiceIds((prev) =>
-      prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId],
-    );
+    setSelectedServiceIds((prev) => (prev.includes(serviceId) ? [] : [serviceId]));
     setSelectedSlotStart(null);
     if (currentStep !== "services") {
       setCurrentStep("services");
@@ -572,6 +570,23 @@ export default function TenantPublicBookingFlow({
   };
 
   const stepNumber = STEP_ORDER.indexOf(currentStep) + 1;
+
+  if (isLoadingMeta) {
+    return (
+      <div className="min-h-screen bg-slate-100 py-10">
+        <section className="mx-auto max-w-6xl px-4">
+          <div className="rounded-3xl border border-slate-200 bg-white p-10 shadow-sm">
+            <div className="mx-auto max-w-md text-center">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-slate-300 border-t-slate-700" />
+              <p className="mt-4 text-sm font-medium text-slate-700">
+                Cargando experiencia de reservas...
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div style={themeStyle} className="min-h-screen bg-app py-6">
@@ -706,9 +721,7 @@ export default function TenantPublicBookingFlow({
 
               {errorMessage ? <p className="mb-4 text-sm text-danger">{errorMessage}</p> : null}
 
-              {isLoadingMeta ? (
-                <p className="text-sm text-muted">Cargando servicios...</p>
-              ) : activeServices.length === 0 ? (
+              {activeServices.length === 0 ? (
                 <p className="rounded-2xl border border-border-soft bg-surface-soft px-3 py-3 text-sm text-muted">
                   Este negocio no tiene servicios públicos disponibles.
                 </p>

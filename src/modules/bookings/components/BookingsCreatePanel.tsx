@@ -385,7 +385,7 @@ export default function BookingsCreatePanel({
     setIsSubmittingManual(true);
     setManualErrorMessage("");
     try {
-      await bookingsService.createManual(
+      await bookingsService.create(
         {
           employee_id: manualSelectedEmployeeId,
           service_ids: manualSelectedServiceIds,
@@ -397,6 +397,7 @@ export default function BookingsCreatePanel({
           customer_phone_national_number:
             manualCustomerForm.customer_phone_national_number.trim() || undefined,
           notes: manualCustomerForm.notes.trim() || undefined,
+          source: "MANUAL",
           status: manualStatus || undefined,
           cancellation_reason: manualCancellationReason.trim() || undefined,
           allow_overlap: manualAllowOverlap,
@@ -522,9 +523,7 @@ export default function BookingsCreatePanel({
           services={activeServices}
           selectedServiceIds={strictSelectedServiceIds}
           onToggleService={(serviceId) => {
-            setStrictSelectedServiceIds((prev) =>
-              prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId],
-            );
+            setStrictSelectedServiceIds((prev) => (prev.includes(serviceId) ? [] : [serviceId]));
             setStrictSlots([]);
             setStrictRequiredDurationMinutes(null);
             setStrictAvailabilityTimezone(null);
@@ -572,9 +571,7 @@ export default function BookingsCreatePanel({
           services={activeServices}
           selectedServiceIds={manualSelectedServiceIds}
           onToggleService={(serviceId) => {
-            setManualSelectedServiceIds((prev) =>
-              prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId],
-            );
+            setManualSelectedServiceIds((prev) => (prev.includes(serviceId) ? [] : [serviceId]));
           }}
           eligibleEmployees={manualEligibleEmployees}
           isLoadingEligibleEmployees={isLoadingManualEmployees}

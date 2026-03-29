@@ -41,9 +41,13 @@ const ACTION_OPTIONS: SelectOption[] = [
   { value: "AUTH_LOGIN_SUCCESS", label: "Inicio de sesión correcto" },
   { value: "TENANT_CREATED", label: "Negocio creado" },
   { value: "TENANT_UPDATED", label: "Negocio actualizado" },
+  { value: "TENANT_ENABLED", label: "Negocio habilitado" },
+  { value: "TENANT_DISABLED", label: "Negocio deshabilitado" },
   { value: "TENANT_DELETED", label: "Negocio eliminado" },
   { value: "TENANT_ADMIN_CREATED", label: "Administrador creado" },
   { value: "TENANT_ADMIN_UPDATED", label: "Administrador actualizado" },
+  { value: "TENANT_ADMIN_ENABLED", label: "Administrador habilitado" },
+  { value: "TENANT_ADMIN_DISABLED", label: "Administrador deshabilitado" },
   { value: "TENANT_ADMIN_DELETED", label: "Administrador eliminado" },
   { value: "EMPLOYEE_CREATED", label: "Empleado creado" },
   { value: "EMPLOYEE_UPDATED", label: "Empleado actualizado" },
@@ -106,7 +110,12 @@ function getActionBadgeClass(action: string) {
   if (action.includes("UPDATED") || action.includes("STATUS")) {
     return "bg-surface-info text-info border-border-info";
   }
-  if (action.includes("CREATED") || action.includes("UPLOADED") || action.includes("LOGIN")) {
+  if (
+    action.includes("CREATED") ||
+    action.includes("UPLOADED") ||
+    action.includes("LOGIN") ||
+    action.includes("ENABLED")
+  ) {
     return "bg-surface-success text-success border-border-success";
   }
   return "bg-surface-warning-soft text-warning border-border-warning";
@@ -115,6 +124,7 @@ function getActionBadgeClass(action: string) {
 function getActionIcon(action: string): LucideIcon {
   if (action.includes("LOGIN")) return LockKeyhole;
   if (action.includes("DELETED") || action.includes("DISABLED")) return Trash2;
+  if (action.includes("ENABLED")) return PlusCircle;
   if (action.includes("UPDATED") || action.includes("STATUS")) return PencilLine;
   if (action.includes("UPLOADED")) return Upload;
   if (action.includes("CREATED")) return PlusCircle;
@@ -334,7 +344,7 @@ export default function AuditLogsManagement(): React.ReactNode {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
-              Bitácora de auditoría
+              Logs
             </h2>
             <p className="mt-4 max-w-3xl text-sm text-muted">
               Trazabilidad completa de acciones críticas en plataforma, negocio y operaciones.

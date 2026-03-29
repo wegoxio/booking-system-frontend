@@ -5,6 +5,7 @@ export type Tenant = {
   name: string;
   slug: string;
   is_active: boolean;
+  tenant_logo_url?: string | null;
 };
 
 export type CreateTenantPayload = {

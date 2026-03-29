@@ -1,5 +1,6 @@
 import type { Booking, BookingStatus } from "@/types/booking.types";
 import { getPhoneDisplay } from "@/modules/phone/utils/phone";
+import Avatar from "@/modules/ui/Avatar";
 import { CalendarClock, Scissors, UserRound } from "lucide-react";
 
 const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
@@ -80,9 +81,12 @@ export default function BookingsTable({
               key={booking.id}
               className="rounded-3xl border border-border-soft bg-surface p-4 shadow-theme-row"
             >
-              <div className="space-y-1">
-                <p className="font-semibold text-fg-strong">{booking.customer_name}</p>
-                <p className="text-xs text-muted">{contactDisplay}</p>
+              <div className="flex items-center gap-3">
+                <Avatar name={booking.customer_name} className="h-10 w-10 text-xs" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-fg-strong">{booking.customer_name}</p>
+                  <p className="text-xs text-muted">{contactDisplay}</p>
+                </div>
               </div>
 
               <div className="mt-3 space-y-2 text-xs text-fg-secondary">
@@ -184,8 +188,13 @@ export default function BookingsTable({
               return (
                 <tr key={booking.id} className="text-primary shadow-theme-row">
                   <td className="rounded-l-3xl border-y border-l border-border-soft bg-surface px-4 py-4">
-                    <p className="font-semibold text-fg-strong">{booking.customer_name}</p>
-                    <p className="mt-1 text-xs text-muted">{contactDisplay}</p>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={booking.customer_name} />
+                      <div>
+                        <p className="font-semibold text-fg-strong">{booking.customer_name}</p>
+                        <p className="mt-1 text-xs text-muted">{contactDisplay}</p>
+                      </div>
+                    </div>
                   </td>
 
                   <td className="border-y border-border-soft bg-surface px-4 py-4">

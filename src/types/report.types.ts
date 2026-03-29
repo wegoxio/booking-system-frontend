@@ -1,6 +1,6 @@
-import type { BookingSource, BookingStatus } from "./booking.types";
-
 export type ReportGroupBy = "day" | "week" | "month";
+export type ReportBookingSource = "WEB" | "MANUAL";
+export type ReportBookingStatus = "PENDING" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
 
 export type ReportsOverviewQuery = {
   date_from?: string;
@@ -10,8 +10,8 @@ export type ReportsOverviewQuery = {
   tenant_id?: string;
   employee_id?: string;
   service_id?: string;
-  source?: BookingSource;
-  status?: BookingStatus;
+  source?: ReportBookingSource;
+  status?: ReportBookingStatus;
   top_limit?: number;
 };
 
@@ -63,7 +63,7 @@ export type ReportsTopEmployee = {
 };
 
 export type ReportsSourceBreakdownRow = {
-  source: BookingSource;
+  source: ReportBookingSource;
   bookings_count: number;
   completed_count: number;
   cancelled_count: number;
@@ -94,8 +94,8 @@ export type ReportsOverviewResponse = {
     tenant_id: string | null;
     employee_id: string | null;
     service_id: string | null;
-    source: BookingSource | null;
-    status: BookingStatus | null;
+    source: ReportBookingSource | null;
+    status: ReportBookingStatus | null;
     top_limit: number;
   };
   summary: ReportsSummary;

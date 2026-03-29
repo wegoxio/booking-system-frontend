@@ -32,11 +32,4 @@ export const tenantsService = {
       body: JSON.stringify(payload),
     });
   },
-
-  remove: async (id: string, token: string): Promise<{ id: string }> => {
-    return apiFetch<{ id: string }>(`/tenant/${id}`, {
-      method: "DELETE",
-      token,
-    });
-  },
 };

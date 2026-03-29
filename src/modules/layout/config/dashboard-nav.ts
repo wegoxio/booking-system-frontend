@@ -18,7 +18,7 @@ const superAdminItems: DashboardNavItem[] = [
   { href: "/reports", label: "Reportes", icon: ChartNoAxesCombined },
   { href: "/tenants", label: "Negocios", icon: Building2 },
   { href: "/users", label: "Admins de negocio", icon: Users },
-  { href: "/audit-logs", label: "Bitácora de auditoría", icon: ReceiptText },
+  { href: "/audit-logs", label: "Logs", icon: ReceiptText },
   { href: "/settings", label: "Configuración", icon: Settings },
 ];
 
@@ -28,7 +28,7 @@ const tenantAdminItems: DashboardNavItem[] = [
   { href: "/services", label: "Servicios", icon: BriefcaseBusiness },
   { href: "/employees", label: "Empleados", icon: Users },
   { href: "/bookings", label: "Citas", icon: CalendarClock },
-  { href: "/audit-logs", label: "Bitácora de auditoría", icon: ReceiptText },
+  { href: "/audit-logs", label: "Logs", icon: ReceiptText },
   { href: "/settings", label: "Configuración", icon: Settings },
 ];
 

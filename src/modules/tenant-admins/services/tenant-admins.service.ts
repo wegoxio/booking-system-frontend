@@ -35,11 +35,4 @@ export const tenantAdminsService = {
       body: JSON.stringify(payload),
     });
   },
-
-  remove: async (id: string, token: string): Promise<{ id: string }> => {
-    return apiFetch<{ id: string }>(`/users/tenant-admins/${id}`, {
-      method: "DELETE",
-      token,
-    });
-  },
 };

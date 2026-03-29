@@ -1,4 +1,4 @@
-import { Hash, Pencil, Trash2 } from "lucide-react";
+import { Ban, Hash, Pencil } from "lucide-react";
 import { Avatar } from "@/modules/employees/components/components/Avatar";
 import type { Tenant } from "@/types/tenant.types";
 import { formatDate } from "@/utils/format";
@@ -6,13 +6,13 @@ import { formatDate } from "@/utils/format";
 interface TenantsTableProps {
   tenants: Tenant[];
   onEdit: (tenant: Tenant) => void;
-  onDelete: (tenant: Tenant) => void;
+  onDeactivate: (tenant: Tenant) => void;
 }
 
 export default function TenantsTable({
   tenants,
   onEdit,
-  onDelete,
+  onDeactivate,
 }: TenantsTableProps): React.ReactNode {
   return (
     <div className="mt-4">
@@ -23,7 +23,7 @@ export default function TenantsTable({
             className="rounded-3xl border border-border-soft bg-surface p-4 shadow-theme-row"
           >
             <div className="flex items-center gap-3">
-              <Avatar name={tenant.name} />
+              <Avatar name={tenant.name} imageUrl={tenant.tenant_logo_url} />
               <div className="min-w-0">
                 <p className="font-semibold text-fg-strong">{tenant.name}</p>
                 <p className="text-xs text-muted">ID del negocio: {tenant.id}</p>
@@ -57,11 +57,12 @@ export default function TenantsTable({
               </button>
               <button
                 type="button"
-                onClick={() => onDelete(tenant)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border-danger bg-surface-danger px-3 py-2 text-xs font-medium text-danger transition-colors hover:bg-danger/60 hover:text-secondary-hover"
+                onClick={() => onDeactivate(tenant)}
+                disabled={!tenant.is_active}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border-warning bg-surface-warning px-3 py-2 text-xs font-medium text-warning transition-colors hover:bg-warning/60 hover:text-secondary-hover disabled:cursor-not-allowed disabled:opacity-55"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                Eliminar
+                <Ban className="h-3.5 w-3.5" />
+                {tenant.is_active ? "Desactivar" : "Inactivo"}
               </button>
             </div>
           </article>
@@ -84,7 +85,7 @@ export default function TenantsTable({
               <tr key={tenant.id} className="text-primary shadow-theme-row">
                 <td className="rounded-l-3xl border-y border-l border-border-soft bg-surface px-4 py-4">
                   <div className="flex items-center gap-3">
-                    <Avatar name={tenant.name} />
+                    <Avatar name={tenant.name} imageUrl={tenant.tenant_logo_url} />
                     <div className="min-w-0">
                       <p className="font-semibold text-fg-strong">{tenant.name}</p>
                       <p className="text-xs text-muted">ID del negocio: {tenant.id}</p>
@@ -121,11 +122,12 @@ export default function TenantsTable({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onDelete(tenant)}
-                      className="inline-flex items-center gap-2 rounded-xl border border-border-danger bg-surface-danger px-3 py-2 text-xs font-medium text-danger transition-colors hover:bg-danger/60 hover:text-secondary-hover"
+                      onClick={() => onDeactivate(tenant)}
+                      disabled={!tenant.is_active}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border-warning bg-surface-warning px-3 py-2 text-xs font-medium text-warning transition-colors hover:bg-warning/60 hover:text-secondary-hover disabled:cursor-not-allowed disabled:opacity-55"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Eliminar
+                      <Ban className="h-3.5 w-3.5" />
+                      {tenant.is_active ? "Desactivar" : "Inactivo"}
                     </button>
                   </div>
                 </td>

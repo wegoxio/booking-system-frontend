@@ -1,4 +1,4 @@
-﻿import { Check, ChevronDown } from "lucide-react";
+﻿import { Check, ChevronDown, ClipboardList } from "lucide-react";
 import Avatar from "@/modules/ui/Avatar";
 import Card from "@/modules/ui/Card";
 import { RecentAuditLogsCardProps } from "@/types/dashboard.types";
@@ -14,7 +14,10 @@ export default function RecentAuditLogsCard({
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-[30px] font-semibold leading-none text-fg-strong">{title}</h3>
+        <h3 className="inline-flex items-center gap-2 text-[30px] font-semibold leading-none text-fg-strong">
+          <ClipboardList className="h-5 w-5 text-accent" />
+          {title}
+        </h3>
 
         {withRanges ? (
           <div className="flex items-center gap-1 rounded-lg border border-border-soft bg-surface-soft p-1 text-xs text-muted">
@@ -67,3 +70,4 @@ export default function RecentAuditLogsCard({
     </Card>
   );
 }
+

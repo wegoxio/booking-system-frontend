@@ -1,8 +1,8 @@
-import { Camera, Mail, Phone, ShieldCheck } from "lucide-react";
+import { Camera, Mail, Phone, ShieldCheck, Upload, X } from "lucide-react";
 import { Avatar as EmployeeAvatar } from "@/modules/employees/components/components/Avatar";
 import { getPhoneDisplay } from "@/modules/phone/utils/phone";
 import PhoneField from "@/modules/ui/PhoneField";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 type EmployeeEditModalContentProps = {
   form: {
@@ -37,6 +37,7 @@ export default function EmployeeEditModalContent({
   onIsActiveChange,
 }: EmployeeEditModalContentProps): React.ReactNode {
   const [localAvatarPreviewUrl, setLocalAvatarPreviewUrl] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!form.avatar_file) {
@@ -56,6 +57,20 @@ export default function EmployeeEditModalContent({
       countryIso2: form.phone_country_iso2,
       nationalNumber: form.phone_national_number,
     }) ?? "";
+  const selectedAvatarName = form.avatar_file?.name?.trim() || "";
+
+  const handleAvatarInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextFile = event.target.files?.[0];
+    if (!nextFile) return;
+    onAvatarFileChange(nextFile);
+  };
+
+  const handleClearAvatarFile = () => {
+    onAvatarFileChange(null);
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = "";
+    }
+  };
 
   return (
     <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1.05fr_0.95fr]">
@@ -110,12 +125,36 @@ export default function EmployeeEditModalContent({
             <Camera className="h-4 w-4 text-fg-icon" />
             Foto del perfil
           </span>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(event) => onAvatarFileChange(event.target.files?.[0] ?? null)}
-            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
-          />
+          <div className="rounded-2xl border border-border bg-surface p-3">
+            <div className="flex items-center justify-between gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border-strong bg-surface-soft px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover">
+                <Upload className="h-3.5 w-3.5" />
+                {selectedAvatarName ? "Cambiar imagen" : "Seleccionar imagen"}
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleAvatarInputChange}
+                  className="hidden"
+                />
+              </label>
+
+              {selectedAvatarName ? (
+                <button
+                  type="button"
+                  onClick={handleClearAvatarFile}
+                  className="inline-flex items-center gap-1 rounded-xl border border-border-strong bg-surface-soft px-2.5 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Quitar
+                </button>
+              ) : null}
+            </div>
+
+            <p className="mt-2 truncate text-xs text-muted">
+              {selectedAvatarName || "No hay archivo seleccionado."}
+            </p>
+          </div>
           <p className="text-xs text-muted">
             PNG, JPG o WEBP. Máximo 2 MB. Si no subes imagen se usará el avatar con iniciales.
           </p>

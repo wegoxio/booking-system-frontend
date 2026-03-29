@@ -2,6 +2,7 @@
 
 import Card from "@/modules/ui/Card";
 import type { DashboardChartPoint } from "@/types/dashboard.types";
+import { BarChart3 } from "lucide-react";
 import {
   Area,
   CartesianGrid,
@@ -53,7 +54,8 @@ export default function DashboardRevenueChartCard({
   return (
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[30px] font-semibold leading-none text-fg-strong">
+        <h3 className="inline-flex items-center gap-2 text-[30px] font-semibold leading-none text-fg-strong">
+          <BarChart3 className="h-5 w-5 text-accent" />
           {title}
         </h3>
         <div className="flex items-center gap-3 text-xs text-muted">

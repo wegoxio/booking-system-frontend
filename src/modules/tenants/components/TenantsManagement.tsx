@@ -7,7 +7,7 @@ import { tenantsService } from "@/modules/tenants/services/tenants.service";
 import { tenantAdminsService } from "@/modules/tenant-admins/services/tenant-admins.service";
 import TenantEditModalContent from "@/modules/tenants/components/TenantEditModalContent";
 import TenantsTable from "@/modules/tenants/components/TenantsTable";
-import ConfirmDeleteModal from "@/modules/ui/ConfirmDeleteModal";
+import ConfirmActionModal from "@/modules/ui/ConfirmActionModal";
 import TableEditModal from "@/modules/ui/TableEditModal";
 import {
   emptyForm,
@@ -38,8 +38,8 @@ export default function TenantsManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [tenantToDelete, setTenantToDelete] = useState<Tenant | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [tenantToDeactivate, setTenantToDeactivate] = useState<Tenant | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const activeTenantsCount = useMemo(
     () => tenants.filter((tenant) => tenant.is_active).length,
@@ -109,8 +109,9 @@ export default function TenantsManagement() {
     setIsModalOpen(true);
   };
 
-  const openDeleteModal = (tenant: Tenant) => {
-    setTenantToDelete(tenant);
+  const openDeactivateModal = (tenant: Tenant) => {
+    if (!tenant.is_active) return;
+    setTenantToDeactivate(tenant);
   };
 
   const handleNameChange = (value: string) => {
@@ -125,26 +126,26 @@ export default function TenantsManagement() {
     setForm((prev) => ({ ...prev, is_active: value }));
   };
 
-  const closeDeleteModal = () => {
-    if (isDeleting) return;
-    setTenantToDelete(null);
+  const closeDeactivateModal = () => {
+    if (isDeactivating) return;
+    setTenantToDeactivate(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!token || !tenantToDelete) return;
-    setIsDeleting(true);
+  const handleConfirmDeactivate = async () => {
+    if (!token || !tenantToDeactivate) return;
+    setIsDeactivating(true);
     setErrorMessage("");
     try {
-      await tenantsService.remove(tenantToDelete.id, token);
+      await tenantsService.update(tenantToDeactivate.id, { is_active: false }, token);
       await loadTenants();
-      toast.success("Negocio eliminado correctamente.");
-      setTenantToDelete(null);
+      toast.success("Negocio desactivado correctamente.");
+      setTenantToDeactivate(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo eliminar el negocio.";
+      const message = error instanceof Error ? error.message : "No se pudo desactivar el negocio.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
-      setIsDeleting(false);
+      setIsDeactivating(false);
     }
   };
 
@@ -283,7 +284,7 @@ export default function TenantsManagement() {
             <TenantsTable
               tenants={filteredTenants}
               onEdit={openEditModal}
-              onDelete={openDeleteModal}
+              onDeactivate={openDeactivateModal}
             />
           )}
         </div>
@@ -324,16 +325,15 @@ export default function TenantsManagement() {
         />
       </TableEditModal>
 
-      <ConfirmDeleteModal
-        isOpen={!!tenantToDelete}
-        title="Eliminar negocio"
-        description="Esta acción eliminará el negocio y su información relacionada. No se puede deshacer."
-        itemName={tenantToDelete?.name}
-        checkboxLabel="Confirmo que deseo eliminar este negocio de forma permanente."
-        confirmText="Eliminar negocio"
-        isConfirming={isDeleting}
-        onClose={closeDeleteModal}
-        onConfirm={() => void handleConfirmDelete()}
+      <ConfirmActionModal
+        isOpen={!!tenantToDeactivate}
+        title="Desactivar negocio"
+        description="El negocio quedará inactivo y se bloqueará el acceso de sus administradores y su enlace público de reservas."
+        checkboxLabel="Confirmo que deseo desactivar este negocio."
+        confirmText="Desactivar negocio"
+        isConfirming={isDeactivating}
+        onClose={closeDeactivateModal}
+        onConfirm={() => void handleConfirmDeactivate()}
       />
     </section>
   );

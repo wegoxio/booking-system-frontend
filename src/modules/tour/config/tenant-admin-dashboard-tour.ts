@@ -56,7 +56,7 @@ export const TENANT_ADMIN_DASHBOARD_TOUR_STEPS: DriveStep[] = [
   {
     element: "[data-tour='dashboard-nav-audit-logs']",
     popover: {
-      title: "Bitácora de auditoría",
+      title: "Logs",
       description:
         "Este historial te ayuda a entender qué cambios se hicieron y quién los realizó dentro del negocio.",
       side: "right",

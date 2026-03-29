@@ -3,6 +3,7 @@ import Card from "@/modules/ui/Card";
 import StatusPill from "@/modules/ui/StatusPill";
 import type { DashboardTenantsTableCardProps } from "@/types/dashboard.types";
 import { formatCurrency, formatDateTime } from "@/utils/format";
+import { Building2, Users } from "lucide-react";
 
 export default function DashboardTenantsTableCard({
   role,
@@ -12,12 +13,15 @@ export default function DashboardTenantsTableCard({
 }: DashboardTenantsTableCardProps) {
   const isSuperAdmin = role === "SUPER_ADMIN";
   const hasRows = isSuperAdmin ? tenants.length > 0 : employees.length > 0;
+  const title = isSuperAdmin ? "Negocios" : "Profesionales";
+  const TitleIcon = isSuperAdmin ? Building2 : Users;
 
   return (
     <Card className="overflow-hidden p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="text-[30px] font-semibold leading-none text-fg-strong">
-          {isSuperAdmin ? "Negocios" : "Profesionales"}
+        <h3 className="inline-flex items-center gap-2 text-[30px] font-semibold leading-none text-fg-strong">
+          <TitleIcon className="h-5 w-5 text-accent" />
+          {title}
         </h3>
       </div>
 
@@ -30,9 +34,16 @@ export default function DashboardTenantsTableCard({
                 className="rounded-3xl border border-border-soft bg-surface-soft p-4"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-primary">{tenant.tenant_name}</p>
-                    <p className="text-xs text-fg-soft">{tenant.tenant_slug}</p>
+                  <div className="flex items-center gap-2.5">
+                    <Avatar
+                      name={tenant.tenant_name}
+                      imageUrl={tenant.tenant_logo_url}
+                      className="h-10 w-10 text-xs"
+                    />
+                    <div>
+                      <p className="font-semibold text-primary">{tenant.tenant_name}</p>
+                      <p className="text-xs text-fg-soft">{tenant.tenant_slug}</p>
+                    </div>
                   </div>
                   <StatusPill
                     label={tenant.tenant_is_active ? "Activo" : "Inactivo"}
@@ -153,9 +164,12 @@ export default function DashboardTenantsTableCard({
                       className="border-b border-border-soft text-sm text-neutral last:border-b-0"
                     >
                       <td className="px-4 py-3">
-                        <div>
-                          <p className="font-semibold text-primary">{tenant.tenant_name}</p>
-                          <p className="text-[10px] text-fg-soft">{tenant.tenant_slug}</p>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={tenant.tenant_name} imageUrl={tenant.tenant_logo_url} />
+                          <div>
+                            <p className="font-semibold text-primary">{tenant.tenant_name}</p>
+                            <p className="text-[10px] text-fg-soft">{tenant.tenant_slug}</p>
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">

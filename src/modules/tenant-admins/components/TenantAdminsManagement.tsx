@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import TenantAdminModalContent from "@/modules/tenant-admins/components/TenantAdminModalContent";
 import { tenantAdminsService } from "@/modules/tenant-admins/services/tenant-admins.service";
 import { tenantsService } from "@/modules/tenants/services/tenants.service";
-import ConfirmDeleteModal from "@/modules/ui/ConfirmDeleteModal";
+import ConfirmActionModal from "@/modules/ui/ConfirmActionModal";
 import TableEditModal from "@/modules/ui/TableEditModal";
 import type {
   CreateTenantAdminPayload,
@@ -42,8 +42,8 @@ export default function TenantAdminsManagement() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [tenantAdminToDelete, setTenantAdminToDelete] = useState<TenantAdmin | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [tenantAdminToDeactivate, setTenantAdminToDeactivate] = useState<TenantAdmin | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const activeTenantAdminsCount = useMemo(
     () => tenantAdmins.filter((tenantAdmin) => tenantAdmin.is_active).length,
@@ -123,8 +123,9 @@ export default function TenantAdminsManagement() {
     setIsModalOpen(true);
   };
 
-  const openDeleteModal = (tenantAdmin: TenantAdmin) => {
-    setTenantAdminToDelete(tenantAdmin);
+  const openDeactivateModal = (tenantAdmin: TenantAdmin) => {
+    if (!tenantAdmin.is_active) return;
+    setTenantAdminToDeactivate(tenantAdmin);
   };
 
   const handleNameChange = (value: string) => {
@@ -143,27 +144,31 @@ export default function TenantAdminsManagement() {
     setForm((prev) => ({ ...prev, is_active: value }));
   };
 
-  const closeDeleteModal = () => {
-    if (isDeleting) return;
-    setTenantAdminToDelete(null);
+  const closeDeactivateModal = () => {
+    if (isDeactivating) return;
+    setTenantAdminToDeactivate(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!token || !tenantAdminToDelete) return;
-    setIsDeleting(true);
+  const handleConfirmDeactivate = async () => {
+    if (!token || !tenantAdminToDeactivate) return;
+    setIsDeactivating(true);
     setErrorMessage("");
     try {
-      await tenantAdminsService.remove(tenantAdminToDelete.id, token);
+      await tenantAdminsService.update(
+        tenantAdminToDeactivate.id,
+        { is_active: false },
+        token,
+      );
       await loadData();
-      toast.success("Administrador eliminado correctamente.");
-      setTenantAdminToDelete(null);
+      toast.success("Administrador desactivado correctamente.");
+      setTenantAdminToDeactivate(null);
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "No se pudo eliminar el administrador.";
+        error instanceof Error ? error.message : "No se pudo desactivar el administrador.";
       setErrorMessage(message);
       toast.error(message);
     } finally {
-      setIsDeleting(false);
+      setIsDeactivating(false);
     }
   };
 
@@ -271,7 +276,11 @@ export default function TenantAdminsManagement() {
               </p>
             </div>
           ) : (
-            <TenantsAdminsTable tenantsAdmin={filteredTenantAdmins} onEdit={openEditModal} onDelete={openDeleteModal} />
+            <TenantsAdminsTable
+              tenantsAdmin={filteredTenantAdmins}
+              onEdit={openEditModal}
+              onDeactivate={openDeactivateModal}
+            />
           )}
         </div>
       )}
@@ -300,16 +309,15 @@ export default function TenantAdminsManagement() {
         />
       </TableEditModal>
 
-      <ConfirmDeleteModal
-        isOpen={!!tenantAdminToDelete}
-        title="Eliminar administrador"
-        description="Esta acción eliminará la cuenta administrativa seleccionada. No se puede deshacer."
-        itemName={tenantAdminToDelete?.name}
-        checkboxLabel="Confirmo que deseo eliminar este administrador de forma permanente."
-        confirmText="Eliminar administrador"
-        isConfirming={isDeleting}
-        onClose={closeDeleteModal}
-        onConfirm={() => void handleConfirmDelete()}
+      <ConfirmActionModal
+        isOpen={!!tenantAdminToDeactivate}
+        title="Desactivar administrador"
+        description="El administrador quedará inactivo y no podrá acceder al panel del negocio."
+        checkboxLabel="Confirmo que deseo desactivar este administrador."
+        confirmText="Desactivar administrador"
+        isConfirming={isDeactivating}
+        onClose={closeDeactivateModal}
+        onConfirm={() => void handleConfirmDeactivate()}
       />
     </section>
   );

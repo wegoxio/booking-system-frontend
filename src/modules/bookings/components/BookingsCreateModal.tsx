@@ -53,7 +53,7 @@ export default function BookingsCreateModal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative z-10 flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-4xl border border-inverse-60 bg-gradient-to-b from-surface-warm to-surface-soft shadow-theme-modal-lg transition ${
+        className={`relative z-10 flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-4xl border border-inverse-60 bg-linear-to-b from-surface-warm to-surface-soft shadow-theme-modal-lg transition ${
           isVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
         }`}
       >

@@ -7,7 +7,13 @@ import { servicesService } from "@/modules/services/services/services.service";
 import Avatar from "@/modules/ui/Avatar";
 import Card from "@/modules/ui/Card";
 import type { Employee } from "@/types/employee.types";
-import type { ReportGroupBy, ReportsOverviewQuery, ReportsOverviewResponse } from "@/types/report.types";
+import type {
+  ReportBookingSource,
+  ReportBookingStatus,
+  ReportGroupBy,
+  ReportsOverviewQuery,
+  ReportsOverviewResponse,
+} from "@/types/report.types";
 import type { Service } from "@/types/service.types";
 import {
   BarChart3,
@@ -44,8 +50,8 @@ type ReportsFiltersState = {
   date_from: string;
   date_to: string;
   group_by: ReportGroupBy;
-  status: string;
-  source: string;
+  status: "" | ReportBookingStatus;
+  source: "" | ReportBookingSource;
   employee_id: string;
   service_id: string;
 };
@@ -53,19 +59,15 @@ type ReportsFiltersState = {
 const STATUS_FILTERS = [
   { value: "", label: "Todos los estados" },
   { value: "PENDING", label: "Pendiente" },
-  { value: "CONFIRMED", label: "Confirmada" },
-  { value: "IN_PROGRESS", label: "En progreso" },
   { value: "COMPLETED", label: "Completada" },
   { value: "CANCELLED", label: "Cancelada" },
-  { value: "NO_SHOW", label: "No asistió" },
+  { value: "NO_SHOW", label: "No asistio" },
 ];
 
 const SOURCE_FILTERS = [
   { value: "", label: "Todos los canales" },
   { value: "WEB", label: "Web" },
-  { value: "ADMIN", label: "Administrador" },
   { value: "MANUAL", label: "Manual" },
-  { value: "API", label: "API" },
 ];
 
 type SummaryCard = {
@@ -87,14 +89,12 @@ function formatTenantLabel(input: {
 
 function formatSourceLabel(source: string): string {
   switch (source) {
-    case "ADMIN":
-      return "Administrador";
     case "WEB":
       return "Web";
+    case "ADMIN":
+    case "API":
     case "MANUAL":
       return "Manual";
-    case "API":
-      return "API";
     default:
       return source;
   }
@@ -178,8 +178,8 @@ export default function ReportsManagement() {
       date_to: state.date_to,
       group_by: state.group_by,
       timezone: browserTimeZone,
-      status: state.status ? (state.status as ReportsOverviewQuery["status"]) : undefined,
-      source: state.source ? (state.source as ReportsOverviewQuery["source"]) : undefined,
+      status: state.status || undefined,
+      source: state.source || undefined,
       employee_id: state.employee_id || undefined,
       service_id: state.service_id || undefined,
       top_limit: 10,
@@ -388,7 +388,10 @@ export default function ReportsManagement() {
           <select
             value={filters.status}
             onChange={(event) =>
-              setFilters((current) => ({ ...current, status: event.target.value }))
+              setFilters((current) => ({
+                ...current,
+                status: event.target.value as ReportsFiltersState["status"],
+              }))
             }
             className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
           >
@@ -402,7 +405,10 @@ export default function ReportsManagement() {
           <select
             value={filters.source}
             onChange={(event) =>
-              setFilters((current) => ({ ...current, source: event.target.value }))
+              setFilters((current) => ({
+                ...current,
+                source: event.target.value as ReportsFiltersState["source"],
+              }))
             }
             className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
           >

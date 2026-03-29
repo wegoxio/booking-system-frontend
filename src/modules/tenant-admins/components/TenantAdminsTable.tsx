@@ -1,11 +1,11 @@
-import { Hash, Pencil, Trash2, UserRound } from "lucide-react";
+import { Ban, Hash, Pencil, UserRound } from "lucide-react";
 import { Avatar } from "@/modules/employees/components/components/Avatar";
 import { TenantAdmin } from "@/types/tenant-admin.types";
 
 interface TenantsAdminTableProps {
   tenantsAdmin: TenantAdmin[];
   onEdit: (tenantAdmin: TenantAdmin) => void;
-  onDelete: (tenantAdmin: TenantAdmin) => void;
+  onDeactivate: (tenantAdmin: TenantAdmin) => void;
 }
 
 function resolveStatus(tenant: TenantAdmin): {
@@ -42,7 +42,7 @@ function resolveStatus(tenant: TenantAdmin): {
 export default function TenantsAdminsTable({
   tenantsAdmin,
   onEdit,
-  onDelete,
+  onDeactivate,
 }: TenantsAdminTableProps): React.ReactNode {
   return (
     <div className="mt-4">
@@ -91,11 +91,12 @@ export default function TenantsAdminsTable({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onDelete(tenant)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-border-danger bg-surface-danger px-3 py-2 text-xs font-medium text-danger transition-colors hover:bg-danger hover:text-inverse"
+                  onClick={() => onDeactivate(tenant)}
+                  disabled={!tenant.is_active}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-border-warning bg-surface-warning px-3 py-2 text-xs font-medium text-warning transition-colors hover:bg-warning/60 hover:text-secondary-hover disabled:cursor-not-allowed disabled:opacity-55"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Eliminar
+                  <Ban className="h-3.5 w-3.5" />
+                  {tenant.is_active ? "Desactivar" : "Inactivo"}
                 </button>
               </div>
             </article>
@@ -158,11 +159,12 @@ export default function TenantsAdminsTable({
                       </button>
                       <button
                         type="button"
-                        onClick={() => onDelete(tenant)}
-                        className="inline-flex items-center gap-2 rounded-xl border border-border-danger bg-surface-danger px-3 py-2 text-xs font-medium text-danger transition-colors hover:bg-danger hover:text-inverse"
+                        onClick={() => onDeactivate(tenant)}
+                        disabled={!tenant.is_active}
+                        className="inline-flex items-center gap-2 rounded-xl border border-border-warning bg-surface-warning px-3 py-2 text-xs font-medium text-warning transition-colors hover:bg-warning/60 hover:text-secondary-hover disabled:cursor-not-allowed disabled:opacity-55"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Eliminar
+                        <Ban className="h-3.5 w-3.5" />
+                        {tenant.is_active ? "Desactivar" : "Inactivo"}
                       </button>
                     </div>
                   </td>

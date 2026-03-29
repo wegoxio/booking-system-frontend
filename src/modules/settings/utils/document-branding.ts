@@ -17,16 +17,19 @@ function normalizeFaviconUrl(value: string | undefined | null) {
   return url || DEFAULT_FAVICON_URL;
 }
 
-function getOrCreateHeadLink(rel: (typeof ICON_REL_VALUES)[number]) {
-  let element = document.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
+function getOrCreateHeadLinks(rel: (typeof ICON_REL_VALUES)[number]) {
+  const elements = Array.from(
+    document.querySelectorAll(`link[rel="${rel}"]`),
+  ) as HTMLLinkElement[];
 
-  if (!element) {
-    element = document.createElement("link");
-    element.rel = rel;
-    document.head.appendChild(element);
+  if (elements.length > 0) {
+    return elements;
   }
 
-  return element;
+  const element = document.createElement("link");
+  element.rel = rel;
+  document.head.appendChild(element);
+  return [element];
 }
 
 function getCurrentFaviconVersion(rawUrl: string) {
@@ -79,7 +82,9 @@ export function applyDocumentBranding(input: {
   document.title = nextTitle;
 
   ICON_REL_VALUES.forEach((rel) => {
-    const link = getOrCreateHeadLink(rel);
-    link.href = nextFaviconHref;
+    const links = getOrCreateHeadLinks(rel);
+    links.forEach((link) => {
+      link.href = nextFaviconHref;
+    });
   });
 }

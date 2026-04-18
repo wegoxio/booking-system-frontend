@@ -590,34 +590,37 @@ export default function TenantPublicBookingFlow({
 
   return (
     <div style={themeStyle} className="min-h-screen bg-app py-6">
-      <section className="mx-auto max-w-6xl space-y-4 px-4">
-        <header className="rounded-[28px] border border-card-border bg-gradient-to-br from-surface-warm via-surface to-surface-soft p-6 shadow-theme-soft">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-card-border bg-surface shadow-theme-soft-sm">
+      <section className="mx-auto max-w-6xl space-y-3 px-3 sm:space-y-4 sm:px-4">
+        <header className="rounded-[26px] border border-card-border bg-gradient-to-br from-surface-warm via-surface to-surface-soft p-4 shadow-theme-soft sm:rounded-[28px] sm:p-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+            <div className="flex items-start gap-3 sm:items-center sm:gap-4">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-card-border bg-surface shadow-theme-soft-sm sm:h-14 sm:w-14">
                 <img
                   src={branding.logoUrl}
                   alt={`${businessName} logo`}
-                  className="h-10 w-10 rounded-md object-contain"
+                  className="h-9 w-9 rounded-md object-contain sm:h-10 sm:w-10"
                   onError={(event) => {
                     event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
                   }}
                 />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
                   Reserva online
                 </p>
-                <h1 className="mt-1 text-3xl font-semibold tracking-[-0.03em] text-fg-strong">
+                <h1 className="mt-1 truncate text-[1.75rem] font-semibold tracking-[-0.03em] text-fg-strong sm:text-3xl">
                   {businessName}
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-muted">
+                <p className="mt-2 hidden max-w-2xl text-sm text-muted sm:block">
                   Selecciona servicios, profesional y horario disponible para completar tu cita.
+                </p>
+                <p className="mt-2 text-xs text-muted sm:hidden">
+                  Elige servicio, profesional y horario.
                 </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-card-border bg-surface-soft px-4 py-3 md:min-w-64">
+            <div className="hidden rounded-2xl border border-card-border bg-surface-soft px-4 py-3 md:min-w-64 lg:block">
               <p className="text-xs uppercase tracking-[0.14em] text-muted">Comercio</p>
               <p className="mt-1 text-sm font-semibold text-fg-strong">{businessName}</p>
               <p className="mt-1 text-xs text-muted">/{`book/${businessSlug}`}</p>
@@ -627,7 +630,7 @@ export default function TenantPublicBookingFlow({
 
         <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
           <div className="grid gap-4 xl:grid-cols-[320px_1fr]">
-            <aside className="rounded-3xl border border-border-soft bg-surface p-4">
+            <aside className="order-2 hidden rounded-3xl border border-border-soft bg-surface p-4 lg:block xl:order-1">
               <div className="rounded-2xl border border-border-soft bg-surface-soft p-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                   Negocio
@@ -709,7 +712,7 @@ export default function TenantPublicBookingFlow({
               </div>
             </aside>
 
-            <div className="rounded-3xl border border-border-soft bg-surface p-4">
+            <div className="order-1 rounded-3xl border border-border-soft bg-surface p-4 xl:order-2">
               <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-lg font-semibold text-fg-strong">{getStepTitle(currentStep)}</h3>
                 {currentStep !== "done" ? (
@@ -717,6 +720,34 @@ export default function TenantPublicBookingFlow({
                     Paso {stepNumber}/4
                   </span>
                 ) : null}
+              </div>
+
+              <div className="mb-4 rounded-2xl border border-border-soft bg-surface-soft px-3 py-3 lg:hidden">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Resumen rapido
+                </p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] text-muted">Servicio</p>
+                    <p className="mt-0.5 truncate text-sm font-medium text-fg">
+                      {selectedServices[0]?.name ?? "Sin seleccionar"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted">Profesional</p>
+                    <p className="mt-0.5 truncate text-sm font-medium text-fg">
+                      {selectedEmployee?.name ?? "Pendiente"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] text-muted">Fecha / Hora</p>
+                    <p className="mt-0.5 truncate text-sm font-medium text-fg">
+                      {selectedSlot
+                        ? `${formatSlotDate(selectedSlot.start_at_utc, availabilityTimezone)} - ${formatSlotTime(selectedSlot.start_at_utc, availabilityTimezone)}`
+                        : "Pendiente"}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {errorMessage ? <p className="mb-4 text-sm text-danger">{errorMessage}</p> : null}

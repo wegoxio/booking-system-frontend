@@ -624,24 +624,6 @@ export default function BookingsSchedulePanel({
             )}
           </div>
 
-          <div className="grid gap-3 md:grid-cols-1">
-            <label className="space-y-1.5">
-              <span className="text-xs font-medium text-fg-label">Zona horaria</span>
-              <input
-                list="timezone-options"
-                value={scheduleTimezone}
-                onChange={(event) => setScheduleTimezone(event.target.value)}
-                className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
-                placeholder="Ej: America/Santo_Domingo"
-              />
-              <datalist id="timezone-options">
-                {TIMEZONE_OPTIONS.map((tz) => (
-                  <option key={tz} value={tz} />
-                ))}
-              </datalist>
-            </label>
-          </div>
-
           <div className="space-y-3 rounded-2xl border border-border-soft bg-surface p-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-fg-strong">Horario laboral semanal</p>
@@ -891,7 +873,7 @@ export default function BookingsSchedulePanel({
               type="button"
               onClick={() => void handleCreateTimeOff()}
               disabled={isCreatingTimeOff}
-              className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-3 py-2 text-sm font-medium text-neutral disabled:opacity-60"
+              className="inline-flex items-center mt-4 gap-2 rounded-xl border border-border-strong bg-surface px-3 py-2 text-sm font-medium text-neutral disabled:opacity-60"
             >
               {isCreatingTimeOff ? (
                 <LoaderCircle className="h-4 w-4 animate-spin" />

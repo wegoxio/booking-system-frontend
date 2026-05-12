@@ -157,14 +157,18 @@ export default function LoginForm() {
           <div className="w-full max-w-md lg:max-w-[440px]">
             <div className="mb-7 flex justify-center lg:hidden">
               <img
-                className="h-12 w-12 object-contain drop-shadow-[0_14px_28px_rgba(151,89,239,0.34)]"
-                src="/bukky-logo.svg"
-                alt="Bukky logo"
+                className="h-11 w-auto max-w-[230px] object-contain drop-shadow-[0_14px_28px_rgba(151,89,239,0.24)]"
+                src="/login-logo.svg"
+                alt="Bukky completo"
               />
             </div>
 
-            <div className="mb-6 hidden lg:flex">
-              <img className="h-10 w-10 object-contain" src="/bukky-logo.svg" alt="Bukky logo" />
+            <div className="mb-6 hidden justify-center lg:flex">
+              <img
+                className="h-11 w-auto max-w-[240px] object-contain"
+                src="/login-logo.svg"
+                alt="Bukky completo"
+              />
             </div>
 
             <div className="rounded-[30px] border border-border-strong bg-surface p-6 shadow-theme-soft sm:p-8">

@@ -13,6 +13,10 @@ const THEME_OVERRIDE_CSS_VARS: Record<string, string> = {
   shellBg: "--shell-bg",
   navbarBg: "--navbar-bg",
   sidebarBgStart: "--sidebar-bg-start",
+  sidebarBgEnd: "--sidebar-bg-end",
+  sidebarHoverBg: "--sidebar-hover-bg",
+  sidebarActiveBg: "--sidebar-active-bg",
+  sidebarActiveText: "--sidebar-active-text",
   cardBg: "--card-bg",
   surface: "--surface",
   surfaceSoft: "--surface-soft",
@@ -48,9 +52,9 @@ const THEME_OVERRIDE_TOKEN_MAP = new Map(
 );
 
 const DEFAULT_THEME_SEED = {
-  primary: "#efc35f",
+  primary: "#9759ef",
   secondary: "#e9e9ed",
-  tertiary: "#5f6470",
+  tertiary: "#1e1e1e",
   textPrimary: "#2f3543",
   textSecondary: "#2d313b",
 } satisfies Pick<
@@ -161,6 +165,15 @@ function ensureReadableText(
     : fallbackDark;
 }
 
+function deriveSidebarHover(baseSidebarColor: string) {
+  const luminance = getRelativeLuminance(baseSidebarColor);
+  if (luminance < 0.28) {
+    return lightenHex(baseSidebarColor, 0.14);
+  }
+
+  return darkenHex(baseSidebarColor, 0.16);
+}
+
 export function normalizeThemeSettings(input: unknown): TenantThemeSettings {
   const theme = input && typeof input === "object" ? (input as Record<string, string>) : {};
 
@@ -196,7 +209,7 @@ export function normalizeThemeSettings(input: unknown): TenantThemeSettings {
     tertiary,
     primaryHover: darkenHex(primary, 0.12),
     secondaryHover: lightenHex(secondary, 0.14),
-    tertiaryHover: darkenHex(tertiary, 0.16),
+    tertiaryHover: deriveSidebarHover(tertiary),
     textPrimary,
     textSecondary,
     textTertiary: mixHex(textSecondary, secondary, 0.35),
@@ -290,11 +303,17 @@ export function createThemeVariables(
     "--app-bg": mixHex(normalizedTheme.secondary, normalizedTheme.tertiary, 0.08),
     "--shell-bg": lightenHex(normalizedTheme.secondary, 0.08),
     "--sidebar-bg-start": normalizedTheme.tertiary,
+    "--sidebar-bg-end": normalizedTheme.tertiaryHover,
+    "--sidebar-hover-bg": normalizedTheme.tertiaryHover,
+    "--sidebar-active-bg": normalizedTheme.primary,
+    "--sidebar-active-text": accentText,
     "--sidebar-text": sidebarText,
     "--navbar-bg": lightenHex(normalizedTheme.secondary, 0.16),
     "--navbar-border": withAlpha(textMuted, 0.22),
     "--icon-button-bg": lightenHex(normalizedTheme.secondary, 0.24),
     "--icon-button-border": withAlpha(textMuted, 0.24),
+    "--icon-button-text": textSecondary,
+    "--icon-button-hover": normalizedTheme.secondaryHover,
     "--card-bg": lightenHex(normalizedTheme.secondary, 0.34),
     "--card-border": withAlpha(textMuted, 0.18),
     "--text-primary": textBody,

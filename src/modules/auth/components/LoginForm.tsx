@@ -104,18 +104,22 @@ export default function LoginForm() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-app px-4 py-4 sm:px-5 sm:py-6">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1200px] flex-col overflow-hidden rounded-[30px] border border-border bg-surface shadow-theme-shell sm:min-h-[calc(100vh-3rem)] sm:rounded-[32px] lg:flex-row">
-        <aside className="relative hidden w-[44%] overflow-hidden bg-gradient-to-br from-sidebar-start via-sidebar-end to-fg-strong p-8 text-inverse lg:flex lg:flex-col lg:justify-between">
-          <div className="pointer-events-none absolute inset-0 opacity-30">
+    <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-shell via-app to-shell px-4 py-4 sm:px-5 sm:py-6">
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -left-24 -top-20 h-72 w-72 rounded-full bg-accent/16 blur-3xl" />
+        <div className="absolute -bottom-24 right-[-4rem] h-80 w-80 rounded-full bg-fg-strong/14 blur-3xl" />
+      </div>
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1200px] flex-col overflow-hidden rounded-[30px] border border-border-strong bg-surface/95 shadow-[0_30px_88px_rgba(30,30,30,0.25)] backdrop-blur-sm sm:min-h-[calc(100vh-3rem)] sm:rounded-[34px] lg:flex-row">
+        <aside className="relative hidden w-[44%] overflow-hidden bg-[linear-gradient(155deg,var(--sidebar-bg-start)_0%,#262626_60%,#2b2144_100%)] p-8 text-inverse lg:flex lg:flex-col lg:justify-between">
+          <div className="pointer-events-none absolute inset-0 opacity-35">
             <div className="absolute -left-12 top-10 h-44 w-44 rounded-full bg-inverse-20 blur-3xl" />
-            <div className="absolute -right-14 bottom-24 h-56 w-56 rounded-full bg-accent/50 blur-3xl" />
+            <div className="absolute -right-14 bottom-24 h-56 w-56 rounded-full bg-accent/45 blur-3xl" />
           </div>
 
           <div className="relative z-10">
-            <div className="mb-12 inline-flex items-center gap-3 rounded-2xl border border-inverse-15 bg-inverse-10 px-4 py-2">
-              <img className="h-7 w-7" src="/wegox-logo.svg" alt="Wegox logo" />
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-inverse-80">
+            <div className="mb-12 inline-flex items-center gap-3 rounded-2xl border border-inverse-20 bg-inverse-10 px-4 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+              <img className="h-7 w-7" src="/bukky-logo.svg" alt="Bukky logo" />
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-inverse-80">
                 Plataforma de Reservas
               </p>
             </div>
@@ -133,10 +137,10 @@ export default function LoginForm() {
                 return (
                   <div
                     key={item.title}
-                    className="rounded-2xl border border-inverse-15 bg-inverse-10 p-4 backdrop-blur-sm"
+                    className="rounded-2xl border border-inverse-15 bg-[linear-gradient(155deg,rgba(255,255,255,0.12),rgba(255,255,255,0.06))] p-4 backdrop-blur-sm"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-inverse-20">
+                      <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-inverse-20 text-inverse-95">
                         <Icon className="h-4 w-4" />
                       </span>
                       <p className="font-semibold">{item.title}</p>
@@ -149,21 +153,21 @@ export default function LoginForm() {
           </div>
         </aside>
 
-        <div className="flex flex-1 items-start justify-center bg-gradient-to-b from-surface-panel via-surface-subtle to-surface-soft px-6 pb-8 pt-8 sm:px-8 sm:pb-10 sm:pt-12 lg:items-center lg:p-10">
+        <div className="flex flex-1 items-start justify-center bg-gradient-to-b from-surface via-surface-subtle to-surface-soft px-6 pb-8 pt-8 sm:px-8 sm:pb-10 sm:pt-12 lg:items-center lg:p-10">
           <div className="w-full max-w-md lg:max-w-[440px]">
             <div className="mb-7 flex justify-center lg:hidden">
               <img
-                className="h-12 w-12 object-contain drop-shadow-[0_12px_24px_rgba(239,197,95,0.18)]"
-                src="/wegox-logo.svg"
-                alt="Wegox logo"
+                className="h-12 w-12 object-contain drop-shadow-[0_14px_28px_rgba(151,89,239,0.34)]"
+                src="/bukky-logo.svg"
+                alt="Bukky logo"
               />
             </div>
 
             <div className="mb-6 hidden lg:flex">
-              <img className="h-10 w-10 object-contain" src="/wegox-logo.svg" alt="Wegox logo" />
+              <img className="h-10 w-10 object-contain" src="/bukky-logo.svg" alt="Bukky logo" />
             </div>
 
-            <div className="rounded-[30px] border border-border bg-surface p-6 shadow-theme-soft sm:p-8">
+            <div className="rounded-[30px] border border-border-strong bg-surface p-6 shadow-theme-soft sm:p-8">
               <div className="mb-6">
                 <h1 className="text-2xl font-semibold text-fg-strong">Iniciar sesión</h1>
                 <p className="mt-2 text-sm text-fg-secondary">
@@ -186,7 +190,7 @@ export default function LoginForm() {
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="h-12 border-border bg-surface-soft text-fg"
+                  className="h-12 border-border bg-surface-soft text-fg focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
                 />
 
                 <div>
@@ -201,13 +205,13 @@ export default function LoginForm() {
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       placeholder="********"
-                      className="h-12 w-full rounded-lg border border-border bg-surface-soft px-3 pr-11 text-fg"
+                      className="h-12 w-full rounded-lg border border-border bg-surface-soft px-3 pr-11 text-fg focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-fg-strong"
+                      className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-accent"
                       aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -230,7 +234,7 @@ export default function LoginForm() {
                 </div>
 
                 {isTurnstileEnabled ? (
-                  <div className="overflow-hidden rounded-xl border border-border bg-surface-soft p-2.5 sm:p-3">
+                  <div className="overflow-hidden rounded-xl border border-border-strong bg-surface-soft p-2.5 sm:p-3">
                     <TurnstileWidget
                       siteKey={TURNSTILE_SITE_KEY}
                       action={TURNSTILE_LOGIN_ACTION}
@@ -244,7 +248,7 @@ export default function LoginForm() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent text-accent-text transition-all hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent to-accent-hover text-accent-text shadow-theme-accent transition-all duration-200 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isLoading ? "Ingresando..." : "Entrar al panel"}
                   <ArrowRight className="h-4 w-4" />

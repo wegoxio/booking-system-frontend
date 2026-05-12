@@ -182,7 +182,7 @@ function resolveActorImageUrl(log: AuditLogItem): string | null {
     pickString(metadata["avatar_url"]);
 
   if (log.actor?.role === "SUPER_ADMIN") {
-    return "/wegox-logo.svg";
+    return "/bukky-logo.svg";
   }
 
   return fromActor ?? fromMetadata;

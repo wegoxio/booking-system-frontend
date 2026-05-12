@@ -39,8 +39,8 @@ export default function DashboardSidebar({
   const router = useRouter();
   const { user, logout } = useAuth();
   const { settings } = useTenantSettings();
-  const logoUrl = settings.branding.logoUrl.trim() || "/wegox-logo.svg";
-  const appName = settings.branding.appName.trim() || "Wegox";
+  const logoUrl = settings.branding.logoUrl.trim() || "/bukky-logo.svg";
+  const appName = settings.branding.appName.trim() || "Bukky";
 
   const handleLogout = async () => {
     await logout();
@@ -72,7 +72,7 @@ export default function DashboardSidebar({
                 alt={`${appName} logo`}
                 className="h-6 w-6 rounded-sm object-contain"
                 onError={(event) => {
-                  event.currentTarget.src = "/wegox-logo.svg";
+                  event.currentTarget.src = "/bukky-logo.svg";
                 }}
               />
               <span className="max-w-42.5 text-2xl font-semibold leading-none tracking-tight">
@@ -127,7 +127,7 @@ export default function DashboardSidebar({
                   {user?.name ?? "Superadministrador"}
                 </span>
                 <span className="mt-1 block truncate text-[10px] text-inverse-60">
-                  {user?.email ?? "admin@wegox.com"}
+                  {user?.email ?? "admin@bukky.com"}
                 </span>
               </span>
             </button>

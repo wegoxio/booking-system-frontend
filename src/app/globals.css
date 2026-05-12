@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --app-bg: #dddce0;
-  --shell-bg: #f1f1f4;
-  --sidebar-bg-start: #5f6470;
+  --app-bg: #dbdbdf;
+  --shell-bg: #ebebee;
+  --sidebar-bg-start: #1e1e1e;
+  --sidebar-bg-end: #3d3d3d;
+  --sidebar-hover-bg: #3d3d3d;
+  --sidebar-active-bg: #9759ef;
+  --sidebar-active-text: #ffffff;
   --sidebar-text: #ffffff;
   --navbar-bg: #ededef;
   --navbar-border: rgba(111, 115, 128, 0.22);
@@ -13,11 +17,11 @@
   --card-border: rgba(111, 115, 128, 0.18);
   --text-primary: #2f3543;
   --text-muted: #707687;
-  --primary-accent: #efc35f;
-  --primary-hover: #d2ac54;
-  --primary-accent-text: #2f3543;
+  --primary-accent: #9759ef;
+  --primary-hover: #844ed2;
+  --primary-accent-text: #ffffff;
   --secondary-hover: #ececef;
-  --tertiary-hover: #4d535d;
+  --tertiary-hover: #3d3d3d;
 
   /* Surfaces */
   --surface: #ffffff;
@@ -100,10 +104,6 @@
   --shadow-inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 
   /* Compatibility aliases for components still using legacy tokens */
-  --sidebar-bg-end: var(--tertiary-hover);
-  --sidebar-hover-bg: var(--tertiary-hover);
-  --sidebar-active-bg: var(--primary-accent);
-  --sidebar-active-text: var(--primary-accent-text);
   --icon-button-text: var(--text-secondary);
   --icon-button-hover: var(--secondary-hover);
 }

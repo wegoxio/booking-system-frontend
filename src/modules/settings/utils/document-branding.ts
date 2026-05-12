@@ -1,6 +1,6 @@
 "use client";
 
-const DEFAULT_TITLE = "Wegox Booking System";
+const DEFAULT_TITLE = "Bukky Booking System";
 const DEFAULT_FAVICON_URL = "/favicon.ico";
 const ICON_REL_VALUES = ["icon", "shortcut icon", "apple-touch-icon"] as const;
 

@@ -6,8 +6,8 @@ import { TenantSettingsProvider } from "@/context/TenantSettingsContext";
 import AppToaster from "@/modules/ui/AppToaster";
 
 export const metadata: Metadata = {
-  title: "Sistema de Reservas Wegox",
-  description: "Plataforma de reservas y gestión operativa de Wegox",
+  title: "Sistema de Reservas Bukky",
+  description: "Plataforma de reservas y gestión operativa de Bukky",
 };
 
 export default function RootLayout({

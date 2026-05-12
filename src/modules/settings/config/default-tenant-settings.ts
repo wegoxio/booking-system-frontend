@@ -3,18 +3,18 @@ import { normalizeThemeSettings } from "@/modules/settings/utils/theme-colors";
 
 export const defaultTenantSettings: TenantSettings = {
   theme: normalizeThemeSettings({
-    primary: "#efc35f",
+    primary: "#9759ef",
     secondary: "#e9e9ed",
-    tertiary: "#5f6470",
+    tertiary: "#1e1e1e",
     textPrimary: "#2f3543",
     textSecondary: "#2d313b",
   }),
   themeMode: "AUTO",
   themeOverrides: {},
   branding: {
-    appName: "wegox",
-    windowTitle: "Wegox Booking System",
-    logoUrl: "/wegox-logo.svg",
+    appName: "Bukky",
+    windowTitle: "Bukky Booking System",
+    logoUrl: "/bukky-logo.svg",
     faviconUrl: "/favicon.ico",
   },
 };

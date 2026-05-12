@@ -254,15 +254,22 @@ export default function TenantSettingsPanel() {
   const previewStyle = useMemo(() => previewTheme as CSSProperties, [previewTheme]);
   const previewSidebarStyle = useMemo(
     () => ({
-      backgroundImage: `linear-gradient(180deg, ${previewTheme["--sidebar-bg-start"]}, ${previewTheme["--tertiary-hover"]})`,
+      backgroundImage: `linear-gradient(180deg, ${previewTheme["--sidebar-bg-start"]}, ${previewTheme["--sidebar-bg-end"]})`,
       color: previewTheme["--sidebar-text"],
     }),
     [previewTheme],
   );
   const previewSidebarItemStyle = useMemo(
     () => ({
-      backgroundColor: previewTheme["--inverse-10"],
+      backgroundColor: "transparent",
       color: previewTheme["--inverse-80"],
+    }),
+    [previewTheme],
+  );
+  const previewSidebarHoverStyle = useMemo(
+    () => ({
+      backgroundColor: previewTheme["--sidebar-hover-bg"],
+      color: previewTheme["--sidebar-text"],
     }),
     [previewTheme],
   );
@@ -523,7 +530,7 @@ export default function TenantSettingsPanel() {
         <aside className="space-y-5 xl:sticky xl:top-4 xl:self-start">
           <SectionCard
             title="Colores editables"
-            description="Solo editas la paleta semilla. El sistema resuelve hover, suaves y estados automáticamente."
+            description="Solo editas la base y textos. El sistema deriva hover, superficies y estados automáticamente."
             icon={<Palette className="h-4 w-4" />}
             isOpen={expandedSections.palette}
             onToggle={() => toggleSection("palette")}
@@ -768,7 +775,13 @@ export default function TenantSettingsPanel() {
                           <div
                             key={item}
                             className="rounded-2xl px-4 py-3 text-sm font-medium transition-colors"
-                            style={item === "Configuración" ? previewSidebarActiveStyle : previewSidebarItemStyle}
+                            style={
+                              item === "Configuración"
+                                ? previewSidebarActiveStyle
+                                : item === "Citas"
+                                ? previewSidebarHoverStyle
+                                : previewSidebarItemStyle
+                            }
                           >
                             {item}
                           </div>

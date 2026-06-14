@@ -66,10 +66,27 @@ export function formatCurrency(value: number, currency: string) {
   }
 }
 
+export function formatCompactCurrency(value: number, currency: string) {
+  try {
+    return new Intl.NumberFormat("es-ES", {
+      style: "currency",
+      currency,
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(0)} ${currency}`;
+  }
+}
+
 export function formatDateTime(value: string | null) {
   if (!value) return "-";
   return new Date(value).toLocaleString("es-ES", {
     dateStyle: "short",
     timeStyle: "short",
   });
+}
+
+export function normalizeString(name: string){
+    return name.trim() ?? ""
 }

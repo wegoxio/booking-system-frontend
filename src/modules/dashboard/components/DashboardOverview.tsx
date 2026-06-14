@@ -9,6 +9,7 @@ import DashboardTenantsTableCard from "./DashboardTenantsTableCard";
 import RecentAuditLogsCard from "./RecentAuditLogsCard";
 import DashboardRevenueChartCard from "./DashboardRevenueChartCard";
 import { dashboardService } from "../services/dashboard.service";
+import { normalizeString } from "@/utils/format";
 
 export default function DashboardOverview() {
   const { user, token } = useAuth();
@@ -37,8 +38,8 @@ export default function DashboardOverview() {
     void loadOverview();
   }, [token, loadOverview]);
 
-  const normalizedUserName = user?.name?.trim() ?? "";
-  const normalizedTenantName = user?.tenant?.name?.trim() ?? "";
+  const normalizedUserName =  normalizeString(user?.name ?? '')
+  const normalizedTenantName = normalizeString(user?.tenant?.name ?? '')
   const welcomeTarget = normalizedUserName || normalizedTenantName;
   const dashboardTitle = welcomeTarget
     ? `Bienvenido, ${welcomeTarget}`

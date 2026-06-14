@@ -10,10 +10,10 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  Sparkles,
   Users2,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SubmitEvent, useEffect, useMemo, useState } from "react";
 
@@ -26,7 +26,8 @@ type HighlightItem = {
 const LOGIN_HIGHLIGHTS: HighlightItem[] = [
   {
     title: "Agenda por profesional",
-    description: "Controla slots reales por servicio, descansos y citas ya tomadas.",
+    description:
+      "Controla slots reales por servicio, descansos y citas ya tomadas.",
     icon: CalendarClock,
   },
   {
@@ -41,7 +42,8 @@ const LOGIN_HIGHLIGHTS: HighlightItem[] = [
   },
 ];
 
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
+const TURNSTILE_SITE_KEY =
+  process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
 const TURNSTILE_LOGIN_ACTION =
   process.env.NEXT_PUBLIC_TURNSTILE_LOGIN_ACTION?.trim() || "login";
 
@@ -91,11 +93,14 @@ export default function LoginForm() {
       await login({
         email,
         password,
-        captcha_token: isTurnstileEnabled ? captchaToken ?? undefined : undefined,
+        captcha_token: isTurnstileEnabled
+          ? (captchaToken ?? undefined)
+          : undefined,
       });
       router.push("/dashboard");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al iniciar sesión";
+      const message =
+        error instanceof Error ? error.message : "Error al iniciar sesión";
       setErrorMessage(message);
       if (isTurnstileEnabled) {
         setCaptchaRefreshKey((prev) => prev + 1);
@@ -104,12 +109,12 @@ export default function LoginForm() {
   };
 
   return (
-    <section className="relative min-h-screen overflow-hidden bg-gradient-to-br from-shell via-app to-shell px-4 py-4 sm:px-5 sm:py-6">
+    <section className="relative min-h-screen overflow-hidden bg-linear-to-br from-shell via-app to-shell px-4 py-4 sm:px-5 sm:py-6">
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 -top-20 h-72 w-72 rounded-full bg-accent/16 blur-3xl" />
-        <div className="absolute -bottom-24 right-[-4rem] h-80 w-80 rounded-full bg-fg-strong/14 blur-3xl" />
+        <div className="absolute -bottom-24 -right-16 h-80 w-80 rounded-full bg-fg-strong/14 blur-3xl" />
       </div>
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1200px] flex-col overflow-hidden rounded-[30px] border border-border-strong bg-surface/95 shadow-[0_30px_88px_rgba(30,30,30,0.25)] backdrop-blur-sm sm:min-h-[calc(100vh-3rem)] sm:rounded-[34px] lg:flex-row">
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-300 flex-col overflow-hidden rounded-[30px] border border-border-strong bg-surface/95 shadow-[0_30px_88px_rgba(30,30,30,0.25)] backdrop-blur-sm sm:min-h-[calc(100vh-3rem)] sm:rounded-[34px] lg:flex-row">
         <aside className="relative hidden w-[44%] overflow-hidden bg-[linear-gradient(155deg,var(--sidebar-bg-start)_0%,#262626_60%,#2b2144_100%)] p-8 text-inverse lg:flex lg:flex-col lg:justify-between">
           <div className="pointer-events-none absolute inset-0 opacity-35">
             <div className="absolute -left-12 top-10 h-44 w-44 rounded-full bg-inverse-20 blur-3xl" />
@@ -118,7 +123,12 @@ export default function LoginForm() {
 
           <div className="relative z-10">
             <div className="mb-12 inline-flex items-center gap-3 rounded-2xl border border-inverse-20 bg-inverse-10 px-4 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
-              <img className="h-7 w-7" src="/bukky-logo.svg" alt="Bukky logo" />
+              <Image
+                width={25}
+                height={25}
+                src="/bukky-logo.svg"
+                alt="Bukky logo"
+              />
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-inverse-80">
                 Plataforma de Reservas
               </p>
@@ -128,7 +138,8 @@ export default function LoginForm() {
               Gestiona tu operación diaria desde un solo panel.
             </h2>
             <p className="mt-4 max-w-md text-sm text-inverse-75">
-              Reserva citas, controla horarios del equipo y monitorea resultados en tiempo real.
+              Reserva citas, controla horarios del equipo y monitorea resultados
+              en tiempo real.
             </p>
 
             <div className="mt-8 space-y-3">
@@ -145,7 +156,9 @@ export default function LoginForm() {
                       </span>
                       <p className="font-semibold">{item.title}</p>
                     </div>
-                    <p className="mt-2 text-sm text-inverse-80">{item.description}</p>
+                    <p className="mt-2 text-sm text-inverse-80">
+                      {item.description}
+                    </p>
                   </div>
                 );
               })}
@@ -153,19 +166,21 @@ export default function LoginForm() {
           </div>
         </aside>
 
-        <div className="flex flex-1 items-start justify-center bg-gradient-to-b from-surface via-surface-subtle to-surface-soft px-6 pb-8 pt-8 sm:px-8 sm:pb-10 sm:pt-12 lg:items-center lg:p-10">
-          <div className="w-full max-w-md lg:max-w-[440px]">
+        <div className="flex flex-1 items-start justify-center bg-linear-to-b from-surface via-surface-subtle to-surface-soft px-6 pb-8 pt-8 sm:px-8 sm:pb-10 sm:pt-12 lg:items-center lg:p-10">
+          <div className="w-full max-w-md lg:max-w-110">
             <div className="mb-7 flex justify-center lg:hidden">
-              <img
-                className="h-11 w-auto max-w-[230px] object-contain drop-shadow-[0_14px_28px_rgba(151,89,239,0.24)]"
+              <Image
+                width={200}
+                height={30}
                 src="/login-logo.svg"
                 alt="Bukky completo"
               />
             </div>
 
             <div className="mb-6 hidden justify-center lg:flex">
-              <img
-                className="h-11 w-auto max-w-[240px] object-contain"
+              <Image
+                width={200}
+                height={20}
                 src="/login-logo.svg"
                 alt="Bukky completo"
               />
@@ -173,9 +188,12 @@ export default function LoginForm() {
 
             <div className="rounded-[30px] border border-border-strong bg-surface p-6 shadow-theme-soft sm:p-8">
               <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-fg-strong">Iniciar sesión</h1>
+                <h1 className="text-2xl font-semibold text-fg-strong">
+                  Iniciar sesión
+                </h1>
                 <p className="mt-2 text-sm text-fg-secondary">
-                  Accede a tu panel para administrar citas, equipo y configuraciones.
+                  Accede a tu panel para administrar citas, equipo y
+                  configuraciones.
                 </p>
                 {noticeMessage ? (
                   <div className="mt-4 rounded-2xl border border-border-success bg-surface-success px-4 py-3 text-sm text-success">
@@ -198,7 +216,10 @@ export default function LoginForm() {
                 />
 
                 <div>
-                  <label htmlFor="password" className="mb-2 block text-sm font-medium text-fg-strong">
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-medium text-fg-strong"
+                  >
                     Contraseña
                   </label>
                   <div className="relative">
@@ -216,16 +237,27 @@ export default function LoginForm() {
                       type="button"
                       onClick={() => setShowPassword((prev) => !prev)}
                       className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-accent"
-                      aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                      aria-label={
+                        showPassword
+                          ? "Ocultar contraseña"
+                          : "Mostrar contraseña"
+                      }
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-start gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <label className="inline-flex items-center gap-2 text-fg-secondary">
-                    <input type="checkbox" className="h-4 w-4 rounded border-border text-accent" />
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-border text-accent"
+                    />
                     Recordar este equipo
                   </label>
                   <button
@@ -252,14 +284,16 @@ export default function LoginForm() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent to-accent-hover text-accent-text shadow-theme-accent transition-all duration-200 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-accent to-accent-hover text-accent-text shadow-theme-accent transition-all duration-200 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isLoading ? "Ingresando..." : "Entrar al panel"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
 
                 {errorMessage && (
-                  <p className="rounded-lg bg-surface-danger px-3 py-2 text-sm text-danger">{errorMessage}</p>
+                  <p className="rounded-lg bg-surface-danger px-3 py-2 text-sm text-danger">
+                    {errorMessage}
+                  </p>
                 )}
               </form>
             </div>

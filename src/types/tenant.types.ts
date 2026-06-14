@@ -28,3 +28,9 @@ export const emptyForm: TenantFormState = {
   slug: "",
   is_active: true,
 };
+
+export interface TenantsTableProps {
+  tenants: Tenant[];
+  onEdit: (tenant: Tenant) => void;
+  onDeactivate: (tenant: Tenant) => void;
+}

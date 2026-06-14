@@ -2,6 +2,7 @@
 
 import Card from "@/modules/ui/Card";
 import type { DashboardChartPoint } from "@/types/dashboard.types";
+import { formatCompactCurrency } from "@/utils/format";
 import { BarChart3 } from "lucide-react";
 import {
   Area,
@@ -19,19 +20,6 @@ type DashboardRevenueChartCardProps = {
   data: DashboardChartPoint[];
   currency: string;
 };
-
-function formatCompactCurrency(value: number, currency: string) {
-  try {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency,
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(value);
-  } catch {
-    return `${value.toFixed(0)} ${currency}`;
-  }
-}
 
 export default function DashboardRevenueChartCard({
   title,

@@ -1,12 +1,12 @@
 "use client";
 
-import type { Driver, DriveStep } from "driver.js";
-import { useEffect, useRef } from "react";
-import { toast } from "react-hot-toast";
 import {
   TENANT_ADMIN_DASHBOARD_TOUR_STEPS,
   TENANT_ADMIN_DASHBOARD_TOUR_TARGETS,
 } from "@/modules/tour/config/tenant-admin-dashboard-tour";
+import type { Driver, DriveStep } from "driver.js";
+import { useCallback, useEffect, useRef } from "react";
+import { toast } from "react-hot-toast";
 
 type TenantAdminDashboardTourControllerProps = {
   isEnabled: boolean;
@@ -49,6 +49,60 @@ export default function TenantAdminDashboardTourController({
   const lastManualRunRef = useRef(0);
   const autoStartedRef = useRef(false);
   const completedAtRef = useRef<string | null>(tourCompletedAt);
+
+  const startTour = useCallback(
+    async (mode: "auto" | "manual"): Promise<boolean> => {
+      if (isRunningRef.current) {
+        return false;
+      }
+
+      if (!isDesktopViewport()) {
+        if (mode === "manual") {
+          toast("El tour guiado por ahora esta optimizado para escritorio.");
+        }
+        return false;
+      }
+
+      const hasTargets = await waitForTourTargets(
+        TENANT_ADMIN_DASHBOARD_TOUR_TARGETS,
+      );
+      if (!hasTargets) {
+        return false;
+      }
+
+      const { driver } = await import("driver.js");
+      driverRef.current?.destroy();
+
+      const instance = driver({
+        steps: TENANT_ADMIN_DASHBOARD_TOUR_STEPS as DriveStep[],
+        animate: true,
+        smoothScroll: true,
+        allowClose: true,
+        showProgress: true,
+        stagePadding: 10,
+        stageRadius: 18,
+        overlayOpacity: 0.58,
+        overlayColor: "rgba(24, 32, 49, 0.82)",
+        popoverClass: "wegox-tour-popover",
+        nextBtnText: "Siguiente",
+        prevBtnText: "Anterior",
+        doneBtnText: "Listo",
+        onDestroyed: () => {
+          driverRef.current = null;
+          isRunningRef.current = false;
+          if (!completedAtRef.current) {
+            void onTourCompleted?.();
+          }
+        },
+      });
+
+      driverRef.current = instance;
+      isRunningRef.current = true;
+      instance.drive();
+      return true;
+    },
+    [onTourCompleted],
+  );
 
   useEffect(() => {
     completedAtRef.current = tourCompletedAt;
@@ -102,7 +156,7 @@ export default function TenantAdminDashboardTourController({
       cancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [isEnabled, tourCompletedAt]);
+  }, [isEnabled, startTour, tourCompletedAt]);
 
   useEffect(() => {
     if (!isEnabled || runNonce === 0 || runNonce === lastManualRunRef.current) {
@@ -111,56 +165,7 @@ export default function TenantAdminDashboardTourController({
 
     lastManualRunRef.current = runNonce;
     void startTour("manual");
-  }, [isEnabled, runNonce]);
-
-  async function startTour(mode: "auto" | "manual"): Promise<boolean> {
-    if (isRunningRef.current) {
-      return false;
-    }
-
-    if (!isDesktopViewport()) {
-      if (mode === "manual") {
-        toast("El tour guiado por ahora está optimizado para escritorio.");
-      }
-      return false;
-    }
-
-    const hasTargets = await waitForTourTargets(TENANT_ADMIN_DASHBOARD_TOUR_TARGETS);
-    if (!hasTargets) {
-      return false;
-    }
-
-    const { driver } = await import("driver.js");
-    driverRef.current?.destroy();
-
-    const instance = driver({
-      steps: TENANT_ADMIN_DASHBOARD_TOUR_STEPS as DriveStep[],
-      animate: true,
-      smoothScroll: true,
-      allowClose: true,
-      showProgress: true,
-      stagePadding: 10,
-      stageRadius: 18,
-      overlayOpacity: 0.58,
-      overlayColor: "rgba(24, 32, 49, 0.82)",
-      popoverClass: "wegox-tour-popover",
-      nextBtnText: "Siguiente",
-      prevBtnText: "Anterior",
-      doneBtnText: "Listo",
-      onDestroyed: () => {
-        driverRef.current = null;
-        isRunningRef.current = false;
-        if (!completedAtRef.current) {
-          void onTourCompleted?.();
-        }
-      },
-    });
-
-    driverRef.current = instance;
-    isRunningRef.current = true;
-    instance.drive();
-    return true;
-  }
+  }, [isEnabled, runNonce, startTour]);
 
   return null;
 }

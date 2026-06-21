@@ -33,7 +33,7 @@ import {
   XCircle,
   type LucideIcon,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import {
   Area,
@@ -54,11 +54,14 @@ type ReportsFiltersState = {
   source: "" | ReportBookingSource;
   employee_id: string;
   service_id: string;
+  currency: string;
 };
 
 const STATUS_FILTERS = [
   { value: "", label: "Todos los estados" },
   { value: "PENDING", label: "Pendiente" },
+  { value: "CONFIRMED", label: "Confirmada" },
+  { value: "IN_PROGRESS", label: "En progreso" },
   { value: "COMPLETED", label: "Completada" },
   { value: "CANCELLED", label: "Cancelada" },
   { value: "NO_SHOW", label: "No asistio" },
@@ -128,10 +131,10 @@ function formatRate(value: number): string {
   return `${value.toFixed(1)}%`;
 }
 
-function formatUsd(value: number): string {
+function formatMoney(value: number, currency: string): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
@@ -149,6 +152,7 @@ function downloadBlob(input: { blob: Blob; fileName: string }) {
 }
 
 export default function ReportsManagement() {
+  const overviewRequestIdRef = useRef(0);
   const { token, user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -166,9 +170,14 @@ export default function ReportsManagement() {
     source: "",
     employee_id: "",
     service_id: "",
+    currency: "",
   });
 
   const isTenantAdmin = user?.role === "TENANT_ADMIN";
+  const activeCurrency = overview?.filters.currency || filters.currency || "USD";
+  const currencyOptions = Array.from(
+    new Set(["USD", "EUR", "DOP", "MXN", "COP", ...services.map((service) => service.currency)]),
+  );
 
   const buildQuery = useCallback((state: ReportsFiltersState): ReportsOverviewQuery => {
     const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -182,6 +191,7 @@ export default function ReportsManagement() {
       source: state.source || undefined,
       employee_id: state.employee_id || undefined,
       service_id: state.service_id || undefined,
+      currency: state.currency || undefined,
       top_limit: 10,
     };
   }, []);
@@ -189,19 +199,22 @@ export default function ReportsManagement() {
   const loadOverview = useCallback(
     async (state: ReportsFiltersState) => {
       if (!token) return;
+      const requestId = ++overviewRequestIdRef.current;
 
       setIsLoading(true);
       setErrorMessage("");
       try {
         const data = await reportsService.getOverview(token, buildQuery(state));
+        if (requestId !== overviewRequestIdRef.current) return;
         setOverview(data);
       } catch (error) {
+        if (requestId !== overviewRequestIdRef.current) return;
         const message =
           error instanceof Error ? error.message : "No se pudieron cargar los reportes.";
         setErrorMessage(message);
         toast.error(message);
       } finally {
-        setIsLoading(false);
+        if (requestId === overviewRequestIdRef.current) setIsLoading(false);
       }
     },
     [buildQuery, token],
@@ -256,7 +269,7 @@ export default function ReportsManagement() {
       },
       {
         label: "Ingresos",
-        value: formatUsd(overview.summary.revenue_total_usd),
+        value: formatMoney(overview.summary.revenue_total_usd, activeCurrency),
         icon: DollarSign,
         iconToneClass: "bg-surface-success text-success",
       },
@@ -280,12 +293,12 @@ export default function ReportsManagement() {
       },
       {
         label: "Ticket promedio",
-        value: formatUsd(overview.summary.avg_ticket_usd),
+        value: formatMoney(overview.summary.avg_ticket_usd, activeCurrency),
         icon: Wallet,
         iconToneClass: "bg-surface-muted text-fg",
       },
     ];
-  }, [overview]);
+  }, [activeCurrency, overview]);
 
   const showServiceTenantColumn = overview?.scope.role === "SUPER_ADMIN";
 
@@ -419,6 +432,21 @@ export default function ReportsManagement() {
             ))}
           </select>
 
+          <select
+            value={filters.currency}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, currency: event.target.value }))
+            }
+            className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
+          >
+            <option value="">Divisa automática</option>
+            {currencyOptions.map((currency) => (
+              <option key={currency} value={currency}>
+                {currency}
+              </option>
+            ))}
+          </select>
+
           {isTenantAdmin ? (
             <select
               value={filters.employee_id}
@@ -517,7 +545,9 @@ export default function ReportsManagement() {
                   <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} tick={{ fill: "var(--chart-axis)", fontSize: 11 }} />
                   <Tooltip
                     formatter={(value, name) => {
-                      if (name === "Ingresos") return [formatUsd(Number(value)), "Ingresos"];
+                      if (name === "Ingresos") {
+                        return [formatMoney(Number(value), activeCurrency), "Ingresos"];
+                      }
                       return [formatInteger(Number(value)), name];
                     }}
                     contentStyle={{
@@ -590,7 +620,7 @@ export default function ReportsManagement() {
                         Citas: <span className="font-medium text-fg">{formatInteger(row.bookings_count)}</span>
                       </p>
                       <p className="text-muted">
-                        Ingresos: <span className="font-medium text-fg">{formatUsd(row.revenue_total_usd)}</span>
+                        Ingresos: <span className="font-medium text-fg">{formatMoney(row.revenue_total_usd, activeCurrency)}</span>
                       </p>
                     </div>
                   </article>
@@ -632,7 +662,7 @@ export default function ReportsManagement() {
                         ) : null}
                         <td className="px-2 py-2 text-muted">{formatInteger(row.sold_items_count)}</td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.bookings_count)}</td>
-                        <td className="px-2 py-2 text-muted">{formatUsd(row.revenue_total_usd)}</td>
+                        <td className="px-2 py-2 text-muted">{formatMoney(row.revenue_total_usd, activeCurrency)}</td>
                       </tr>
                     ))}
                     {overview.top_services.length === 0 ? (
@@ -674,7 +704,7 @@ export default function ReportsManagement() {
                         Completados: <span className="font-medium text-fg">{formatInteger(row.completed_count)}</span>
                       </p>
                       <p className="text-muted">
-                        Ingresos: <span className="font-medium text-fg">{formatUsd(row.revenue_total_usd)}</span>
+                        Ingresos: <span className="font-medium text-fg">{formatMoney(row.revenue_total_usd, activeCurrency)}</span>
                       </p>
                     </div>
                   </article>
@@ -711,7 +741,7 @@ export default function ReportsManagement() {
                         </td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.bookings_count)}</td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.completed_count)}</td>
-                        <td className="px-2 py-2 text-muted">{formatUsd(row.revenue_total_usd)}</td>
+                        <td className="px-2 py-2 text-muted">{formatMoney(row.revenue_total_usd, activeCurrency)}</td>
                       </tr>
                     ))}
                     {overview.top_employees.length === 0 ? (
@@ -751,7 +781,7 @@ export default function ReportsManagement() {
                         Canceladas: <span className="font-medium text-fg">{formatInteger(row.cancelled_count)}</span>
                       </p>
                       <p className="text-muted">
-                        Ingresos: <span className="font-medium text-fg">{formatUsd(row.revenue_total_usd)}</span>
+                        Ingresos: <span className="font-medium text-fg">{formatMoney(row.revenue_total_usd, activeCurrency)}</span>
                       </p>
                     </div>
                   </article>
@@ -781,7 +811,7 @@ export default function ReportsManagement() {
                         <td className="px-2 py-2 text-muted">{formatInteger(row.bookings_count)}</td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.completed_count)}</td>
                         <td className="px-2 py-2 text-muted">{formatInteger(row.cancelled_count)}</td>
-                        <td className="px-2 py-2 text-muted">{formatUsd(row.revenue_total_usd)}</td>
+                        <td className="px-2 py-2 text-muted">{formatMoney(row.revenue_total_usd, activeCurrency)}</td>
                       </tr>
                     ))}
                     {overview.source_breakdown.length === 0 ? (

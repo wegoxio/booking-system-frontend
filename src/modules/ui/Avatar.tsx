@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 type AvatarProps = {
   name: string;
   imageUrl?: string | null;
@@ -26,9 +28,12 @@ export default function Avatar({ name, imageUrl, className = "" }: AvatarProps) 
 
   if (normalizedImageUrl) {
     return (
-      <img
+      <Image
         src={normalizedImageUrl}
         alt={name}
+        width={32}
+        height={32}
+        unoptimized
         className={`inline-flex h-8 w-8 rounded-full object-cover ${className}`.trim()}
       />
     );

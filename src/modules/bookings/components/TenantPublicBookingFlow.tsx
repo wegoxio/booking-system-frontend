@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
 import { validateOptionalPhoneValue } from "@/modules/phone/utils/phone";
@@ -34,8 +34,9 @@ import {
   Scissors,
   UserRound,
 } from "lucide-react";
+import Image from "next/image";
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 type BookingStep = "services" | "employee" | "datetime" | "customer" | "done";
@@ -169,18 +170,20 @@ function getStepTitle(step: BookingStep) {
     case "customer":
       return "Paso 4: Datos del cliente";
     case "done":
-      return "Reserva confirmada";
+      return "Resultado de la reserva";
   }
 }
 
 export default function TenantPublicBookingFlow({
   tenantSlug,
 }: TenantPublicBookingFlowProps) {
+  const idempotencyRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const isTurnstileEnabled = TURNSTILE_SITE_KEY.length > 0;
   const [services, setServices] = useState<PublicBookingService[]>([]);
   const [businessSettings, setBusinessSettings] = useState<TenantSettingsRecord | null>(null);
   const [eligibleEmployees, setEligibleEmployees] = useState<PublicBookingEmployee[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [partySize, setPartySize] = useState(1);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [selectedDate, setSelectedDate] = useState(getTodayDateInput());
   const [slots, setSlots] = useState<BookingSlot[]>([]);
@@ -256,6 +259,13 @@ export default function TenantPublicBookingFlow({
     () => activeServices.filter((service) => selectedServiceIds.includes(service.id)),
     [activeServices, selectedServiceIds],
   );
+  const selectedService = selectedServices[0];
+  const partySizeOptions = selectedService
+    ? Array.from(
+        { length: selectedService.max_capacity - selectedService.min_capacity + 1 },
+        (_, index) => selectedService.min_capacity + index,
+      )
+    : [];
 
   const selectedEmployee = useMemo(
     () => eligibleEmployees.find((employee) => employee.id === selectedEmployeeId) ?? null,
@@ -265,14 +275,6 @@ export default function TenantPublicBookingFlow({
     () => [...new Set(selectedEmployee?.working_days ?? [])].sort((a, b) => a - b),
     [selectedEmployee],
   );
-  const selectableDateSeed = useMemo(() => {
-    const today = getTodayDateInput();
-    if (selectedEmployeeWorkingDays.length === 0) {
-      return today;
-    }
-
-    return getNextAllowedDateFrom(today, selectedEmployeeWorkingDays) ?? today;
-  }, [selectedEmployeeWorkingDays]);
 
   const selectedSlot = useMemo(
     () => slots.find((slot) => slot.start_at_utc === selectedSlotStart) ?? null,
@@ -343,6 +345,7 @@ export default function TenantPublicBookingFlow({
         employee_id: selectedEmployeeId,
         service_ids: selectedServiceIds,
         date: selectedDate,
+        party_size: partySize,
       });
       setSlots(availability.slots);
       setRequiredDurationMinutes(availability.required_duration_minutes);
@@ -365,6 +368,7 @@ export default function TenantPublicBookingFlow({
     selectedEmployeeId,
     selectedEmployeeWorkingDays,
     selectedServiceIds,
+    partySize,
     tenantSlug,
   ]);
 
@@ -392,11 +396,6 @@ export default function TenantPublicBookingFlow({
 
   useEffect(() => {
     if (selectedServiceIds.length === 0) {
-      setEligibleEmployees([]);
-      setSelectedEmployeeId("");
-      setSlots([]);
-      setSelectedSlotStart(null);
-      setRequiredDurationMinutes(null);
       return;
     }
 
@@ -444,35 +443,38 @@ export default function TenantPublicBookingFlow({
     void refreshAvailability();
   }, [refreshAvailability]);
 
-  useEffect(() => {
-    if (!selectedEmployeeId) return;
-
-    if (selectedEmployeeWorkingDays.length === 0) {
-      setSelectedSlotStart(null);
-      setRequiredDurationMinutes(null);
-      return;
-    }
-
-    if (isDateAllowedForWorkingDays(selectedDate, selectedEmployeeWorkingDays)) {
-      return;
-    }
-
-    const nextAllowedDate =
-      getNextAllowedDateFrom(selectedDate, selectedEmployeeWorkingDays) ??
-      getNextAllowedDateFrom(getTodayDateInput(), selectedEmployeeWorkingDays);
-
-    if (nextAllowedDate && nextAllowedDate !== selectedDate) {
-      setSelectedDate(nextAllowedDate);
-      setSelectedSlotStart(null);
-    }
-  }, [selectedDate, selectedEmployeeId, selectedEmployeeWorkingDays]);
-
   const handleToggleService = (serviceId: string) => {
-    setSelectedServiceIds((prev) => (prev.includes(serviceId) ? [] : [serviceId]));
+    const isSelected = selectedServiceIds.includes(serviceId);
+    const nextService = activeServices.find((service) => service.id === serviceId);
+    setSelectedServiceIds(isSelected ? [] : [serviceId]);
+    setPartySize(isSelected ? 1 : nextService?.min_capacity ?? 1);
+    setEligibleEmployees([]);
+    setSelectedEmployeeId("");
+    setSlots([]);
     setSelectedSlotStart(null);
+    setRequiredDurationMinutes(null);
+    setAvailabilityTimezone(null);
     if (currentStep !== "services") {
       setCurrentStep("services");
     }
+  };
+
+  const handleSelectEmployee = (employee: PublicBookingEmployee) => {
+    const workingDays = [...new Set(employee.working_days ?? [])].sort((a, b) => a - b);
+    const nextAllowedDate =
+      isDateAllowedForWorkingDays(selectedDate, workingDays)
+        ? selectedDate
+        : getNextAllowedDateFrom(selectedDate, workingDays) ??
+          getNextAllowedDateFrom(getTodayDateInput(), workingDays);
+
+    setSelectedEmployeeId(employee.id);
+    if (nextAllowedDate && nextAllowedDate !== selectedDate) {
+      setSelectedDate(nextAllowedDate);
+    }
+    setSlots([]);
+    setSelectedSlotStart(null);
+    setRequiredDurationMinutes(null);
+    setAvailabilityTimezone(null);
   };
 
   const goNext = () => {
@@ -493,6 +495,7 @@ export default function TenantPublicBookingFlow({
 
   const resetFlow = () => {
     setSelectedServiceIds([]);
+    setPartySize(1);
     setEligibleEmployees([]);
     setSelectedEmployeeId("");
     setSelectedDate(getTodayDateInput());
@@ -537,14 +540,22 @@ export default function TenantPublicBookingFlow({
       setErrorMessage("Completa la verificación de seguridad para confirmar.");
       return;
     }
+    if (
+      selectedService &&
+      (partySize < selectedService.min_capacity || partySize > selectedService.max_capacity)
+    ) {
+      setErrorMessage("El número de personas no es válido para el servicio.");
+      return;
+    }
 
     setIsSubmitting(true);
     setErrorMessage("");
     try {
-      const booking = await bookingsService.createPublic(tenantSlug, {
+      const payload = {
         employee_id: selectedEmployeeId,
         service_ids: selectedServiceIds,
         start_at_utc: selectedSlotStart,
+        party_size: partySize,
         customer_name: customerForm.customer_name.trim(),
         customer_email: customerForm.customer_email.trim() || undefined,
         customer_phone_country_iso2:
@@ -554,10 +565,30 @@ export default function TenantPublicBookingFlow({
         notes: customerForm.notes.trim() || undefined,
         source: "WEB",
         captcha_token: isTurnstileEnabled ? captchaToken ?? undefined : undefined,
-      });
+      } as const;
+      const fingerprint = JSON.stringify(payload);
+      if (idempotencyRef.current?.fingerprint !== fingerprint) {
+        idempotencyRef.current = {
+          fingerprint,
+          key:
+            typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+              ? crypto.randomUUID()
+              : `booking_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        };
+      }
+      const booking = await bookingsService.createPublic(
+        tenantSlug,
+        payload,
+        idempotencyRef.current.key,
+      );
+      idempotencyRef.current = null;
       setCreatedBooking(booking);
       setCurrentStep("done");
-      toast.success("Reserva confirmada correctamente.");
+      toast.success(
+        booking.status === "PENDING"
+          ? "Solicitud enviada correctamente."
+          : "Reserva confirmada correctamente.",
+      );
     } catch (error) {
       if (isTurnstileEnabled) {
         setCaptchaRefreshKey((prev) => prev + 1);
@@ -595,9 +626,12 @@ export default function TenantPublicBookingFlow({
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
             <div className="flex items-start gap-3 sm:items-center sm:gap-4">
               <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-card-border bg-surface shadow-theme-soft-sm sm:h-14 sm:w-14">
-                <img
+                <Image
                   src={branding.logoUrl}
                   alt={`${businessName} logo`}
+                  width={40}
+                  height={40}
+                  unoptimized
                   className="h-9 w-9 rounded-md object-contain sm:h-10 sm:w-10"
                   onError={(event) => {
                     event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -636,9 +670,12 @@ export default function TenantPublicBookingFlow({
                   Negocio
                 </p>
                 <div className="mt-2 flex items-center gap-2.5">
-                  <img
+                  <Image
                     src={branding.logoUrl}
                     alt={`${businessName} logo`}
+                    width={32}
+                    height={32}
+                    unoptimized
                     className="h-8 w-8 rounded-md border border-border-soft bg-surface object-contain p-1"
                     onError={(event) => {
                       event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -677,6 +714,11 @@ export default function TenantPublicBookingFlow({
                       ))
                     )}
                   </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted">Personas</p>
+                  <p className="mt-1 text-sm font-medium text-fg">{partySize}</p>
                 </div>
 
                 <div>
@@ -778,6 +820,12 @@ export default function TenantPublicBookingFlow({
                               <p className="mt-1 text-xs text-muted">
                                 {service.duration_minutes} min - {service.price} {service.currency}
                               </p>
+                              <p className="mt-1 text-xs text-muted">
+                                {service.min_capacity === service.max_capacity
+                                  ? `${service.max_capacity} persona(s)`
+                                  : `${service.min_capacity}-${service.max_capacity} personas`}
+                                {service.requires_confirmation ? " - requiere confirmación" : ""}
+                              </p>
                               {service.instructions ? (
                                 <p className="mt-2 text-xs text-warning">
                                   Indicaciones: {service.instructions}
@@ -787,6 +835,25 @@ export default function TenantPublicBookingFlow({
                           );
                         })}
                       </div>
+                      {selectedService ? (
+                        <label className="block max-w-xs space-y-1.5">
+                          <span className="text-xs font-medium text-fg-label">Personas</span>
+                          <select
+                            value={partySize}
+                            onChange={(event) => {
+                              setPartySize(Number(event.target.value));
+                              setSelectedSlotStart(null);
+                            }}
+                            className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-sm text-fg"
+                          >
+                            {partySizeOptions.map((value) => (
+                              <option key={value} value={value}>
+                                {value}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                       <div className="flex justify-end">
                         <button
                           type="button"
@@ -817,7 +884,7 @@ export default function TenantPublicBookingFlow({
                               <button
                                 key={employee.id}
                                 type="button"
-                                onClick={() => setSelectedEmployeeId(employee.id)}
+                                onClick={() => handleSelectEmployee(employee)}
                                 className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
                                   isSelected
                                     ? "border-accent bg-surface-warning-soft"
@@ -1049,7 +1116,11 @@ export default function TenantPublicBookingFlow({
                       <div className="flex items-start gap-3">
                         <CheckCircle2 className="mt-0.5 h-5 w-5 text-success" />
                         <div>
-                          <p className="font-semibold text-success">Reserva confirmada</p>
+                          <p className="font-semibold text-success">
+                            {createdBooking?.status === "PENDING"
+                              ? "Solicitud recibida"
+                              : "Reserva confirmada"}
+                          </p>
                           <p className="mt-1 text-sm text-fg-secondary">
                             {createdBooking
                               ? `${createdBooking.customer_name} con ${createdBooking.employee?.name ?? "profesional"}`
@@ -1100,4 +1171,3 @@ export default function TenantPublicBookingFlow({
     </div>
   );
 }
-

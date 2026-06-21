@@ -41,6 +41,7 @@ export type Booking = {
   cancelled_by_user_id: string | null;
   cancellation_reason: string | null;
   total_duration_minutes: number;
+  party_size: number;
   total_price: string;
   currency: string;
   customer_name: string;
@@ -74,6 +75,10 @@ export type PublicBookingService = {
   description: string | null;
   instructions: string | null;
   duration_minutes: number;
+  capacity: number;
+  min_capacity: number;
+  max_capacity: number;
+  requires_confirmation: boolean;
   price: string;
   currency: string;
   is_active: boolean;
@@ -97,6 +102,7 @@ export type PublicBookingConfirmation = {
   start_at_utc: string;
   end_at_utc: string;
   total_duration_minutes: number;
+  party_size: number;
   total_price: string;
   currency: string;
   customer_name: string;
@@ -174,11 +180,13 @@ export type AvailabilityQuery = {
   service_ids: string[];
   date: string;
   timezone?: string;
+  party_size?: number;
 };
 
 export type ListBookingsQuery = {
   employee_id?: string;
   date?: string;
+  timezone?: string;
   status?: BookingStatus;
   q?: string;
   page?: number;
@@ -193,12 +201,16 @@ export type ListBookingsResponse = {
     total: number;
     total_pages: number;
   };
+  summary: {
+    today_count: number;
+  };
 };
 
 export type CreateBookingPayload = {
   employee_id: string;
   service_ids: string[];
   start_at_utc: string;
+  party_size?: number;
   customer_name: string;
   customer_email?: string;
   customer_phone?: string | null;

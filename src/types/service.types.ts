@@ -12,6 +12,8 @@ export type Service = {
   buffer_before_minutes: number;
   buffer_after_minutes: number;
   capacity: number;
+  min_capacity: number;
+  max_capacity: number;
   price: string;
   currency: string;
   is_active: boolean;
@@ -30,6 +32,8 @@ export type CreateServicePayload = {
   buffer_before_minutes?: number;
   buffer_after_minutes?: number;
   capacity?: number;
+  min_capacity?: number;
+  max_capacity?: number;
   price: number;
   currency?: string;
   is_active?: boolean;
@@ -52,10 +56,13 @@ export type ServiceFormState = {
   instructions: string;
   duration_minutes: number;
   capacity: number;
+  min_capacity: number;
+  max_capacity: number;
   price: number;
   currency: string;
   employee_ids: string[];
   is_active: boolean;
+  requires_confirmation: boolean;
 };
 
 export type ServicesListProps = {

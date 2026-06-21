@@ -60,14 +60,6 @@ const DAY_SELECT_OPTIONS: SelectOption[] = DAY_OPTIONS.map((day) => ({
   label: day.label,
 }));
 
-const TIMEZONE_OPTIONS = [
-  "UTC",
-  "America/Santo_Domingo",
-  "America/New_York",
-  "America/Mexico_City",
-  "Europe/Madrid",
-];
-
 const WEEKDAY_VALUES = [1, 2, 3, 4, 5];
 
 const INITIAL_TIME_OFF_FORM: TimeOffFormState = {
@@ -619,7 +611,7 @@ export default function BookingsSchedulePanel({
             ) : (
               <div className="rounded-xl border border-border-warning bg-surface-warning-soft px-3 py-2.5 text-xs text-warning">
                 Este profesional aún no tiene horario guardado. Usa la sección de abajo para crear la
-                agenda y pulsa "Guardar horario".
+                agenda y pulsa Guardar horario.
               </div>
             )}
           </div>

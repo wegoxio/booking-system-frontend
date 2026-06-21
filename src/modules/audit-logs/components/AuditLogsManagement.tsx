@@ -34,7 +34,7 @@ import {
   UserRound,
   Wrench,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const ACTION_OPTIONS: SelectOption[] = [
   { value: "", label: "Todas las acciones" },
@@ -188,6 +188,7 @@ function resolveActorImageUrl(log: AuditLogItem): string | null {
   return fromActor ?? fromMetadata;
 }
 export default function AuditLogsManagement(): React.ReactNode {
+  const logsRequestIdRef = useRef(0);
   const { token, user } = useAuth();
 
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
@@ -259,6 +260,7 @@ export default function AuditLogsManagement(): React.ReactNode {
 
   const loadLogs = useCallback(async () => {
     if (!token || !user) return;
+    const requestId = ++logsRequestIdRef.current;
     setIsLoadingLogs(true);
     setErrorMessage("");
 
@@ -279,14 +281,17 @@ export default function AuditLogsManagement(): React.ReactNode {
         token,
       );
 
+      if (requestId !== logsRequestIdRef.current) return;
+
       setLogs(response.data);
       setTotal(response.pagination.total);
       setTotalPages(response.pagination.total_pages);
     } catch (error) {
+      if (requestId !== logsRequestIdRef.current) return;
       setLogs([]);
       setErrorMessage(error instanceof Error ? error.message : "No se pudieron cargar los logs.");
     } finally {
-      setIsLoadingLogs(false);
+      if (requestId === logsRequestIdRef.current) setIsLoadingLogs(false);
     }
   }, [
     actionFilter,

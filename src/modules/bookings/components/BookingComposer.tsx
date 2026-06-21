@@ -5,7 +5,7 @@ import type { BookingSlot } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import type { Service } from "@/types/service.types";
 import { Clock3, UserRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 export type BookingCustomerFormState = {
   customer_name: string;
@@ -31,6 +31,8 @@ type BookingComposerProps = {
   onSelectSlot: (slotStart: string) => void;
   requiredDurationMinutes: number | null;
   availabilityTimezone: string | null;
+  partySize: number;
+  onPartySizeChange: (value: number) => void;
   customerForm: BookingCustomerFormState;
   onCustomerFormChange: (next: BookingCustomerFormState) => void;
   onSubmit: () => void;
@@ -84,6 +86,8 @@ export default function BookingComposer({
   onSelectSlot,
   requiredDurationMinutes,
   availabilityTimezone,
+  partySize,
+  onPartySizeChange,
   customerForm,
   onCustomerFormChange,
   onSubmit,
@@ -92,7 +96,7 @@ export default function BookingComposer({
   isReadyToSubmit,
   wizardMode = false,
 }: BookingComposerProps): React.ReactNode {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [requestedStep, setRequestedStep] = useState(1);
 
   const selectedServices = useMemo(
     () => services.filter((service) => selectedServiceIds.includes(service.id)),
@@ -103,6 +107,24 @@ export default function BookingComposer({
     () => selectedServices.reduce((sum, service) => sum + Number(service.price), 0),
     [selectedServices],
   );
+  const selectedService = selectedServices[0];
+  const partySizeOptions = selectedService
+    ? Array.from(
+        { length: selectedService.max_capacity - selectedService.min_capacity + 1 },
+        (_, index) => selectedService.min_capacity + index,
+      )
+    : [];
+  const highestAllowedStep =
+    selectedServiceIds.length === 0
+      ? 1
+      : selectedEmployeeId.length === 0
+        ? 2
+        : !selectedSlotStart
+          ? 3
+          : 4;
+  const currentStep = wizardMode
+    ? Math.min(requestedStep, highestAllowedStep)
+    : 1;
 
   const canContinueCurrentStep =
     currentStep === 1
@@ -114,25 +136,6 @@ export default function BookingComposer({
           : isReadyToSubmit;
 
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
-
-  useEffect(() => {
-    if (!wizardMode) {
-      setCurrentStep(1);
-      return;
-    }
-
-    if (currentStep > 1 && selectedServiceIds.length === 0) {
-      setCurrentStep(1);
-      return;
-    }
-    if (currentStep > 2 && selectedEmployeeId.length === 0) {
-      setCurrentStep(2);
-      return;
-    }
-    if (currentStep > 3 && !selectedSlotStart) {
-      setCurrentStep(3);
-    }
-  }, [currentStep, selectedEmployeeId, selectedServiceIds.length, selectedSlotStart, wizardMode]);
 
   const servicesStep = (
     <div>
@@ -166,10 +169,29 @@ export default function BookingComposer({
         </div>
 
         {selectedServices.length > 0 ? (
-          <p className="mt-3 text-xs text-muted">
-            {selectedServices.length} servicio(s) seleccionado(s). Total estimado:{" "}
-            {totalPrice.toFixed(2)} {selectedServices[0]?.currency ?? "USD"}.
-          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-[1fr_180px] md:items-end">
+            <p className="text-xs text-muted">
+              {selectedServices.length} servicio(s) seleccionado(s). Total estimado:{" "}
+              {totalPrice.toFixed(2)} {selectedServices[0]?.currency ?? "USD"}.
+              {selectedService?.requires_confirmation ? " Requiere confirmación." : ""}
+            </p>
+            {selectedService ? (
+              <label className="space-y-1.5">
+                <span className="text-xs font-medium text-fg-label">Personas</span>
+                <select
+                  value={partySize}
+                  onChange={(event) => onPartySizeChange(Number(event.target.value))}
+                  className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
+                >
+                  {partySizeOptions.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
         ) : (
           <p className="mt-3 text-xs text-muted">Selecciona al menos un servicio para continuar.</p>
         )}
@@ -417,7 +439,7 @@ export default function BookingComposer({
             <div className="flex flex-col-reverse gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+                onClick={() => setRequestedStep((prev) => Math.max(1, prev - 1))}
                 disabled={currentStep === 1 || isSubmitting}
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-fg-secondary transition hover:bg-surface-soft disabled:opacity-60"
               >
@@ -427,7 +449,9 @@ export default function BookingComposer({
               {currentStep < TOTAL_STEPS ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep((prev) => Math.min(TOTAL_STEPS, prev + 1))}
+                  onClick={() =>
+                    setRequestedStep((prev) => Math.min(TOTAL_STEPS, prev + 1))
+                  }
                   disabled={!canContinueCurrentStep || isSubmitting}
                   className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
                 >

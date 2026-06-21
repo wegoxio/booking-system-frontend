@@ -79,10 +79,10 @@
   --inverse-10: rgba(255, 255, 255, 0.1);
 
   /* Charts */
-  --chart-primary: #d9a63a;
-  --chart-primary-soft: #dfb34d;
-  --chart-secondary: #b8bbc5;
-  --chart-tertiary: #d7d9e1;
+  --chart-primary: var(--primary-accent);
+  --chart-primary-soft: #b78aff;
+  --chart-secondary: #c7b2e8;
+  --chart-tertiary: #e8dcfb;;
   --chart-grid: #ebebef;
   --chart-axis: #8b8f9a;
   --chart-cursor: #d8dae2;
@@ -95,8 +95,8 @@
   --shadow-card: 0 20px 44px rgba(26, 35, 58, 0.05);
   --shadow-shell: 0 18px 45px rgba(31, 35, 48, 0.18);
   --shadow-row: 0 12px 30px rgba(17, 24, 39, 0.04);
-  --shadow-accent: 0 12px 24px rgba(239, 195, 95, 0.28);
-  --shadow-accent-sm: 0 10px 24px rgba(239, 195, 95, 0.18);
+  --shadow-accent: 0 12px 24px rgba(151, 89, 239, 0.28);
+  --shadow-accent-sm: 0 10px 24px rgba(151, 89, 239, 0.18);
   --shadow-info: 0 12px 24px rgba(46, 103, 189, 0.28);
   --shadow-danger: 0 12px 24px rgba(223, 95, 95, 0.32);
   --shadow-modal: 0 28px 80px rgba(15, 23, 42, 0.25);
@@ -130,7 +130,7 @@
   --color-card: var(--card-bg);
   --color-card-border: var(--card-border);
 
-  --color-primary: var(--text-body);
+  --color-primary: var(--primary-accent);
   --color-muted: var(--text-secondary);
 
   --color-accent: var(--primary-accent);
@@ -363,7 +363,13 @@
 .wegox-tour-popover .driver-popover-next-btn {
   background: var(--primary-accent);
   color: var(--primary-accent-text);
-  box-shadow: 0 10px 24px rgba(239, 195, 95, 0.28);
+  box-shadow: var(--shadow-accent-sm);
+}
+
+.wegox-tour-popover .driver-popover-next-btn:hover {
+  background: var(--primary-hover);
+  color: var(--primary-accent-text);
+  box-shadow: var(--shadow-accent-sm);
 }
 
 .wegox-tour-popover .driver-popover-prev-btn {

@@ -275,7 +275,6 @@ export function createThemeVariables(
     textBody,
   );
   const textMuted = mixHex(textSecondary, normalizedTheme.secondary, 0.34);
-  const textLabel = mixHex(textBody, textSecondary, 0.55);
   const textPlaceholder = mixHex(textMuted, normalizedTheme.secondary, 0.2);
   const chartPrimary = mixHex(normalizedTheme.primary, "#b8841f", 0.32);
   const chartPrimarySoft = mixHex(normalizedTheme.primary, "#dfb34d", 0.46);

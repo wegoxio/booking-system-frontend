@@ -186,7 +186,6 @@ export default function TenantAdminsManagement() {
     const basePayload = {
       name: form.name.trim(),
       email: form.email.trim().toLowerCase(),
-      tenant_id: form.tenant_id,
     };
 
     setIsSaving(true);
@@ -204,6 +203,7 @@ export default function TenantAdminsManagement() {
       } else {
         const payload: CreateTenantAdminPayload = {
           ...basePayload,
+          tenant_id: form.tenant_id,
         };
         await tenantAdminsService.create(payload, token);
         toast.success("Invitación enviada correctamente.");

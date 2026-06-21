@@ -8,6 +8,11 @@ export type Tenant = {
   tenant_logo_url?: string | null;
 };
 
+export type TenantPage = {
+  data: Tenant[];
+  pagination: { page: number; limit: number; total: number; total_pages: number };
+};
+
 export type CreateTenantPayload = {
   name: string;
   slug: string;

@@ -11,10 +11,13 @@ export const emptyServiceForm: ServiceFormState = {
   instructions: "",
   duration_minutes: 60,
   capacity: 1,
+  min_capacity: 1,
+  max_capacity: 1,
   price: 0,
   currency: "USD",
   employee_ids: [],
   is_active: true,
+  requires_confirmation: false,
 };
 
 export function toCreateServicePayload(form: ServiceFormState): CreateServicePayload {
@@ -23,10 +26,13 @@ export function toCreateServicePayload(form: ServiceFormState): CreateServicePay
     description: form.description.trim() || undefined,
     instructions: form.instructions.trim() || undefined,
     duration_minutes: form.duration_minutes,
-    capacity: form.capacity,
+    capacity: form.max_capacity,
+    min_capacity: form.min_capacity,
+    max_capacity: form.max_capacity,
     price: Number(form.price.toFixed(2)),
     currency: form.currency.trim().toUpperCase(),
     is_active: form.is_active,
+    requires_confirmation: form.requires_confirmation,
     employee_ids: form.employee_ids,
   };
 }
@@ -37,11 +43,14 @@ export function toUpdateServicePayload(form: ServiceFormState): UpdateServicePay
     description: form.description.trim() || undefined,
     instructions: form.instructions.trim() || undefined,
     duration_minutes: form.duration_minutes,
-    capacity: form.capacity,
+    capacity: form.max_capacity,
+    min_capacity: form.min_capacity,
+    max_capacity: form.max_capacity,
     price: Number(form.price.toFixed(2)),
     currency: form.currency.trim().toUpperCase(),
     employee_ids: form.employee_ids,
     is_active: form.is_active,
+    requires_confirmation: form.requires_confirmation,
   };
 }
 
@@ -51,10 +60,13 @@ export function serviceToFormState(service: Service): ServiceFormState {
     description: service.description ?? "",
     instructions: service.instructions ?? "",
     duration_minutes: service.duration_minutes,
-    capacity: service.capacity,
+    capacity: service.max_capacity ?? service.capacity,
+    min_capacity: service.min_capacity ?? 1,
+    max_capacity: service.max_capacity ?? service.capacity,
     price: Number(service.price),
     currency: service.currency,
     employee_ids: service.employees.map((employee) => employee.id),
     is_active: service.is_active,
+    requires_confirmation: service.requires_confirmation,
   };
 }

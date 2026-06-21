@@ -16,14 +16,19 @@ export default function DashboardOverview() {
   const [overview, setOverview] = useState<DashboardOverviewResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [currency, setCurrency] = useState("");
+  const userRole = user?.role;
 
   const loadOverview = useCallback(async () => {
     if (!token) return;
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const data = await dashboardService.getOverview(token);
+      const data = await dashboardService.getOverview(token, {
+        currency: currency || (userRole === "SUPER_ADMIN" ? "USD" : undefined),
+      });
       setOverview(data);
+      if (!currency) setCurrency(data.currency);
     } catch (error) {
       setErrorMessage(
         error instanceof Error ? error.message : "No se pudo cargar el panel.",
@@ -31,7 +36,7 @@ export default function DashboardOverview() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [currency, token, userRole]);
 
   useEffect(() => {
     if (!token) return;
@@ -69,6 +74,17 @@ export default function DashboardOverview() {
         </div>
 
         <div className="inline-flex items-center gap-2">
+          <select
+            value={currency}
+            onChange={(event) => setCurrency(event.target.value)}
+            aria-label="Divisa del panel"
+            className="rounded-lg border border-border bg-surface-soft px-2 py-2 text-xs text-muted"
+          >
+            <option value="">Divisa automática</option>
+            {['USD', 'EUR', 'DOP', 'MXN', 'COP'].map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={handleStartTour}

@@ -1,6 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useTenantSettings } from "@/context/TenantSettingsContext";
+import Image from "next/image";
 import { defaultTenantSettings } from "@/modules/settings/config/default-tenant-settings";
 import {
   getTenantAssetMaxSizeLabel,
@@ -620,9 +621,12 @@ export default function TenantSettingsPanel() {
                       PNG, JPG o WEBP. Máximo {LOGO_MAX_SIZE_LABEL}.
                     </p>
                   </div>
-                  <img
+                  <Image
                     src={logoPreview || defaultTenantSettings.branding.logoUrl}
                     alt="Vista previa del logo"
+                    width={48}
+                    height={48}
+                    unoptimized
                     className="h-12 w-12 rounded-xl border border-border-soft bg-surface object-contain p-2"
                     onError={(event) => {
                       event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -664,9 +668,12 @@ export default function TenantSettingsPanel() {
                       PNG, ICO o WEBP. Máximo {FAVICON_MAX_SIZE_LABEL}.
                     </p>
                   </div>
-                  <img
+                  <Image
                     src={faviconPreview || defaultTenantSettings.branding.faviconUrl}
                     alt="Vista previa del favicon"
+                    width={48}
+                    height={48}
+                    unoptimized
                     className="h-12 w-12 rounded-xl border border-border-soft bg-surface object-contain p-2"
                     onError={(event) => {
                       event.currentTarget.src = defaultTenantSettings.branding.faviconUrl;
@@ -753,9 +760,12 @@ export default function TenantSettingsPanel() {
                           className="grid h-14 w-14 place-items-center rounded-[22px]"
                           style={previewSidebarItemStyle}
                         >
-                          <img
+                          <Image
                             src={logoPreview || defaultTenantSettings.branding.logoUrl}
                             alt="Logo de marca"
+                            width={36}
+                            height={36}
+                            unoptimized
                             className="h-9 w-9 object-contain"
                             onError={(event) => {
                               event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -878,9 +888,12 @@ export default function TenantSettingsPanel() {
                           </p>
                         </div>
                         <div className="grid h-12 w-12 place-items-center rounded-[18px] border border-card-border bg-surface">
-                          <img
+                          <Image
                             src={logoPreview || defaultTenantSettings.branding.logoUrl}
                             alt="Vista previa de marca"
+                            width={28}
+                            height={28}
+                            unoptimized
                             className="h-7 w-7 object-contain"
                             onError={(event) => {
                               event.currentTarget.src = defaultTenantSettings.branding.logoUrl;
@@ -1029,9 +1042,12 @@ export default function TenantSettingsPanel() {
                   </p>
                   <div className="mt-3 flex items-center gap-3">
                     <div className="grid h-14 w-14 place-items-center rounded-2xl border border-card-border bg-surface">
-                      <img
+                      <Image
                         src={logoPreview || defaultTenantSettings.branding.logoUrl}
                         alt="Vista previa de marca"
+                        width={36}
+                        height={36}
+                        unoptimized
                         className="h-9 w-9 object-contain"
                         onError={(event) => {
                           event.currentTarget.src = defaultTenantSettings.branding.logoUrl;

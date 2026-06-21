@@ -1,6 +1,12 @@
 export type ReportGroupBy = "day" | "week" | "month";
 export type ReportBookingSource = "WEB" | "MANUAL";
-export type ReportBookingStatus = "PENDING" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
+export type ReportBookingStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "NO_SHOW";
 
 export type ReportsOverviewQuery = {
   date_from?: string;
@@ -12,6 +18,7 @@ export type ReportsOverviewQuery = {
   service_id?: string;
   source?: ReportBookingSource;
   status?: ReportBookingStatus;
+  currency?: string;
   top_limit?: number;
 };
 
@@ -96,6 +103,7 @@ export type ReportsOverviewResponse = {
     service_id: string | null;
     source: ReportBookingSource | null;
     status: ReportBookingStatus | null;
+    currency: string;
     top_limit: number;
   };
   summary: ReportsSummary;

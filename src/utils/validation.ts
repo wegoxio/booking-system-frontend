@@ -16,8 +16,14 @@ export function validateServiceForm(form: ServiceFormState): string | null {
     if (!Number.isInteger(form.duration_minutes) || form.duration_minutes <= 0) {
         return "La duración debe ser un entero positivo.";
     }
-    if (!Number.isInteger(form.capacity) || form.capacity <= 0) {
-        return "La capacidad debe ser un entero positivo.";
+    if (!Number.isInteger(form.min_capacity) || form.min_capacity <= 0) {
+        return "La capacidad mínima debe ser un entero positivo.";
+    }
+    if (!Number.isInteger(form.max_capacity) || form.max_capacity <= 0) {
+        return "La capacidad máxima debe ser un entero positivo.";
+    }
+    if (form.max_capacity < form.min_capacity) {
+        return "La capacidad máxima debe ser mayor o igual a la mínima.";
     }
     if (!Number.isFinite(form.price) || form.price < 0) {
         return "El precio debe ser mayor o igual a 0.";

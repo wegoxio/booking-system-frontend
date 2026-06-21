@@ -25,7 +25,9 @@ export type CreateTenantAdminPayload = {
   tenant_id: string;
 };
 
-export type UpdateTenantAdminPayload = Partial<CreateTenantAdminPayload> & {
+export type UpdateTenantAdminPayload = {
+  name?: string;
+  email?: string;
   is_active?: boolean;
 };
 

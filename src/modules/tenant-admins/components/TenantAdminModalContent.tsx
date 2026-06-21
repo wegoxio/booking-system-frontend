@@ -65,22 +65,31 @@ export default function TenantAdminModalContent({
           <label htmlFor="tenant-admin-tenant" className="text-sm font-medium text-fg-label">
             Negocio
           </label>
-          <select
-            id="tenant-admin-tenant"
-            value={form.tenant_id}
-            onChange={(event) => onTenantChange(event.target.value)}
-            className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-fg"
-            required
-          >
-            <option value="" disabled>
-              Selecciona un negocio
-            </option>
-            {tenants.map((tenant) => (
-              <option key={tenant.id} value={tenant.id}>
-                {tenant.name} ({tenant.slug})
+          {isEditing ? (
+            <div
+              id="tenant-admin-tenant"
+              className="w-full rounded-2xl border border-border bg-surface-muted px-4 py-3 text-sm text-fg"
+            >
+              {selectedTenantName}
+            </div>
+          ) : (
+            <select
+              id="tenant-admin-tenant"
+              value={form.tenant_id}
+              onChange={(event) => onTenantChange(event.target.value)}
+              className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-fg"
+              required
+            >
+              <option value="" disabled>
+                Selecciona un negocio
               </option>
-            ))}
-          </select>
+              {tenants.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.name} ({tenant.slug})
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {isEditing && (

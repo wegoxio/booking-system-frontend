@@ -130,7 +130,7 @@
   --color-card: var(--card-bg);
   --color-card-border: var(--card-border);
 
-  --color-primary: var(--primary-accent);
+  --color-primary: var(--text-primary);
   --color-muted: var(--text-secondary);
 
   --color-accent: var(--primary-accent);

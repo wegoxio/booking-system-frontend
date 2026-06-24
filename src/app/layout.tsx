@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import "driver.js/dist/driver.css";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
@@ -10,13 +11,18 @@ export const metadata: Metadata = {
   description: "Plataforma de reservas y gestión operativa de Bukky",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="es">
+      <head>
+        {nonce ? <meta name="csp-nonce" content={nonce} /> : null}
+      </head>
       <body>
         <AuthProvider>
           <TenantSettingsProvider>

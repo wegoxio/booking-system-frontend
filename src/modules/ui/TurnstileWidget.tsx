@@ -41,6 +41,12 @@ type TurnstileWidgetProps = {
 const TURNSTILE_SCRIPT_SRC =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
+function getCspNonce(): string | undefined {
+  return document
+    .querySelector<HTMLMetaElement>('meta[name="csp-nonce"]')
+    ?.content.trim() || undefined;
+}
+
 function loadTurnstileScript(): Promise<TurnstileInstance> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Turnstile solo funciona en el navegador."));
@@ -80,6 +86,12 @@ function loadTurnstileScript(): Promise<TurnstileInstance> {
       }
 
       const script = document.createElement("script");
+      const nonce = getCspNonce();
+
+      if (nonce) {
+        script.nonce = nonce;
+      }
+
       script.src = TURNSTILE_SCRIPT_SRC;
       script.async = true;
       script.defer = true;

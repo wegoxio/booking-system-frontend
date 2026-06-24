@@ -38,6 +38,8 @@ import Image from "next/image";
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
+import { ApiError } from "@/modules/http/services/api";
+import { calculateEstimatedTotal } from "@/modules/bookings/utils/money";
 
 type BookingStep = "services" | "employee" | "datetime" | "customer" | "done";
 
@@ -262,8 +264,8 @@ export default function TenantPublicBookingFlow({
   const selectedService = selectedServices[0];
   const partySizeOptions = selectedService
     ? Array.from(
-        { length: selectedService.max_capacity - selectedService.min_capacity + 1 },
-        (_, index) => selectedService.min_capacity + index,
+        { length: selectedService.max_party_size - selectedService.min_party_size + 1 },
+        (_, index) => selectedService.min_party_size + index,
       )
     : [];
 
@@ -281,10 +283,9 @@ export default function TenantPublicBookingFlow({
     [slots, selectedSlotStart],
   );
 
-  const totalPrice = useMemo(
-    () => selectedServices.reduce((sum, service) => sum + Number(service.price), 0),
-    [selectedServices],
-  );
+  const totalPrice = selectedService
+    ? calculateEstimatedTotal(selectedService.price, partySize, selectedService.pricing_model)
+    : "0.00";
 
   const loadMeta = useCallback(async () => {
     setIsLoadingMeta(true);
@@ -447,7 +448,7 @@ export default function TenantPublicBookingFlow({
     const isSelected = selectedServiceIds.includes(serviceId);
     const nextService = activeServices.find((service) => service.id === serviceId);
     setSelectedServiceIds(isSelected ? [] : [serviceId]);
-    setPartySize(isSelected ? 1 : nextService?.min_capacity ?? 1);
+    setPartySize(isSelected ? 1 : nextService?.min_party_size ?? 1);
     setEligibleEmployees([]);
     setSelectedEmployeeId("");
     setSlots([]);
@@ -542,7 +543,7 @@ export default function TenantPublicBookingFlow({
     }
     if (
       selectedService &&
-      (partySize < selectedService.min_capacity || partySize > selectedService.max_capacity)
+      (partySize < selectedService.min_party_size || partySize > selectedService.max_party_size)
     ) {
       setErrorMessage("El número de personas no es válido para el servicio.");
       return;
@@ -593,7 +594,12 @@ export default function TenantPublicBookingFlow({
       if (isTurnstileEnabled) {
         setCaptchaRefreshKey((prev) => prev + 1);
       }
-      setErrorMessage(error instanceof Error ? error.message : "No se pudo crear la reserva.");
+      if (error instanceof ApiError && error.status === 409) {
+        await refreshAvailability();
+        setErrorMessage("Otro cliente ocupó las últimas plazas. Selecciona otro horario disponible.");
+      } else {
+        setErrorMessage(error instanceof Error ? error.message : "No se pudo crear la reserva.");
+      }
       toast.error(error instanceof Error ? error.message : "No se pudo crear la reserva.");
     } finally {
       setIsSubmitting(false);
@@ -747,8 +753,13 @@ export default function TenantPublicBookingFlow({
 
                 <div>
                   <p className="text-xs text-muted">Total estimado</p>
+                  {selectedService?.pricing_model === "PER_PERSON" ? (
+                    <p className="mt-1 text-xs text-muted">
+                      {selectedService.price} {selectedService.currency} por persona
+                    </p>
+                  ) : null}
                   <p className="mt-1 text-sm font-semibold text-fg-strong">
-                    {totalPrice.toFixed(2)} {selectedServices[0]?.currency ?? "USD"}
+                    {totalPrice} {selectedServices[0]?.currency ?? "USD"}
                   </p>
                 </div>
               </div>
@@ -821,9 +832,11 @@ export default function TenantPublicBookingFlow({
                                 {service.duration_minutes} min - {service.price} {service.currency}
                               </p>
                               <p className="mt-1 text-xs text-muted">
-                                {service.min_capacity === service.max_capacity
-                                  ? `${service.max_capacity} persona(s)`
-                                  : `${service.min_capacity}-${service.max_capacity} personas`}
+                                {service.min_party_size === service.max_party_size
+                                  ? `${service.max_party_size} persona(s)`
+                                  : `${service.min_party_size}-${service.max_party_size} personas por reserva`}
+                                {` · ${service.slot_capacity} plazas totales`}
+                                {service.pricing_model === "PER_PERSON" ? " · precio por persona" : " · precio fijo"}
                                 {service.requires_confirmation ? " - requiere confirmación" : ""}
                               </p>
                               {service.instructions ? (
@@ -977,6 +990,9 @@ export default function TenantPublicBookingFlow({
                                   }`}
                                 >
                                   {formatSlotTime(slot.start_at_utc, availabilityTimezone)}
+                                  <span className="mt-0.5 block text-[10px] opacity-80">
+                                    {slot.available_capacity} plaza(s) libre(s)
+                                  </span>
                                 </button>
                               );
                             })}
@@ -1127,10 +1143,18 @@ export default function TenantPublicBookingFlow({
                               : "Reserva creada"}
                           </p>
                           {createdBooking ? (
-                            <p className="mt-1 text-sm text-fg-secondary">
-                              {formatSlotDate(createdBooking.start_at_utc)} -{" "}
-                              {formatSlotTime(createdBooking.start_at_utc)}
-                            </p>
+                            <div className="mt-1 space-y-1 text-sm text-fg-secondary">
+                              <p>
+                                {formatSlotDate(createdBooking.start_at_utc)} -{" "}
+                                {formatSlotTime(createdBooking.start_at_utc)}
+                              </p>
+                              <p>{createdBooking.party_size} persona(s) · {createdBooking.total_price} {createdBooking.currency}</p>
+                              <p>
+                                {createdBooking.status === "PENDING"
+                                  ? "El negocio debe confirmar la solicitud."
+                                  : "La reserva está confirmada."}
+                              </p>
+                            </div>
                           ) : null}
                         </div>
                       </div>

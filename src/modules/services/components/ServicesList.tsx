@@ -35,6 +35,10 @@ export function ServicesList({
                 <span className="inline-flex items-center gap-2 rounded-full bg-surface-success px-3 py-1.5 text-xs font-semibold text-success">
                   <DollarSign className="h-3.5 w-3.5" />
                   {service.currency} {formatPrice(service.price)}
+                  {service.pricing_model === "PER_PERSON" ? " / persona" : " / reserva"}
+                </span>
+                <span className="rounded-full bg-surface-muted px-3 py-1.5 text-xs text-fg-secondary">
+                  {service.min_party_size}-{service.max_party_size} por reserva · {service.slot_capacity} plazas
                 </span>
                 <span
                   className={`rounded-full px-3 py-1.5 text-xs font-medium ${
@@ -135,6 +139,7 @@ export function ServicesList({
                     <div className="inline-flex items-center gap-2 rounded-full bg-surface-success px-3 py-1.5 text-xs font-semibold text-success">
                       <DollarSign className="h-3.5 w-3.5" />
                       {service.currency} {formatPrice(service.price)}
+                      {service.pricing_model === "PER_PERSON" ? " / persona" : " / reserva"}
                     </div>
                   </td>
                   <td className="border-y border-border-soft bg-surface px-4 py-4">

@@ -14,6 +14,10 @@ export type Service = {
   capacity: number;
   min_capacity: number;
   max_capacity: number;
+  min_party_size: number;
+  max_party_size: number;
+  slot_capacity: number;
+  pricing_model: "FLAT" | "PER_PERSON";
   price: string;
   currency: string;
   is_active: boolean;
@@ -34,6 +38,10 @@ export type CreateServicePayload = {
   capacity?: number;
   min_capacity?: number;
   max_capacity?: number;
+  min_party_size?: number;
+  max_party_size?: number;
+  slot_capacity?: number;
+  pricing_model?: "FLAT" | "PER_PERSON";
   price: number;
   currency?: string;
   is_active?: boolean;
@@ -58,6 +66,10 @@ export type ServiceFormState = {
   capacity: number;
   min_capacity: number;
   max_capacity: number;
+  min_party_size: number;
+  max_party_size: number;
+  slot_capacity: number;
+  pricing_model: "FLAT" | "PER_PERSON";
   price: number;
   currency: string;
   employee_ids: string[];

@@ -69,7 +69,7 @@ export default function ServiceEditModalContent({
   );
   const capacityOptions = buildNumberOptions(
     BASE_CAPACITY_OPTIONS,
-    Math.max(form.min_capacity, form.max_capacity),
+    Math.max(form.min_party_size, form.max_party_size, form.slot_capacity),
     (value) => `${value} persona${value === 1 ? "" : "s"}`,
   );
   const currencyOptions = buildCurrencyOptions(form.currency);
@@ -129,14 +129,15 @@ export default function ServiceEditModalContent({
             Mín. personas
           </label>
           <SelectField
-            value={String(form.min_capacity)}
+            value={String(form.min_party_size)}
             onValueChange={(value) => {
               const nextMinCapacity = Number(value);
               onFormChange((prev) => ({
                 ...prev,
+                min_party_size: nextMinCapacity,
+                max_party_size: Math.max(prev.max_party_size, nextMinCapacity),
+                slot_capacity: Math.max(prev.slot_capacity, prev.max_party_size, nextMinCapacity),
                 min_capacity: nextMinCapacity,
-                max_capacity: Math.max(prev.max_capacity, nextMinCapacity),
-                capacity: Math.max(prev.max_capacity, nextMinCapacity),
               }));
             }}
             options={capacityOptions}
@@ -148,14 +149,15 @@ export default function ServiceEditModalContent({
             Máx. personas
           </label>
           <SelectField
-            value={String(form.max_capacity)}
+            value={String(form.max_party_size)}
             onValueChange={(value) => {
               const nextMaxCapacity = Number(value);
               onFormChange((prev) => ({
                 ...prev,
+                max_party_size: nextMaxCapacity,
+                min_party_size: Math.min(prev.min_party_size, nextMaxCapacity),
+                slot_capacity: Math.max(prev.slot_capacity, nextMaxCapacity),
                 max_capacity: nextMaxCapacity,
-                min_capacity: Math.min(prev.min_capacity, nextMaxCapacity),
-                capacity: nextMaxCapacity,
               }));
             }}
             options={capacityOptions}
@@ -163,8 +165,42 @@ export default function ServiceEditModalContent({
         </div>
 
         <div className="space-y-1.5">
+          <label className="text-sm font-medium text-fg-label">Capacidad total del horario</label>
+          <SelectField
+            value={String(form.slot_capacity)}
+            onValueChange={(value) => {
+              const slotCapacity = Number(value);
+              onFormChange((prev) => ({
+                ...prev,
+                slot_capacity: slotCapacity,
+                max_party_size: Math.min(prev.max_party_size, slotCapacity),
+                capacity: slotCapacity,
+              }));
+            }}
+            options={capacityOptions}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-fg-label">Modelo de precio</label>
+          <SelectField
+            value={form.pricing_model}
+            onValueChange={(value) =>
+              onFormChange((prev) => ({
+                ...prev,
+                pricing_model: value as "FLAT" | "PER_PERSON",
+              }))
+            }
+            options={[
+              { value: "FLAT", label: "Fijo por reserva" },
+              { value: "PER_PERSON", label: "Por persona" },
+            ]}
+          />
+        </div>
+
+        <div className="space-y-1.5">
           <label htmlFor="service-price" className="text-sm font-medium text-fg-label">
-            Precio
+            {form.pricing_model === "PER_PERSON" ? "Precio por persona" : "Precio por reserva"}
           </label>
           <input
             id="service-price"
@@ -282,4 +318,3 @@ export default function ServiceEditModalContent({
     </div>
   );
 }
-

@@ -25,6 +25,15 @@ export function validateServiceForm(form: ServiceFormState): string | null {
     if (form.max_capacity < form.min_capacity) {
         return "La capacidad máxima debe ser mayor o igual a la mínima.";
     }
+    if (!Number.isInteger(form.min_party_size) || form.min_party_size < 1) {
+        return "El mínimo por reserva debe ser un entero positivo.";
+    }
+    if (!Number.isInteger(form.max_party_size) || form.max_party_size < form.min_party_size) {
+        return "El máximo por reserva debe ser mayor o igual al mínimo.";
+    }
+    if (!Number.isInteger(form.slot_capacity) || form.slot_capacity < form.max_party_size) {
+        return "La capacidad total debe ser mayor o igual al máximo por reserva.";
+    }
     if (!Number.isFinite(form.price) || form.price < 0) {
         return "El precio debe ser mayor o igual a 0.";
     }

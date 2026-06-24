@@ -4,6 +4,7 @@ import PhoneField from "@/modules/ui/PhoneField";
 import type { BookingSlot } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import type { Service } from "@/types/service.types";
+import { calculateEstimatedTotal } from "@/modules/bookings/utils/money";
 import { Clock3, UserRound } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -103,15 +104,14 @@ export default function BookingComposer({
     [services, selectedServiceIds],
   );
 
-  const totalPrice = useMemo(
-    () => selectedServices.reduce((sum, service) => sum + Number(service.price), 0),
-    [selectedServices],
-  );
   const selectedService = selectedServices[0];
+  const totalPrice = selectedService
+    ? calculateEstimatedTotal(selectedService.price, partySize, selectedService.pricing_model)
+    : "0.00";
   const partySizeOptions = selectedService
     ? Array.from(
-        { length: selectedService.max_capacity - selectedService.min_capacity + 1 },
-        (_, index) => selectedService.min_capacity + index,
+        { length: selectedService.max_party_size - selectedService.min_party_size + 1 },
+        (_, index) => selectedService.min_party_size + index,
       )
     : [];
   const highestAllowedStep =
@@ -172,7 +172,8 @@ export default function BookingComposer({
           <div className="mt-3 grid gap-3 md:grid-cols-[1fr_180px] md:items-end">
             <p className="text-xs text-muted">
               {selectedServices.length} servicio(s) seleccionado(s). Total estimado:{" "}
-              {totalPrice.toFixed(2)} {selectedServices[0]?.currency ?? "USD"}.
+              {totalPrice} {selectedServices[0]?.currency ?? "USD"}.
+              {selectedService?.pricing_model === "PER_PERSON" ? " Precio por persona." : " Precio fijo por reserva."}
               {selectedService?.requires_confirmation ? " Requiere confirmación." : ""}
             </p>
             {selectedService ? (
@@ -280,6 +281,9 @@ export default function BookingComposer({
                   }`}
                 >
                   {formatSlotTime(slot.start_at_utc, availabilityTimezone)}
+                  <span className="mt-0.5 block text-[10px] opacity-80">
+                    {slot.available_capacity} plaza(s) libre(s)
+                  </span>
                 </button>
               );
             })}

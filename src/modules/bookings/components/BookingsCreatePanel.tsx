@@ -10,7 +10,9 @@ import { servicesService } from "@/modules/services/services/services.service";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
 import type { Employee } from "@/types/employee.types";
 import type { Service } from "@/types/service.types";
+import type { BookingSlot } from "@/types/booking.types";
 import { buildZonedDateTimeToIso } from "@/modules/bookings/utils/zoned-date-time";
+import { calculateEstimatedTotal } from "@/modules/bookings/utils/money";
 import { Clock3, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -50,12 +52,12 @@ function isCancellationStatus(status: ManualBookingStatusSelection) {
 }
 
 function getDefaultPartySize(service: Service | undefined) {
-  return service?.min_capacity ?? 1;
+  return service?.min_party_size ?? 1;
 }
 
 function isPartySizeAllowed(service: Service | undefined, partySize: number) {
   if (!service) return false;
-  return partySize >= service.min_capacity && partySize <= service.max_capacity;
+  return partySize >= service.min_party_size && partySize <= service.max_party_size;
 }
 
 export default function BookingsCreatePanel({
@@ -74,7 +76,7 @@ export default function BookingsCreatePanel({
   const [isLoadingStrictEmployees, setIsLoadingStrictEmployees] = useState(false);
   const [strictSelectedEmployeeId, setStrictSelectedEmployeeId] = useState("");
   const [strictDate, setStrictDate] = useState(getTodayDateInput());
-  const [strictSlots, setStrictSlots] = useState<Array<{ start_at_utc: string; end_at_utc: string }>>([]);
+  const [strictSlots, setStrictSlots] = useState<BookingSlot[]>([]);
   const [isLoadingStrictSlots, setIsLoadingStrictSlots] = useState(false);
   const [strictSelectedSlotStart, setStrictSelectedSlotStart] = useState<string | null>(null);
   const [strictRequiredDurationMinutes, setStrictRequiredDurationMinutes] = useState<number | null>(null);
@@ -128,10 +130,16 @@ export default function BookingsCreatePanel({
     [manualSelectedServices],
   );
 
-  const manualEstimatedTotal = useMemo(
-    () => manualSelectedServices.reduce((sum, service) => sum + Number(service.price), 0),
-    [manualSelectedServices],
-  );
+  const manualEstimatedTotal = useMemo(() => {
+    if (!manualSelectedService) return 0;
+    return Number(
+      calculateEstimatedTotal(
+        manualSelectedService.price,
+        manualPartySize,
+        manualSelectedService.pricing_model,
+      ),
+    );
+  }, [manualPartySize, manualSelectedService]);
 
   const loadServices = useCallback(async () => {
     if (!token) return;

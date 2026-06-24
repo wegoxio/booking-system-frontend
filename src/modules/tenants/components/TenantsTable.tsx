@@ -1,13 +1,8 @@
 import { Ban, Hash, Pencil } from "lucide-react";
 import { Avatar } from "@/modules/employees/components/components/Avatar";
-import type { Tenant } from "@/types/tenant.types";
 import { formatDate } from "@/utils/format";
+import { TenantsTableProps } from "@/types/tenant.types";
 
-interface TenantsTableProps {
-  tenants: Tenant[];
-  onEdit: (tenant: Tenant) => void;
-  onDeactivate: (tenant: Tenant) => void;
-}
 
 export default function TenantsTable({
   tenants,

@@ -19,7 +19,7 @@ import {
   Search,
   XCircle,
 } from "lucide-react";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
 const STATUS_FILTERS: Array<{ value: "" | BookingStatus; label: string }> = [
@@ -50,14 +50,6 @@ function buildTenantBookingUrl(baseDomain: string, tenantSlug: string) {
   )}`;
 }
 
-function getTodayDateInput() {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, "0");
-  const dd = String(now.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 type PendingStatusChange = {
   booking: Booking;
   status: BookingStatus;
@@ -68,6 +60,7 @@ function isCancellationStatus(status: BookingStatus) {
 }
 
 export default function BookingsManagement() {
+  const bookingsRequestIdRef = useRef(0);
   const { token, user } = useAuth();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -94,6 +87,7 @@ export default function BookingsManagement() {
   const [limit] = useState(25);
   const [totalBookings, setTotalBookings] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [bookingsTodayCount, setBookingsTodayCount] = useState(0);
 
   const activeEmployees = useMemo(
     () => employees.filter((employee) => employee.is_active),
@@ -144,6 +138,7 @@ export default function BookingsManagement() {
 
   const loadBookings = useCallback(async () => {
     if (!token) return;
+    const requestId = ++bookingsRequestIdRef.current;
     setIsLoadingBookings(true);
     setErrorMessage("");
 
@@ -153,29 +148,34 @@ export default function BookingsManagement() {
           status: statusFilter || undefined,
           employee_id: employeeFilter || undefined,
           date: dateFilter || undefined,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           q: debouncedSearchQuery || undefined,
           page,
           limit,
         },
         token,
       );
+      if (requestId !== bookingsRequestIdRef.current) return;
       setBookings(response.data);
       setTotalBookings(response.pagination.total);
       setTotalPages(response.pagination.total_pages);
+      setBookingsTodayCount(response.summary.today_count);
 
       if (page > response.pagination.total_pages) {
         setPage(response.pagination.total_pages);
       }
     } catch (error) {
+      if (requestId !== bookingsRequestIdRef.current) return;
       const message =
         error instanceof Error ? error.message : "No se pudieron cargar las citas.";
       setBookings([]);
       setTotalBookings(0);
       setTotalPages(1);
+      setBookingsTodayCount(0);
       setErrorMessage(message);
       toast.error(message);
     } finally {
-      setIsLoadingBookings(false);
+      if (requestId === bookingsRequestIdRef.current) setIsLoadingBookings(false);
     }
   }, [
     dateFilter,
@@ -198,11 +198,6 @@ export default function BookingsManagement() {
   useEffect(() => {
     void loadBookings();
   }, [loadBookings]);
-
-  const bookingsTodayCount = useMemo(() => {
-    const today = getTodayDateInput();
-    return bookings.filter((booking) => booking.start_at_utc.slice(0, 10) === today).length;
-  }, [bookings]);
 
   const pendingBookingsCount = useMemo(
     () =>

@@ -21,6 +21,16 @@ type RequestOptions = RequestInit & {
   responseType?: "auto" | "json" | "text" | "blob";
 };
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 let refreshInFlight: Promise<string | null> | null = null;
 
 function buildHeaders(
@@ -137,7 +147,7 @@ export async function apiFetch<t>(
   }
 
   if (!response.ok) {
-    throw new Error(await parseErrorMessage(response));
+    throw new ApiError(await parseErrorMessage(response), response.status);
   }
 
   if (response.status === 204) {

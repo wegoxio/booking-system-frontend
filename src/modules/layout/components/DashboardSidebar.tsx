@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTenantSettings } from "@/context/TenantSettingsContext";
 import Avatar from "@/modules/ui/Avatar";
+import Image from "next/image";
 
 export type DashboardNavItem = {
   href: string;
@@ -67,10 +68,11 @@ export default function DashboardSidebar({
         <div className="flex h-full flex-col p-4">
           <div className="mb-5 rounded-xl bg-overlay-muted px-4 py-3">
             <Link href="/dashboard" className="flex items-center gap-2">
-              <img
+              <Image
                 src={logoUrl}
                 alt={`${appName} logo`}
-                className="h-6 w-6 rounded-sm object-contain"
+                width={30}
+                height={20}
                 onError={(event) => {
                   event.currentTarget.src = "/bukky-logo.svg";
                 }}
@@ -138,7 +140,7 @@ export default function DashboardSidebar({
               className="flex w-full items-center justify-center gap-2 rounded-lg border border-inverse-15 bg-overlay-muted px-3 py-2 text-xs font-semibold text-inverse-95 hover:bg-inverse-10"
             >
               <LogOut className="h-3.5 w-3.5" />
-              <span>Cerrar sesion</span>
+              <span>Cerrar sesión</span>
             </button>
           </div>
         </div>

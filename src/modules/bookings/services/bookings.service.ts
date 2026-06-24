@@ -61,6 +61,7 @@ export const bookingsService = {
       service_ids: query.service_ids.join(","),
       date: query.date,
       timezone: query.timezone,
+      party_size: query.party_size ? String(query.party_size) : undefined,
     });
     return apiFetch<AvailabilityResponse>(
       `/public/tenants/${encodeURIComponent(tenantSlug)}/bookings/availability${queryString}`,
@@ -73,12 +74,14 @@ export const bookingsService = {
   createPublic: async (
     tenantSlug: string,
     payload: CreateBookingPayload,
+    idempotencyKey: string,
   ): Promise<PublicBookingConfirmation> => {
     return apiFetch<PublicBookingConfirmation>(
       `/public/tenants/${encodeURIComponent(tenantSlug)}/bookings`,
       {
         method: "POST",
         body: JSON.stringify(payload),
+        headers: { "Idempotency-Key": idempotencyKey },
       },
     );
   },
@@ -99,6 +102,7 @@ export const bookingsService = {
       service_ids: query.service_ids.join(","),
       date: query.date,
       timezone: query.timezone,
+      party_size: query.party_size ? String(query.party_size) : undefined,
     });
     return apiFetch<AvailabilityResponse>(`/bookings/availability${queryString}`, {
       method: "GET",
@@ -122,6 +126,7 @@ export const bookingsService = {
     const queryString = toQueryString({
       employee_id: query.employee_id,
       date: query.date,
+      timezone: query.timezone,
       status: query.status,
       q: query.q,
       page: query.page ? String(query.page) : undefined,

@@ -1,7 +1,7 @@
 import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
 import type { Employee } from "@/types/employee.types";
 import type { ServiceFormState } from "@/types/service.types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ServiceEmployeesSelector } from "./ServiceEmployeesSelector";
 
 type ServiceEditModalContentProps = {
@@ -69,17 +69,13 @@ export default function ServiceEditModalContent({
   );
   const capacityOptions = buildNumberOptions(
     BASE_CAPACITY_OPTIONS,
-    form.capacity,
+    Math.max(form.min_party_size, form.max_party_size, form.slot_capacity),
     (value) => `${value} persona${value === 1 ? "" : "s"}`,
   );
   const currencyOptions = buildCurrencyOptions(form.currency);
-  const [priceInput, setPriceInput] = useState(
-    Number.isFinite(form.price) ? String(form.price) : "",
-  );
-
-  useEffect(() => {
-    setPriceInput(Number.isFinite(form.price) ? String(form.price) : "");
-  }, [form.price]);
+  const [priceInputOverride, setPriceInputOverride] = useState<string | null>(null);
+  const priceInput =
+    priceInputOverride ?? (Number.isFinite(form.price) ? String(form.price) : "");
 
   return (
     <div className="space-y-4">
@@ -129,21 +125,82 @@ export default function ServiceEditModalContent({
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="service-capacity" className="text-sm font-medium text-fg-label">
-            Capacidad
+          <label htmlFor="service-min-capacity" className="text-sm font-medium text-fg-label">
+            Mín. personas
           </label>
           <SelectField
-            value={String(form.capacity)}
-            onValueChange={(value) =>
-              onFormChange((prev) => ({ ...prev, capacity: Number(value) }))
-            }
+            value={String(form.min_party_size)}
+            onValueChange={(value) => {
+              const nextMinCapacity = Number(value);
+              onFormChange((prev) => ({
+                ...prev,
+                min_party_size: nextMinCapacity,
+                max_party_size: Math.max(prev.max_party_size, nextMinCapacity),
+                slot_capacity: Math.max(prev.slot_capacity, prev.max_party_size, nextMinCapacity),
+                min_capacity: nextMinCapacity,
+              }));
+            }}
             options={capacityOptions}
           />
         </div>
 
         <div className="space-y-1.5">
+          <label htmlFor="service-max-capacity" className="text-sm font-medium text-fg-label">
+            Máx. personas
+          </label>
+          <SelectField
+            value={String(form.max_party_size)}
+            onValueChange={(value) => {
+              const nextMaxCapacity = Number(value);
+              onFormChange((prev) => ({
+                ...prev,
+                max_party_size: nextMaxCapacity,
+                min_party_size: Math.min(prev.min_party_size, nextMaxCapacity),
+                slot_capacity: Math.max(prev.slot_capacity, nextMaxCapacity),
+                max_capacity: nextMaxCapacity,
+              }));
+            }}
+            options={capacityOptions}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-fg-label">Capacidad total del horario</label>
+          <SelectField
+            value={String(form.slot_capacity)}
+            onValueChange={(value) => {
+              const slotCapacity = Number(value);
+              onFormChange((prev) => ({
+                ...prev,
+                slot_capacity: slotCapacity,
+                max_party_size: Math.min(prev.max_party_size, slotCapacity),
+                capacity: slotCapacity,
+              }));
+            }}
+            options={capacityOptions}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-fg-label">Modelo de precio</label>
+          <SelectField
+            value={form.pricing_model}
+            onValueChange={(value) =>
+              onFormChange((prev) => ({
+                ...prev,
+                pricing_model: value as "FLAT" | "PER_PERSON",
+              }))
+            }
+            options={[
+              { value: "FLAT", label: "Fijo por reserva" },
+              { value: "PER_PERSON", label: "Por persona" },
+            ]}
+          />
+        </div>
+
+        <div className="space-y-1.5">
           <label htmlFor="service-price" className="text-sm font-medium text-fg-label">
-            Precio
+            {form.pricing_model === "PER_PERSON" ? "Precio por persona" : "Precio por reserva"}
           </label>
           <input
             id="service-price"
@@ -153,7 +210,7 @@ export default function ServiceEditModalContent({
             value={priceInput}
             onChange={(event) => {
               const nextValue = event.target.value;
-              setPriceInput(nextValue);
+              setPriceInputOverride(nextValue);
 
               if (nextValue === "") {
                 onFormChange((prev) => ({ ...prev, price: Number.NaN }));
@@ -170,7 +227,7 @@ export default function ServiceEditModalContent({
               if (priceInput === "") return;
               const parsedValue = Number(priceInput);
               if (!Number.isFinite(parsedValue)) return;
-              setPriceInput(String(parsedValue));
+              setPriceInputOverride(null);
               onFormChange((prev) => ({ ...prev, price: parsedValue }));
             }}
             className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm"
@@ -227,6 +284,25 @@ export default function ServiceEditModalContent({
         </p>
       </div>
 
+      <label className="flex items-start gap-2 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-sm text-fg-label">
+        <input
+          type="checkbox"
+          checked={form.requires_confirmation}
+          onChange={(event) =>
+            onFormChange((prev) => ({
+              ...prev,
+              requires_confirmation: event.target.checked,
+            }))
+          }
+        />
+        <span>
+          Requiere confirmación
+          <span className="mt-1 block text-xs text-muted">
+            Las reservas entran como pendientes hasta que el negocio las confirme.
+          </span>
+        </span>
+      </label>
+
       {isEditing ? (
         <label className="flex items-center gap-2 rounded-2xl border border-border-soft bg-surface px-4 py-3 text-sm text-fg-label">
           <input
@@ -242,4 +318,3 @@ export default function ServiceEditModalContent({
     </div>
   );
 }
-

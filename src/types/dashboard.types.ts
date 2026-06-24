@@ -73,6 +73,7 @@ export type DashboardOverviewResponse = {
 };
 
 export type DashboardOverviewQuery = {
+  currency?: string;
   months?: number;
   logs_limit?: number;
   table_limit?: number;

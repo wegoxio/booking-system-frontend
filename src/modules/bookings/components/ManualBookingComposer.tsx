@@ -5,7 +5,7 @@ import type { BookingStatus } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import type { Service } from "@/types/service.types";
 import { Clock3, ShieldAlert, UserRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { BookingCustomerFormState } from "./BookingComposer";
 
 export type ManualBookingStatusSelection = "" | BookingStatus;
@@ -21,6 +21,7 @@ type ManualBookingComposerProps = {
   manualDate: string;
   onManualDateChange: (date: string) => void;
   manualTime: string;
+  manualTimezone: string;
   onManualTimeChange: (time: string) => void;
   manualStatus: ManualBookingStatusSelection;
   onManualStatusChange: (status: ManualBookingStatusSelection) => void;
@@ -28,6 +29,8 @@ type ManualBookingComposerProps = {
   onAllowOverlapChange: (value: boolean) => void;
   cancellationReason: string;
   onCancellationReasonChange: (value: string) => void;
+  partySize: number;
+  onPartySizeChange: (value: number) => void;
   customerForm: BookingCustomerFormState;
   onCustomerFormChange: (next: BookingCustomerFormState) => void;
   onSubmit: () => void;
@@ -75,6 +78,7 @@ export default function ManualBookingComposer({
   manualDate,
   onManualDateChange,
   manualTime,
+  manualTimezone,
   onManualTimeChange,
   manualStatus,
   onManualStatusChange,
@@ -82,6 +86,8 @@ export default function ManualBookingComposer({
   onAllowOverlapChange,
   cancellationReason,
   onCancellationReasonChange,
+  partySize,
+  onPartySizeChange,
   customerForm,
   onCustomerFormChange,
   onSubmit,
@@ -91,12 +97,19 @@ export default function ManualBookingComposer({
   estimatedTotalPrice,
   wizardMode = false,
 }: ManualBookingComposerProps): React.ReactNode {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [requestedStep, setRequestedStep] = useState(1);
 
   const selectedServices = useMemo(
     () => services.filter((service) => selectedServiceIds.includes(service.id)),
     [services, selectedServiceIds],
   );
+  const selectedService = selectedServices[0];
+  const partySizeOptions = selectedService
+    ? Array.from(
+        { length: selectedService.max_party_size - selectedService.min_party_size + 1 },
+        (_, index) => selectedService.min_party_size + index,
+      )
+    : [];
 
   const isReadyToSubmit =
     selectedServiceIds.length > 0 &&
@@ -111,6 +124,18 @@ export default function ManualBookingComposer({
     manualTime.length > 0 &&
     (!isCancellationStatus(manualStatus) || cancellationReason.trim().length > 0);
 
+  const highestAllowedStep =
+    selectedServiceIds.length === 0
+      ? 1
+      : selectedEmployeeId.length === 0
+        ? 2
+        : !isStepThreeValid
+          ? 3
+          : 4;
+  const currentStep = wizardMode
+    ? Math.min(requestedStep, highestAllowedStep)
+    : 1;
+
   const canContinueCurrentStep =
     currentStep === 1
       ? selectedServiceIds.length > 0
@@ -121,31 +146,6 @@ export default function ManualBookingComposer({
           : isReadyToSubmit;
 
   const progressPercent = (currentStep / TOTAL_STEPS) * 100;
-
-  useEffect(() => {
-    if (!wizardMode) {
-      setCurrentStep(1);
-      return;
-    }
-
-    if (currentStep > 1 && selectedServiceIds.length === 0) {
-      setCurrentStep(1);
-      return;
-    }
-    if (currentStep > 2 && selectedEmployeeId.length === 0) {
-      setCurrentStep(2);
-      return;
-    }
-    if (currentStep > 3 && !isStepThreeValid) {
-      setCurrentStep(3);
-    }
-  }, [
-    currentStep,
-    isStepThreeValid,
-    selectedEmployeeId.length,
-    selectedServiceIds.length,
-    wizardMode,
-  ]);
 
   const servicesStep = (
     <div>
@@ -182,12 +182,30 @@ export default function ManualBookingComposer({
         </div>
 
         {selectedServices.length > 0 ? (
-          <p className="mt-3 inline-flex flex-wrap items-center gap-1.5 text-xs text-muted">
-            <Clock3 className="h-3.5 w-3.5 text-fg-icon" />
-            {selectedServices.length} servicio(s) seleccionado(s). Duracion estimada:{" "}
-            {formatDuration(estimatedDurationMinutes)}. Total estimado: {estimatedTotalPrice.toFixed(2)}{" "}
-            {selectedServices[0]?.currency ?? "USD"}.
-          </p>
+          <div className="mt-3 grid gap-3 md:grid-cols-[1fr_180px] md:items-end">
+            <p className="inline-flex flex-wrap items-center gap-1.5 text-xs text-muted">
+              <Clock3 className="h-3.5 w-3.5 text-fg-icon" />
+              {selectedServices.length} servicio(s) seleccionado(s). Duracion estimada:{" "}
+              {formatDuration(estimatedDurationMinutes)}. Total estimado: {estimatedTotalPrice.toFixed(2)}{" "}
+              {selectedServices[0]?.currency ?? "USD"}.
+            </p>
+            {selectedService ? (
+              <label className="space-y-1.5">
+                <span className="text-xs font-medium text-fg-label">Personas</span>
+                <select
+                  value={partySize}
+                  onChange={(event) => onPartySizeChange(Number(event.target.value))}
+                  className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
+                >
+                  {partySizeOptions.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+          </div>
         ) : (
           <p className="mt-3 text-xs text-muted">Selecciona al menos un servicio para continuar.</p>
         )}
@@ -269,6 +287,9 @@ export default function ManualBookingComposer({
               step={300}
               className="w-full rounded-xl border border-border bg-surface-soft px-3 py-2 text-sm text-fg"
             />
+            <span className="block text-[11px] text-muted">
+              Zona horaria del profesional: {manualTimezone}
+            </span>
           </label>
 
           <label className="space-y-1.5">
@@ -470,7 +491,7 @@ export default function ManualBookingComposer({
             <div className="flex flex-col-reverse gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}
+                onClick={() => setRequestedStep((prev) => Math.max(1, prev - 1))}
                 disabled={currentStep === 1 || isSubmitting}
                 className="inline-flex items-center justify-center rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-fg-secondary transition hover:bg-surface-soft disabled:opacity-60"
               >
@@ -480,7 +501,9 @@ export default function ManualBookingComposer({
               {currentStep < TOTAL_STEPS ? (
                 <button
                   type="button"
-                  onClick={() => setCurrentStep((prev) => Math.min(TOTAL_STEPS, prev + 1))}
+                  onClick={() =>
+                    setRequestedStep((prev) => Math.min(TOTAL_STEPS, prev + 1))
+                  }
                   disabled={!canContinueCurrentStep || isSubmitting}
                   className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent disabled:opacity-60"
                 >

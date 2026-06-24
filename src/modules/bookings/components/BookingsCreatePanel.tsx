@@ -10,6 +10,9 @@ import { servicesService } from "@/modules/services/services/services.service";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
 import type { Employee } from "@/types/employee.types";
 import type { Service } from "@/types/service.types";
+import type { BookingSlot } from "@/types/booking.types";
+import { buildZonedDateTimeToIso } from "@/modules/bookings/utils/zoned-date-time";
+import { calculateEstimatedTotal } from "@/modules/bookings/utils/money";
 import { Clock3, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -44,14 +47,17 @@ function getRoundedCurrentTime() {
   return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
-function buildLocalDateTimeToIso(date: string, time: string) {
-  const parsed = new Date(`${date}T${time}`);
-  if (Number.isNaN(parsed.getTime())) return null;
-  return parsed.toISOString();
-}
-
 function isCancellationStatus(status: ManualBookingStatusSelection) {
   return status === "CANCELLED" || status === "NO_SHOW";
+}
+
+function getDefaultPartySize(service: Service | undefined) {
+  return service?.min_party_size ?? 1;
+}
+
+function isPartySizeAllowed(service: Service | undefined, partySize: number) {
+  if (!service) return false;
+  return partySize >= service.min_party_size && partySize <= service.max_party_size;
 }
 
 export default function BookingsCreatePanel({
@@ -65,11 +71,12 @@ export default function BookingsCreatePanel({
   const [loadError, setLoadError] = useState("");
 
   const [strictSelectedServiceIds, setStrictSelectedServiceIds] = useState<string[]>([]);
+  const [strictPartySize, setStrictPartySize] = useState(1);
   const [strictEligibleEmployees, setStrictEligibleEmployees] = useState<Employee[]>([]);
   const [isLoadingStrictEmployees, setIsLoadingStrictEmployees] = useState(false);
   const [strictSelectedEmployeeId, setStrictSelectedEmployeeId] = useState("");
   const [strictDate, setStrictDate] = useState(getTodayDateInput());
-  const [strictSlots, setStrictSlots] = useState<Array<{ start_at_utc: string; end_at_utc: string }>>([]);
+  const [strictSlots, setStrictSlots] = useState<BookingSlot[]>([]);
   const [isLoadingStrictSlots, setIsLoadingStrictSlots] = useState(false);
   const [strictSelectedSlotStart, setStrictSelectedSlotStart] = useState<string | null>(null);
   const [strictRequiredDurationMinutes, setStrictRequiredDurationMinutes] = useState<number | null>(null);
@@ -79,6 +86,7 @@ export default function BookingsCreatePanel({
   const [isSubmittingStrict, setIsSubmittingStrict] = useState(false);
 
   const [manualSelectedServiceIds, setManualSelectedServiceIds] = useState<string[]>([]);
+  const [manualPartySize, setManualPartySize] = useState(1);
   const [manualEligibleEmployees, setManualEligibleEmployees] = useState<Employee[]>([]);
   const [isLoadingManualEmployees, setIsLoadingManualEmployees] = useState(false);
   const [manualSelectedEmployeeId, setManualSelectedEmployeeId] = useState("");
@@ -100,6 +108,14 @@ export default function BookingsCreatePanel({
     () => activeServices.filter((service) => manualSelectedServiceIds.includes(service.id)),
     [activeServices, manualSelectedServiceIds],
   );
+  const strictSelectedService = useMemo(
+    () => activeServices.find((service) => strictSelectedServiceIds.includes(service.id)),
+    [activeServices, strictSelectedServiceIds],
+  );
+  const manualSelectedService = useMemo(
+    () => activeServices.find((service) => manualSelectedServiceIds.includes(service.id)),
+    [activeServices, manualSelectedServiceIds],
+  );
 
   const manualEstimatedDurationMinutes = useMemo(
     () =>
@@ -114,10 +130,16 @@ export default function BookingsCreatePanel({
     [manualSelectedServices],
   );
 
-  const manualEstimatedTotal = useMemo(
-    () => manualSelectedServices.reduce((sum, service) => sum + Number(service.price), 0),
-    [manualSelectedServices],
-  );
+  const manualEstimatedTotal = useMemo(() => {
+    if (!manualSelectedService) return 0;
+    return Number(
+      calculateEstimatedTotal(
+        manualSelectedService.price,
+        manualPartySize,
+        manualSelectedService.pricing_model,
+      ),
+    );
+  }, [manualPartySize, manualSelectedService]);
 
   const loadServices = useCallback(async () => {
     if (!token) return;
@@ -142,8 +164,6 @@ export default function BookingsCreatePanel({
 
   useEffect(() => {
     if (!token || strictSelectedServiceIds.length === 0) {
-      setStrictEligibleEmployees([]);
-      setStrictSelectedEmployeeId("");
       return;
     }
 
@@ -180,8 +200,6 @@ export default function BookingsCreatePanel({
 
   useEffect(() => {
     if (!token || manualSelectedServiceIds.length === 0) {
-      setManualEligibleEmployees([]);
-      setManualSelectedEmployeeId("");
       return;
     }
 
@@ -218,10 +236,6 @@ export default function BookingsCreatePanel({
 
   useEffect(() => {
     if (!token || !strictSelectedEmployeeId || strictSelectedServiceIds.length === 0 || !strictDate) {
-      setStrictSlots([]);
-      setStrictSelectedSlotStart(null);
-      setStrictRequiredDurationMinutes(null);
-      setStrictAvailabilityTimezone(null);
       return;
     }
 
@@ -240,6 +254,7 @@ export default function BookingsCreatePanel({
             employee_id: strictSelectedEmployeeId,
             service_ids: strictSelectedServiceIds,
             date: strictDate,
+            party_size: strictPartySize,
           },
           token,
         );
@@ -270,10 +285,11 @@ export default function BookingsCreatePanel({
     return () => {
       isCancelled = true;
     };
-  }, [strictDate, strictSelectedEmployeeId, strictSelectedServiceIds, token]);
+  }, [strictDate, strictPartySize, strictSelectedEmployeeId, strictSelectedServiceIds, token]);
 
   const resetStrictForm = useCallback(() => {
     setStrictSelectedServiceIds([]);
+    setStrictPartySize(1);
     setStrictEligibleEmployees([]);
     setStrictSelectedEmployeeId("");
     setStrictDate(getTodayDateInput());
@@ -287,6 +303,7 @@ export default function BookingsCreatePanel({
 
   const resetManualForm = useCallback(() => {
     setManualSelectedServiceIds([]);
+    setManualPartySize(1);
     setManualEligibleEmployees([]);
     setManualSelectedEmployeeId("");
     setManualDate(getTodayDateInput());
@@ -300,6 +317,10 @@ export default function BookingsCreatePanel({
 
   const handleStrictSubmit = async () => {
     if (!token || !strictSelectedSlotStart) return;
+    if (!isPartySizeAllowed(strictSelectedService, strictPartySize)) {
+      setStrictErrorMessage("El número de personas no es válido para el servicio.");
+      return;
+    }
 
     if (
       strictCustomerForm.customer_email.trim().length > 0 &&
@@ -327,6 +348,7 @@ export default function BookingsCreatePanel({
           employee_id: strictSelectedEmployeeId,
           service_ids: strictSelectedServiceIds,
           start_at_utc: strictSelectedSlotStart,
+          party_size: strictPartySize,
           customer_name: strictCustomerForm.customer_name.trim(),
           customer_email: strictCustomerForm.customer_email.trim() || undefined,
           customer_phone_country_iso2:
@@ -352,6 +374,10 @@ export default function BookingsCreatePanel({
 
   const handleManualSubmit = async () => {
     if (!token) return;
+    if (!isPartySizeAllowed(manualSelectedService, manualPartySize)) {
+      setManualErrorMessage("El número de personas no es válido para el servicio.");
+      return;
+    }
 
     if (
       manualCustomerForm.customer_email.trim().length > 0 &&
@@ -376,7 +402,15 @@ export default function BookingsCreatePanel({
       return;
     }
 
-    const startAtUtc = buildLocalDateTimeToIso(manualDate, manualTime);
+    const selectedEmployee = manualEligibleEmployees.find(
+      (employee) => employee.id === manualSelectedEmployeeId,
+    );
+    const employeeTimezone = selectedEmployee?.schedule_timezone || "UTC";
+    const startAtUtc = buildZonedDateTimeToIso(
+      manualDate,
+      manualTime,
+      employeeTimezone,
+    );
     if (!startAtUtc) {
       setManualErrorMessage("Debes indicar una fecha y hora válidas.");
       return;
@@ -390,6 +424,7 @@ export default function BookingsCreatePanel({
           employee_id: manualSelectedEmployeeId,
           service_ids: manualSelectedServiceIds,
           start_at_utc: startAtUtc,
+          party_size: manualPartySize,
           customer_name: manualCustomerForm.customer_name.trim(),
           customer_email: manualCustomerForm.customer_email.trim() || undefined,
           customer_phone_country_iso2:
@@ -523,7 +558,10 @@ export default function BookingsCreatePanel({
           services={activeServices}
           selectedServiceIds={strictSelectedServiceIds}
           onToggleService={(serviceId) => {
-            setStrictSelectedServiceIds((prev) => (prev.includes(serviceId) ? [] : [serviceId]));
+            const nextServiceIds = strictSelectedServiceIds.includes(serviceId) ? [] : [serviceId];
+            const nextService = activeServices.find((service) => service.id === serviceId);
+            setStrictSelectedServiceIds(nextServiceIds);
+            setStrictPartySize(nextServiceIds.length === 0 ? 1 : getDefaultPartySize(nextService));
             setStrictSlots([]);
             setStrictRequiredDurationMinutes(null);
             setStrictAvailabilityTimezone(null);
@@ -553,6 +591,12 @@ export default function BookingsCreatePanel({
           onSelectSlot={setStrictSelectedSlotStart}
           requiredDurationMinutes={strictRequiredDurationMinutes}
           availabilityTimezone={strictAvailabilityTimezone}
+          partySize={strictPartySize}
+          onPartySizeChange={(value) => {
+            setStrictPartySize(value);
+            setStrictSlots([]);
+            setStrictSelectedSlotStart(null);
+          }}
           customerForm={strictCustomerForm}
           onCustomerFormChange={setStrictCustomerForm}
           onSubmit={() => void handleStrictSubmit()}
@@ -571,7 +615,10 @@ export default function BookingsCreatePanel({
           services={activeServices}
           selectedServiceIds={manualSelectedServiceIds}
           onToggleService={(serviceId) => {
-            setManualSelectedServiceIds((prev) => (prev.includes(serviceId) ? [] : [serviceId]));
+            const nextServiceIds = manualSelectedServiceIds.includes(serviceId) ? [] : [serviceId];
+            const nextService = activeServices.find((service) => service.id === serviceId);
+            setManualSelectedServiceIds(nextServiceIds);
+            setManualPartySize(nextServiceIds.length === 0 ? 1 : getDefaultPartySize(nextService));
           }}
           eligibleEmployees={manualEligibleEmployees}
           isLoadingEligibleEmployees={isLoadingManualEmployees}
@@ -580,6 +627,10 @@ export default function BookingsCreatePanel({
           manualDate={manualDate}
           onManualDateChange={setManualDate}
           manualTime={manualTime}
+          manualTimezone={
+            manualEligibleEmployees.find((employee) => employee.id === manualSelectedEmployeeId)
+              ?.schedule_timezone || "UTC"
+          }
           onManualTimeChange={setManualTime}
           manualStatus={manualStatus}
           onManualStatusChange={setManualStatus}
@@ -587,6 +638,8 @@ export default function BookingsCreatePanel({
           onAllowOverlapChange={setManualAllowOverlap}
           cancellationReason={manualCancellationReason}
           onCancellationReasonChange={setManualCancellationReason}
+          partySize={manualPartySize}
+          onPartySizeChange={setManualPartySize}
           customerForm={manualCustomerForm}
           onCustomerFormChange={setManualCustomerForm}
           onSubmit={() => void handleManualSubmit()}

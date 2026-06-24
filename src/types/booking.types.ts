@@ -21,6 +21,10 @@ export type BookingItem = {
   buffer_before_minutes_snapshot: number;
   buffer_after_minutes_snapshot: number;
   price_snapshot: string;
+  pricing_model_snapshot: "FLAT" | "PER_PERSON";
+  unit_price_snapshot: string;
+  quantity_snapshot: number;
+  line_total_snapshot: string;
   currency_snapshot: string;
   instructions_snapshot: string | null;
   sort_order: number;
@@ -41,6 +45,7 @@ export type Booking = {
   cancelled_by_user_id: string | null;
   cancellation_reason: string | null;
   total_duration_minutes: number;
+  party_size: number;
   total_price: string;
   currency: string;
   customer_name: string;
@@ -59,6 +64,10 @@ export type Booking = {
 export type BookingSlot = {
   start_at_utc: string;
   end_at_utc: string;
+  slot_capacity: number;
+  occupied_capacity: number;
+  available_capacity: number;
+  requested_party_size: number;
 };
 
 export type PublicBookingEmployee = {
@@ -74,6 +83,14 @@ export type PublicBookingService = {
   description: string | null;
   instructions: string | null;
   duration_minutes: number;
+  capacity: number;
+  min_capacity: number;
+  max_capacity: number;
+  min_party_size: number;
+  max_party_size: number;
+  slot_capacity: number;
+  pricing_model: "FLAT" | "PER_PERSON";
+  requires_confirmation: boolean;
   price: string;
   currency: string;
   is_active: boolean;
@@ -86,6 +103,10 @@ export type PublicBookingItem = {
   service_name_snapshot: string;
   duration_minutes_snapshot: number;
   price_snapshot: string;
+  pricing_model_snapshot: "FLAT" | "PER_PERSON";
+  unit_price_snapshot: string;
+  quantity_snapshot: number;
+  line_total_snapshot: string;
   currency_snapshot: string;
   instructions_snapshot?: string | null;
   sort_order: number;
@@ -97,6 +118,7 @@ export type PublicBookingConfirmation = {
   start_at_utc: string;
   end_at_utc: string;
   total_duration_minutes: number;
+  party_size: number;
   total_price: string;
   currency: string;
   customer_name: string;
@@ -174,11 +196,13 @@ export type AvailabilityQuery = {
   service_ids: string[];
   date: string;
   timezone?: string;
+  party_size?: number;
 };
 
 export type ListBookingsQuery = {
   employee_id?: string;
   date?: string;
+  timezone?: string;
   status?: BookingStatus;
   q?: string;
   page?: number;
@@ -193,12 +217,16 @@ export type ListBookingsResponse = {
     total: number;
     total_pages: number;
   };
+  summary: {
+    today_count: number;
+  };
 };
 
 export type CreateBookingPayload = {
   employee_id: string;
   service_ids: string[];
   start_at_utc: string;
+  party_size?: number;
   customer_name: string;
   customer_email?: string;
   customer_phone?: string | null;

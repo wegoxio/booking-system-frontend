@@ -1,4 +1,3 @@
-import { stat } from "fs"
 import TableStatsCard, { TableStatsCardProps } from "./TableStatsCard"
 
 interface SectionHeaderProps {

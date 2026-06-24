@@ -200,7 +200,7 @@ export default function EmployeesManagement() {
       }
 
       if (form.avatar_file) {
-        savedEmployee = await employeesService.uploadAvatar(savedEmployee.id, form.avatar_file, token);
+        await employeesService.uploadAvatar(savedEmployee.id, form.avatar_file, token);
       }
 
       await loadEmployees();

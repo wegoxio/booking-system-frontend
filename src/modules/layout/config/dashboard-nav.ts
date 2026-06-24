@@ -35,6 +35,7 @@ const tenantAdminItems: DashboardNavItem[] = [
 const allowedPathsByRole: Record<Role, string[]> = {
   SUPER_ADMIN: [
     "/dashboard",
+    "/profile",
     "/reports",
     "/tenants",
     "/users",
@@ -43,6 +44,7 @@ const allowedPathsByRole: Record<Role, string[]> = {
   ],
   TENANT_ADMIN: [
     "/dashboard",
+    "/profile",
     "/reports",
     "/services",
     "/employees",

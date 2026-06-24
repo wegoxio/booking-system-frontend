@@ -9,8 +9,7 @@ export function proxy(request: NextRequest) {
   const isProduction = process.env.NODE_ENV === "production";
   const contentSecurityPolicy = [
     "default-src 'self'",
-    // 'nonce-${nonce}' 'strict-dynamic'${isProduction ? "" : " 'unsafe-eval'"}
-    `script-src 'self'  ${turnstileOrigin}`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isProduction ? "" : " 'unsafe-eval'"} ${turnstileOrigin}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",

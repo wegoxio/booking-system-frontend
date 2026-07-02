@@ -21,7 +21,6 @@ import {
   CircleUserRound,
   FileCog,
   Filter,
-  Hash,
   LockKeyhole,
   PencilLine,
   PlusCircle,
@@ -79,15 +78,74 @@ const ENTITY_OPTIONS: SelectOption[] = [
   { value: "platform_settings", label: "Configuracion de plataforma" },
 ];
 
+const ACTION_OPTION_DETAILS: Record<
+  string,
+  Pick<SelectOption, "label" | "description" | "icon">
+> = {
+  "": { label: "Todas las acciones", description: "Cualquier evento registrado", icon: Activity },
+  AUTH_LOGIN_SUCCESS: { label: "Inicio de sesión correcto", description: "Acceso autenticado", icon: LockKeyhole },
+  TENANT_CREATED: { label: "Negocio creado", description: "Alta de negocio", icon: Building2 },
+  TENANT_UPDATED: { label: "Negocio actualizado", description: "Cambios de negocio", icon: PencilLine },
+  TENANT_ENABLED: { label: "Negocio habilitado", description: "Activación operativa", icon: PlusCircle },
+  TENANT_DISABLED: { label: "Negocio deshabilitado", description: "Desactivación operativa", icon: Trash2 },
+  TENANT_DELETED: { label: "Negocio eliminado", description: "Baja de negocio", icon: Trash2 },
+  TENANT_ADMIN_CREATED: { label: "Administrador creado", description: "Alta de administrador", icon: UserCog },
+  TENANT_ADMIN_UPDATED: { label: "Administrador actualizado", description: "Cambios de administrador", icon: PencilLine },
+  TENANT_ADMIN_ENABLED: { label: "Administrador habilitado", description: "Acceso reactivado", icon: PlusCircle },
+  TENANT_ADMIN_DISABLED: { label: "Administrador deshabilitado", description: "Acceso suspendido", icon: Trash2 },
+  TENANT_ADMIN_DELETED: { label: "Administrador eliminado", description: "Baja de administrador", icon: Trash2 },
+  EMPLOYEE_CREATED: { label: "Empleado creado", description: "Alta de profesional", icon: UserRound },
+  EMPLOYEE_UPDATED: { label: "Empleado actualizado", description: "Cambios de profesional", icon: PencilLine },
+  SERVICE_CREATED: { label: "Servicio creado", description: "Nuevo servicio", icon: Wrench },
+  SERVICE_UPDATED: { label: "Servicio actualizado", description: "Cambios de servicio", icon: PencilLine },
+  SERVICE_ENABLED: { label: "Servicio habilitado", description: "Servicio visible", icon: PlusCircle },
+  SERVICE_DISABLED: { label: "Servicio deshabilitado", description: "Servicio pausado", icon: Trash2 },
+  EMPLOYEE_SCHEDULE_CREATED: { label: "Horario creado", description: "Nueva disponibilidad", icon: CalendarClock },
+  EMPLOYEE_SCHEDULE_UPDATED: { label: "Horario actualizado", description: "Cambio de disponibilidad", icon: CalendarClock },
+  EMPLOYEE_TIME_OFF_CREATED: { label: "Bloqueo creado", description: "Ausencia o descanso", icon: CalendarClock },
+  EMPLOYEE_TIME_OFF_REMOVED: { label: "Bloqueo eliminado", description: "Ausencia retirada", icon: Trash2 },
+  BOOKING_CREATED: { label: "Cita creada", description: "Nueva reserva", icon: CalendarCheck2 },
+  BOOKING_STATUS_UPDATED: { label: "Estado de cita actualizado", description: "Cambio de estado", icon: PencilLine },
+  TENANT_SETTINGS_UPDATED: { label: "Configuración de negocio actualizada", description: "Ajustes del negocio", icon: Settings2 },
+  TENANT_SETTINGS_ASSET_UPLOADED: { label: "Recurso de negocio subido", description: "Logo o favicon", icon: Upload },
+  PLATFORM_SETTINGS_UPDATED: { label: "Configuración de plataforma actualizada", description: "Ajustes globales", icon: Settings2 },
+  PLATFORM_SETTINGS_ASSET_UPLOADED: { label: "Recurso de plataforma subido", description: "Asset global", icon: Upload },
+};
+
+const ENTITY_OPTION_DETAILS: Record<
+  string,
+  Pick<SelectOption, "label" | "description" | "icon">
+> = {
+  "": { label: "Todas las entidades", description: "Cualquier módulo", icon: FileCog },
+  auth: { label: "Autenticación", description: "Login y sesión", icon: ShieldCheck },
+  tenant: { label: "Negocio", description: "Cuenta de negocio", icon: Building2 },
+  user: { label: "Usuario", description: "Administradores", icon: CircleUserRound },
+  employee: { label: "Empleado", description: "Profesionales", icon: UserRound },
+  service: { label: "Servicio", description: "Catálogo de servicios", icon: Wrench },
+  booking: { label: "Cita", description: "Reservas y estados", icon: CalendarCheck2 },
+  tenant_settings: { label: "Configuración de negocio", description: "Branding y apariencia", icon: Settings2 },
+  platform_settings: { label: "Configuración de plataforma", description: "Ajustes globales", icon: Settings2 },
+};
+
+const ACTION_FILTER_OPTIONS: SelectOption[] = ACTION_OPTIONS.map((option) => ({
+  ...option,
+  ...(ACTION_OPTION_DETAILS[option.value] ?? {}),
+}));
+
+const ENTITY_FILTER_OPTIONS: SelectOption[] = ENTITY_OPTIONS.map((option) => ({
+  ...option,
+  ...(ENTITY_OPTION_DETAILS[option.value] ?? {}),
+}));
+
 const ENTITY_LABELS: Record<string, string> = {
-  auth: "Autenticacion",
+  auth: "Autenticación",
   tenant: "Negocio",
   user: "Usuario",
   employee: "Empleado",
   service: "Servicio",
   booking: "Cita",
-  tenant_settings: "Configuracion de negocio",
-  platform_settings: "Configuracion de plataforma",
+  tenant_settings: "Configuración de negocio",
+  platform_settings: "Configuración de plataforma",
   employee_schedule: "Horario de empleado",
   employee_time_off: "Bloqueo de empleado",
 };
@@ -95,6 +153,192 @@ const ENTITY_LABELS: Record<string, string> = {
 function formatEntityLabel(entity: string | null) {
   if (!entity) return "Sin entidad";
   return ENTITY_LABELS[entity] ?? entity.replaceAll("_", " ");
+}
+
+const AUDIT_FIELD_LABELS: Record<string, string> = {
+  name: "nombre",
+  email: "correo",
+  phone: "teléfono",
+  slug: "URL pública",
+  is_active: "estado",
+  duration_minutes: "duración",
+  buffer_before_minutes: "margen antes de la cita",
+  buffer_after_minutes: "margen después de la cita",
+  capacity: "capacidad",
+  min_capacity: "capacidad mínima",
+  max_capacity: "capacidad máxima",
+  min_party_size: "mínimo de personas",
+  max_party_size: "máximo de personas",
+  slot_capacity: "cupos por horario",
+  currency: "moneda",
+  price: "precio",
+  pricing_model: "tipo de precio",
+  sort_order: "orden",
+  requires_confirmation: "confirmación requerida",
+  min_notice_minutes: "anticipación mínima",
+  booking_window_days: "ventana de reserva",
+  theme: "colores",
+  themeMode: "modo de apariencia",
+  themeOverrides: "personalización visual",
+  branding: "marca",
+  logoUrl: "logo",
+  faviconUrl: "favicon",
+  avatar_url: "foto",
+};
+
+const AUDIT_STATUS_LABELS: Record<string, string> = {
+  PENDING: "pendiente",
+  CONFIRMED: "confirmada",
+  IN_PROGRESS: "en progreso",
+  COMPLETED: "completada",
+  CANCELLED: "cancelada",
+  NO_SHOW: "no asistió",
+};
+
+function getMetadataString(
+  metadata: Record<string, unknown> | null,
+  key: string,
+): string | null {
+  const value = metadata?.[key];
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function getUpdatedFieldLabels(metadata: Record<string, unknown> | null): string {
+  const fields = Array.isArray(metadata?.updated_fields)
+    ? metadata.updated_fields.filter((field): field is string => typeof field === "string")
+    : [];
+
+  if (fields.length === 0) return "detalles actualizados";
+
+  const labels = fields
+    .slice(0, 5)
+    .map((field) => AUDIT_FIELD_LABELS[field] ?? field.replaceAll("_", " "));
+
+  const extraCount = fields.length - labels.length;
+  return extraCount > 0 ? `${labels.join(", ")} y ${extraCount} más` : labels.join(", ");
+}
+
+function formatAssetType(metadata: Record<string, unknown> | null): string {
+  const assetType = getMetadataString(metadata, "asset_type");
+  if (assetType === "logo") return "logo";
+  if (assetType === "favicon") return "favicon";
+  return "recurso visual";
+}
+
+function resolveAuditDisplayMessage(log: AuditLogItem): string {
+  const metadata = log.metadata ?? null;
+  const name = getMetadataString(metadata, "name");
+  const email = getMetadataString(metadata, "email");
+  const status = getMetadataString(metadata, "status");
+  const statusLabel = status ? (AUDIT_STATUS_LABELS[status] ?? status.toLowerCase()) : null;
+  const serviceCount = Array.isArray(metadata?.service_ids) ? metadata.service_ids.length : null;
+
+  switch (log.action) {
+    case "AUTH_LOGIN_SUCCESS":
+      return "Inicio de sesión exitoso.";
+    case "AUTH_LOGIN_FAILED":
+      return "Intento de inicio de sesión fallido.";
+    case "AUTH_LOGIN_BLOCKED":
+      return "Inicio de sesión bloqueado por seguridad.";
+    case "AUTH_ACCOUNT_LOCKED":
+      return "Cuenta bloqueada temporalmente por intentos fallidos.";
+    case "AUTH_REFRESH_SUCCESS":
+    case "AUTH_REFRESH_DUPLICATE_REJECTED":
+      return "Sesión renovada correctamente.";
+    case "AUTH_REFRESH_FAILED":
+      return "No se pudo renovar la sesión.";
+    case "AUTH_REFRESH_REUSE_DETECTED":
+      return "Se detectó actividad sospechosa en la sesión y se cerraron las sesiones activas.";
+    case "AUTH_LOGOUT":
+      return "Sesión cerrada.";
+    case "AUTH_LOGOUT_ALL":
+      return "Todas las sesiones fueron cerradas.";
+    case "AUTH_EMAIL_VERIFIED":
+      return "Correo electrónico verificado correctamente.";
+    case "AUTH_ACCESS_SETUP_LINK_SENT":
+      return "Se envió un enlace para activar el acceso.";
+    case "AUTH_PASSWORD_RESET_REQUESTED":
+      return "Se solicitó un restablecimiento de contraseña.";
+    case "AUTH_PASSWORD_RESET_COMPLETED":
+      return "La contraseña fue restablecida.";
+    case "AUTH_TENANT_ADMIN_ONBOARDING_COMPLETED":
+      return "Administrador de negocio activado correctamente.";
+    case "AUTH_TENANT_DASHBOARD_TOUR_COMPLETED":
+      return "Tour guiado completado.";
+
+    case "TENANT_CREATED":
+      return `Negocio "${name ?? "sin nombre"}" creado.`;
+    case "TENANT_UPDATED":
+      return `Negocio actualizado: ${getUpdatedFieldLabels(metadata)}.`;
+    case "TENANT_ENABLED":
+      return `Negocio "${name ?? "sin nombre"}" habilitado.`;
+    case "TENANT_DISABLED":
+      return `Negocio "${name ?? "sin nombre"}" deshabilitado.`;
+    case "TENANT_DELETED":
+      return `Negocio "${name ?? "sin nombre"}" eliminado.`;
+
+    case "TENANT_ADMIN_CREATED":
+      return `Administrador "${name ?? email ?? "sin nombre"}" creado.`;
+    case "TENANT_ADMIN_INVITATION_SENT":
+      return `Invitación enviada a ${email ?? "un administrador"}.`;
+    case "TENANT_ADMIN_INVITATION_FAILED":
+      return `No se pudo enviar la invitación a ${email ?? "un administrador"}.`;
+    case "TENANT_ADMIN_EMAIL_CHANGED":
+      return "Correo del administrador actualizado. Se requiere activar el nuevo acceso.";
+    case "TENANT_ADMIN_UPDATED":
+      return `Administrador actualizado: ${getUpdatedFieldLabels(metadata)}.`;
+    case "TENANT_ADMIN_ENABLED":
+      return `Administrador "${name ?? "sin nombre"}" habilitado.`;
+    case "TENANT_ADMIN_DISABLED":
+      return `Administrador "${name ?? "sin nombre"}" deshabilitado.`;
+    case "TENANT_ADMIN_DELETED":
+      return `Administrador "${name ?? "sin nombre"}" eliminado.`;
+
+    case "EMPLOYEE_CREATED":
+      return `Profesional "${name ?? "sin nombre"}" creado.`;
+    case "EMPLOYEE_UPDATED":
+      return `Profesional actualizado: ${getUpdatedFieldLabels(metadata)}.`;
+
+    case "SERVICE_CREATED":
+      return `Servicio "${name ?? "sin nombre"}" creado.`;
+    case "SERVICE_UPDATED":
+      return `Servicio actualizado: ${getUpdatedFieldLabels(metadata)}.`;
+    case "SERVICE_ENABLED":
+      return `Servicio "${name ?? "sin nombre"}" habilitado.`;
+    case "SERVICE_DISABLED":
+      return `Servicio "${name ?? "sin nombre"}" deshabilitado.`;
+
+    case "EMPLOYEE_SCHEDULE_CREATED":
+      return "Horario de profesional creado.";
+    case "EMPLOYEE_SCHEDULE_UPDATED":
+      return "Horario de profesional actualizado.";
+    case "EMPLOYEE_TIME_OFF_CREATED":
+      return "Bloqueo de agenda creado.";
+    case "EMPLOYEE_TIME_OFF_REMOVED":
+      return "Bloqueo de agenda eliminado.";
+
+    case "BOOKING_CREATED":
+      return `Cita creada${serviceCount ? ` con ${serviceCount} servicio(s)` : ""}.`;
+    case "BOOKING_STATUS_UPDATED":
+      return statusLabel
+        ? `Estado de cita cambiado a ${statusLabel}.`
+        : "Estado de cita actualizado.";
+
+    case "TENANT_SETTINGS_UPDATED":
+      return `Configuración del negocio actualizada: ${getUpdatedFieldLabels(metadata)}.`;
+    case "TENANT_SETTINGS_ASSET_UPLOADED":
+      return `Se actualizó el ${formatAssetType(metadata)} del negocio.`;
+    case "PLATFORM_SETTINGS_UPDATED":
+      return `Configuración de plataforma actualizada: ${getUpdatedFieldLabels(metadata)}.`;
+    case "PLATFORM_SETTINGS_ASSET_UPLOADED":
+      return `Se actualizó el ${formatAssetType(metadata)} de la plataforma.`;
+
+    default:
+      return log.message
+        .replaceAll("tenant", "negocio")
+        .replaceAll("Tenant", "Negocio")
+        .replaceAll("_", " ");
+  }
 }
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("es-ES", {
@@ -161,6 +405,19 @@ function pickString(value: unknown): string | null {
   return normalized.length > 0 ? normalized : null;
 }
 
+function getInitials(value: string) {
+  return value
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
+}
+
+function resolveTenantAssetUrl(tenant: Tenant): string | null {
+  return pickString(tenant.tenant_favicon_url) ?? pickString(tenant.tenant_logo_url);
+}
+
 function resolveActorImageUrl(log: AuditLogItem): string | null {
   const actor = log.actor as (NonNullable<AuditLogItem["actor"]> & {
     avatar_url?: string | null;
@@ -218,10 +475,18 @@ export default function AuditLogsManagement(): React.ReactNode {
 
   const tenantOptions = useMemo<SelectOption[]>(
     () => [
-      { value: "", label: "Todos los negocios" },
+      {
+        value: "",
+        label: "Todos los negocios",
+        description: "Incluye eventos globales y de negocios",
+        icon: Building2,
+      },
       ...tenants.map((tenant) => ({
         value: tenant.id,
-        label: `${tenant.name} (${tenant.slug})`,
+        label: tenant.name,
+        description: tenant.slug,
+        imageUrl: resolveTenantAssetUrl(tenant),
+        initials: getInitials(tenant.name),
       })),
     ],
     [tenants],
@@ -229,13 +494,35 @@ export default function AuditLogsManagement(): React.ReactNode {
 
   const employeeOptions = useMemo<SelectOption[]>(
     () => [
-      { value: "", label: "Todos los empleados" },
+      {
+        value: "",
+        label: "Todos los empleados",
+        description: "Cualquier profesional",
+        icon: UserRound,
+      },
       ...employees.map((employee) => ({
         value: employee.id,
         label: employee.name,
+        description: employee.email,
+        imageUrl: employee.avatar_url,
+        initials: getInitials(employee.name),
       })),
     ],
     [employees],
+  );
+
+  const tenantAssetsById = useMemo(
+    () =>
+      new Map(
+        tenants.map((tenant) => [
+          tenant.id,
+          {
+            imageUrl: resolveTenantAssetUrl(tenant),
+            name: tenant.name,
+          },
+        ]),
+      ),
+    [tenants],
   );
 
   const loadFilterData = useCallback(async () => {
@@ -396,13 +683,13 @@ export default function AuditLogsManagement(): React.ReactNode {
           <SelectField
             value={actionFilter}
             onValueChange={setActionFilter}
-            options={ACTION_OPTIONS}
+            options={ACTION_FILTER_OPTIONS}
           />
 
           <SelectField
             value={entityFilter}
             onValueChange={setEntityFilter}
-            options={ENTITY_OPTIONS}
+            options={ENTITY_FILTER_OPTIONS}
           />
 
           <CalendarDatePicker
@@ -460,6 +747,10 @@ export default function AuditLogsManagement(): React.ReactNode {
                 const actionBadgeClass = getActionBadgeClass(log.action);
                 const actorName = log.actor?.name ?? "Sistema";
                 const actorImageUrl = resolveActorImageUrl(log);
+                const tenantAsset = log.tenant?.id
+                  ? tenantAssetsById.get(log.tenant.id)
+                  : null;
+                const displayMessage = resolveAuditDisplayMessage(log);
 
                 return (
                   <article
@@ -472,12 +763,6 @@ export default function AuditLogsManagement(): React.ReactNode {
                           <CalendarClock className="h-3.5 w-3.5 text-fg-soft" />
                           {formatDateTime(log.created_at)}
                         </p>
-                        <p className="mt-1 text-xs text-muted" title={log.id}>
-                          <span className="inline-flex items-start gap-1.5">
-                            <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                            <span className="font-mono break-all">{log.id}</span>
-                          </span>
-                        </p>
                       </div>
                       <span
                         className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border ${actionBadgeClass}`}
@@ -486,7 +771,7 @@ export default function AuditLogsManagement(): React.ReactNode {
                       </span>
                     </div>
 
-                    <p className="mt-3 text-sm font-medium text-fg">{log.message}</p>
+                    <p className="mt-3 text-sm font-medium text-fg">{displayMessage}</p>
 
                     <div className="mt-3 space-y-2 rounded-2xl border border-border-soft bg-surface-soft p-3">
                       <div className="flex items-center gap-2.5">
@@ -501,10 +786,16 @@ export default function AuditLogsManagement(): React.ReactNode {
                         </div>
                       </div>
 
-                      <p className="inline-flex items-center gap-2 text-xs text-fg-secondary">
-                        <Building2 className="h-3.5 w-3.5 text-fg-soft" />
-                        {log.tenant?.name ?? "Global"} ({log.tenant?.slug ?? "-"})
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-fg-secondary">
+                        <Avatar
+                          name={log.tenant?.name ?? "Global"}
+                          imageUrl={tenantAsset?.imageUrl ?? null}
+                          className="h-6 w-6 text-[9px]"
+                        />
+                        <span>
+                          {log.tenant?.name ?? "Global"} ({log.tenant?.slug ?? "-"})
+                        </span>
+                      </div>
 
                       <p className="inline-flex items-center gap-2 text-xs font-medium text-fg">
                         <EntityIcon className="h-3.5 w-3.5 text-fg-soft" />
@@ -560,6 +851,10 @@ export default function AuditLogsManagement(): React.ReactNode {
                     const actionBadgeClass = getActionBadgeClass(log.action);
                     const actorName = log.actor?.name ?? "Sistema";
                     const actorImageUrl = resolveActorImageUrl(log);
+                    const tenantAsset = log.tenant?.id
+                      ? tenantAssetsById.get(log.tenant.id)
+                      : null;
+                    const displayMessage = resolveAuditDisplayMessage(log);
 
                     return (
                       <tr key={log.id} className="text-primary shadow-theme-row">
@@ -567,12 +862,6 @@ export default function AuditLogsManagement(): React.ReactNode {
                           <p className="inline-flex items-center gap-1.5 font-medium text-fg">
                             <CalendarClock className="h-3.5 w-3.5 text-fg-soft" />
                             {formatDateTime(log.created_at)}
-                          </p>
-                          <p className="mt-1 text-xs text-muted" title={log.id}>
-                            <span className="inline-flex items-center gap-1.5">
-                              <Hash className="h-3.5 w-3.5 shrink-0" />
-                              <span className="font-mono">{log.id.slice(0, 8)}</span>
-                            </span>
                           </p>
                         </td>
 
@@ -584,7 +873,7 @@ export default function AuditLogsManagement(): React.ReactNode {
                               <ActionIcon className="h-3.5 w-3.5" />
                             </span>
                             <div>
-                              <p className="max-w-90 text-sm font-medium text-fg">{log.message}</p>
+                              <p className="max-w-90 text-sm font-medium text-fg">{displayMessage}</p>
                             </div>
                           </div>
                         </td>
@@ -604,8 +893,17 @@ export default function AuditLogsManagement(): React.ReactNode {
                         </td>
 
                         <td className="border-y border-border-soft bg-surface px-4 py-4">
-                          <p className="font-medium text-fg">{log.tenant?.name ?? "Global"}</p>
-                          <p className="mt-1 text-xs text-muted">{log.tenant?.slug ?? "-"}</p>
+                          <div className="flex items-center gap-2.5">
+                            <Avatar
+                              name={log.tenant?.name ?? "Global"}
+                              imageUrl={tenantAsset?.imageUrl ?? null}
+                              className="h-8 w-8 text-[10px]"
+                            />
+                            <div>
+                              <p className="font-medium text-fg">{log.tenant?.name ?? "Global"}</p>
+                              <p className="mt-1 text-xs text-muted">{log.tenant?.slug ?? "-"}</p>
+                            </div>
+                          </div>
                         </td>
 
                         <td className="border-y border-border-soft bg-surface px-4 py-4">

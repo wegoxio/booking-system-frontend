@@ -5,35 +5,81 @@ import BookingsCreateModal from "@/modules/bookings/components/BookingsCreateMod
 import BookingsTable from "@/modules/bookings/components/BookingsTable";
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
 import { employeesService } from "@/modules/employees/services/employees.service";
+import CalendarDatePicker from "@/modules/ui/CalendarDatePicker";
+import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
 import SectionHeader from "@/modules/ui/SectionHeader";
 import TableEditModal from "@/modules/ui/TableEditModal";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
-import type { Booking, BookingStatus } from "@/types/booking.types";
+import type { Booking, BookingSlot, BookingStatus } from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import {
-  Check,
+  CalendarPlus,
   CheckCircle2,
   CircleAlert,
+  Clock3,
   Copy,
+  Download,
+  ExternalLink,
+  ListFilter,
   Plus,
+  QrCode,
   Search,
+  TimerReset,
+  UserRound,
   XCircle,
 } from "lucide-react";
+import * as QRCode from "qrcode";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
-const STATUS_FILTERS: Array<{ value: "" | BookingStatus; label: string }> = [
-  { value: "", label: "Todos los estados" },
-  { value: "PENDING", label: "Pendiente" },
-  { value: "CONFIRMED", label: "Confirmada" },
-  { value: "IN_PROGRESS", label: "En progreso" },
-  { value: "COMPLETED", label: "Completada" },
-  { value: "CANCELLED", label: "Cancelada" },
-  { value: "NO_SHOW", label: "No asistió" },
+const STATUS_FILTER_OPTIONS: SelectOption[] = [
+  {
+    value: "",
+    label: "Todos los estados",
+    description: "Cualquier cita",
+    icon: ListFilter,
+  },
+  {
+    value: "PENDING",
+    label: "Pendiente",
+    description: "Aún sin confirmar",
+    icon: Clock3,
+  },
+  {
+    value: "CONFIRMED",
+    label: "Confirmada",
+    description: "Cita aceptada",
+    icon: CheckCircle2,
+  },
+  {
+    value: "IN_PROGRESS",
+    label: "En progreso",
+    description: "Servicio en curso",
+    icon: TimerReset,
+  },
+  {
+    value: "COMPLETED",
+    label: "Completada",
+    description: "Servicio realizado",
+    icon: CheckCircle2,
+  },
+  {
+    value: "CANCELLED",
+    label: "Cancelada",
+    description: "Cita cancelada",
+    icon: XCircle,
+  },
+  {
+    value: "NO_SHOW",
+    label: "No asistió",
+    description: "Cliente ausente",
+    icon: XCircle,
+  },
 ];
 
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN?.trim() ?? "";
 const PUBLIC_BOOKING_PREFIX = "/book";
+const BOOKINGS_FILTERS_STORAGE_KEY = "bukky:bookings:filters:v1";
 
 function trimTrailingSlashes(value: string) {
   return value.replace(/\/+$/, "");
@@ -55,8 +101,75 @@ type PendingStatusChange = {
   status: BookingStatus;
 };
 
+type PendingReschedule = {
+  booking: Booking;
+  date: string;
+  selectedSlotStartAt: string;
+  slots: BookingSlot[];
+  isLoadingSlots: boolean;
+  errorMessage: string;
+};
+
 function isCancellationStatus(status: BookingStatus) {
   return status === "CANCELLED" || status === "NO_SHOW";
+}
+
+function getTodayDateInput() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getDateInputFromIso(value: string) {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatSlotRange(slot: BookingSlot) {
+  const start = new Date(slot.start_at_utc);
+  const end = new Date(slot.end_at_utc);
+  return `${start.toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })} - ${end.toLocaleTimeString("es-ES", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+}
+
+function loadStoredBookingFilters(): {
+  searchQuery: string;
+  statusFilter: "" | BookingStatus;
+  employeeFilter: string;
+  dateFilter: string;
+} {
+  if (typeof window === "undefined") {
+    return { searchQuery: "", statusFilter: "", employeeFilter: "", dateFilter: "" };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(BOOKINGS_FILTERS_STORAGE_KEY);
+    if (!raw) return { searchQuery: "", statusFilter: "", employeeFilter: "", dateFilter: "" };
+    const parsed = JSON.parse(raw) as Partial<{
+      searchQuery: string;
+      statusFilter: BookingStatus | "";
+      employeeFilter: string;
+      dateFilter: string;
+    }>;
+    return {
+      searchQuery: parsed.searchQuery ?? "",
+      statusFilter: parsed.statusFilter ?? "",
+      employeeFilter: parsed.employeeFilter ?? "",
+      dateFilter: parsed.dateFilter ?? "",
+    };
+  } catch {
+    return { searchQuery: "", statusFilter: "", employeeFilter: "", dateFilter: "" };
+  }
 }
 
 export default function BookingsManagement() {
@@ -73,25 +186,54 @@ export default function BookingsManagement() {
   const [errorMessage, setErrorMessage] = useState("");
   const [modalError, setModalError] = useState("");
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"" | BookingStatus>("");
-  const [employeeFilter, setEmployeeFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const storedFilters = useMemo(() => loadStoredBookingFilters(), []);
+  const [searchQuery, setSearchQuery] = useState(storedFilters.searchQuery);
+  const [statusFilter, setStatusFilter] = useState<"" | BookingStatus>(
+    storedFilters.statusFilter,
+  );
+  const [employeeFilter, setEmployeeFilter] = useState(storedFilters.employeeFilter);
+  const [dateFilter, setDateFilter] = useState(storedFilters.dateFilter);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
+  const [pendingReschedule, setPendingReschedule] = useState<PendingReschedule | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
   const [runtimeAppDomain, setRuntimeAppDomain] = useState("");
   const [isBookingLinkCopied, setIsBookingLinkCopied] = useState(false);
+  const [bookingQrDataUrl, setBookingQrDataUrl] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
   const [totalBookings, setTotalBookings] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [bookingsTodayCount, setBookingsTodayCount] = useState(0);
+  const [isRescheduling, setIsRescheduling] = useState(false);
 
   const activeEmployees = useMemo(
     () => employees.filter((employee) => employee.is_active),
     [employees],
+  );
+  const employeeFilterOptions = useMemo<SelectOption[]>(
+    () => [
+      {
+        value: "",
+        label: "Todos los profesionales",
+        description: "Cualquier profesional",
+        icon: UserRound,
+      },
+      ...activeEmployees.map((employee) => ({
+        value: employee.id,
+        label: employee.name,
+        description: employee.email,
+        imageUrl: employee.avatar_url,
+        initials: employee.name
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((word) => word.charAt(0).toUpperCase())
+          .join(""),
+      })),
+    ],
+    [activeEmployees],
   );
   const isTenantAdmin = user?.role === "TENANT_ADMIN";
   const tenantSlug = user?.tenant?.slug?.trim() ?? "";
@@ -100,14 +242,42 @@ export default function BookingsManagement() {
     () => buildTenantBookingUrl(bookingAppDomain, tenantSlug),
     [bookingAppDomain, tenantSlug],
   );
-  const shouldShowTenantBookingClipboard =
-    isTenantAdmin && tenantSlug.length > 0;
-
   useEffect(() => {
     if (APP_DOMAIN) return;
     if (typeof window === "undefined") return;
     setRuntimeAppDomain(window.location.origin);
   }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!tenantBookingPublicUrl) {
+      setBookingQrDataUrl("");
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    QRCode.toDataURL(tenantBookingPublicUrl, {
+      width: 320,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#111827",
+        light: "#ffffff",
+      },
+    })
+      .then((dataUrl) => {
+        if (!isCancelled) setBookingQrDataUrl(dataUrl);
+      })
+      .catch(() => {
+        if (!isCancelled) setBookingQrDataUrl("");
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [tenantBookingPublicUrl]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -118,6 +288,14 @@ export default function BookingsManagement() {
       window.clearTimeout(timeout);
     };
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      BOOKINGS_FILTERS_STORAGE_KEY,
+      JSON.stringify({ searchQuery, statusFilter, employeeFilter, dateFilter }),
+    );
+  }, [dateFilter, employeeFilter, searchQuery, statusFilter]);
 
   const loadMeta = useCallback(async () => {
     if (!token) return;
@@ -218,9 +396,18 @@ export default function BookingsManagement() {
     employeeFilter.length > 0 ||
     dateFilter.length > 0;
 
+  const handleClearFilters = useCallback(() => {
+    setSearchQuery("");
+    setDebouncedSearchQuery("");
+    setStatusFilter("");
+    setEmployeeFilter("");
+    setDateFilter("");
+    setPage(1);
+  }, []);
+
   const handleCopyTenantBookingUrl = useCallback(async () => {
     if (!tenantBookingPublicUrl) {
-      toast.error("No se pudo construir la URL publica para compartir.");
+      toast.error("No se pudo construir el enlace público para compartir.");
       return;
     }
 
@@ -232,11 +419,23 @@ export default function BookingsManagement() {
     try {
       await navigator.clipboard.writeText(tenantBookingPublicUrl);
       setIsBookingLinkCopied(true);
-      toast.success("URL de reservas copiada.");
+      toast.success("Enlace de reservas copiado.");
     } catch {
-      toast.error("No se pudo copiar la URL.");
+      toast.error("No se pudo copiar el enlace.");
     }
   }, [tenantBookingPublicUrl]);
+
+  const handleDownloadTenantBookingQr = useCallback(() => {
+    if (!bookingQrDataUrl || !tenantSlug) {
+      toast.error("No se pudo generar el QR del enlace público.");
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = bookingQrDataUrl;
+    anchor.download = `qr-reservas-${tenantSlug}.png`;
+    anchor.click();
+  }, [bookingQrDataUrl, tenantSlug]);
 
   useEffect(() => {
     if (!isBookingLinkCopied) return;
@@ -294,6 +493,136 @@ export default function BookingsManagement() {
     setIsCreateModalOpen(false);
   }, []);
 
+  const loadRescheduleSlots = useCallback(
+    async (booking: Booking, date: string) => {
+      if (!token) return;
+
+      const serviceIds = booking.items.map((item) => item.service_id);
+      if (serviceIds.length === 0) {
+        setPendingReschedule((current) =>
+          current && current.booking.id === booking.id
+            ? {
+                ...current,
+                slots: [],
+                isLoadingSlots: false,
+                errorMessage: "Esta cita no tiene un servicio asociado.",
+              }
+            : current,
+        );
+        return;
+      }
+
+      setPendingReschedule((current) =>
+        current && current.booking.id === booking.id
+          ? { ...current, date, selectedSlotStartAt: "", isLoadingSlots: true, errorMessage: "" }
+          : current,
+      );
+
+      try {
+        const availability = await bookingsService.getAvailability(
+          {
+            employee_id: booking.employee_id,
+            service_ids: serviceIds,
+            date,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            party_size: booking.party_size,
+          },
+          token,
+        );
+        setPendingReschedule((current) =>
+          current && current.booking.id === booking.id
+            ? {
+                ...current,
+                date,
+                slots: availability.slots,
+                isLoadingSlots: false,
+                errorMessage:
+                  availability.slots.length === 0
+                    ? "No hay horarios disponibles para ese día."
+                    : "",
+              }
+            : current,
+        );
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "No se pudieron cargar horarios disponibles.";
+        setPendingReschedule((current) =>
+          current && current.booking.id === booking.id
+            ? { ...current, slots: [], isLoadingSlots: false, errorMessage: message }
+            : current,
+        );
+      }
+    },
+    [token],
+  );
+
+  const openRescheduleModal = useCallback(
+    (booking: Booking) => {
+      const initialDate = getDateInputFromIso(booking.start_at_utc);
+      setPendingReschedule({
+        booking,
+        date: initialDate,
+        selectedSlotStartAt: "",
+        slots: [],
+        isLoadingSlots: true,
+        errorMessage: "",
+      });
+      setModalError("");
+      void loadRescheduleSlots(booking, initialDate);
+    },
+    [loadRescheduleSlots],
+  );
+
+  const closeRescheduleModal = useCallback(() => {
+    if (isRescheduling) return;
+    setPendingReschedule(null);
+    setModalError("");
+  }, [isRescheduling]);
+
+  const handleRescheduleDateChange = useCallback(
+    (date: string) => {
+      if (!pendingReschedule) return;
+      void loadRescheduleSlots(pendingReschedule.booking, date);
+    },
+    [loadRescheduleSlots, pendingReschedule],
+  );
+
+  const handleRescheduleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!token || !pendingReschedule) return;
+
+    if (!pendingReschedule.selectedSlotStartAt) {
+      setModalError("Selecciona un horario disponible para reprogramar la cita.");
+      return;
+    }
+
+    setIsRescheduling(true);
+    setModalError("");
+    setErrorMessage("");
+
+    try {
+      await bookingsService.reschedule(
+        pendingReschedule.booking.id,
+        {
+          start_at_utc: pendingReschedule.selectedSlotStartAt,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+        token,
+      );
+      await loadBookings();
+      toast.success("Cita reprogramada correctamente.");
+      setPendingReschedule(null);
+      setModalError("");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "No se pudo reprogramar la cita.";
+      setModalError(message);
+      toast.error(message);
+    } finally {
+      setIsRescheduling(false);
+    }
+  };
+
   const handleStatusModalSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -343,9 +672,104 @@ export default function BookingsManagement() {
     <section className="space-y-4">
       <SectionHeader
         headerTitle="Citas"
-        headerDescription="Agenda citas por profesional con slots reales según servicios y disponibilidad."
+        headerDescription="Agenda citas por profesional con horarios reales según servicios y disponibilidad."
         stats={bookingsStats}
       />
+
+      {isTenantAdmin ? (
+        <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-[24px] border border-card-border bg-surface-panel p-4 shadow-theme-soft">
+            <p className="text-sm font-semibold text-fg-strong">Checklist operativo</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div className="rounded-2xl border border-border-soft bg-surface px-3 py-3">
+                <p className="text-xs font-medium text-muted">Profesionales</p>
+                <p className="mt-1 text-sm font-semibold text-fg">
+                  {activeEmployees.length > 0 ? "Listos" : "Faltan profesionales"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border-soft bg-surface px-3 py-3">
+                <p className="text-xs font-medium text-muted">Enlace público</p>
+                <p className="mt-1 text-sm font-semibold text-fg">
+                  {tenantBookingPublicUrl ? "Disponible" : "Falta dominio público"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-border-soft bg-surface px-3 py-3">
+                <p className="text-xs font-medium text-muted">Citas de hoy</p>
+                <p className="mt-1 text-sm font-semibold text-fg">{bookingsTodayCount}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-muted">
+              Para recibir reservas online, el negocio necesita al menos un servicio activo,
+              un profesional activo y horarios publicados para ese profesional.
+            </p>
+          </div>
+
+          <div className="rounded-[24px] border border-card-border bg-surface-panel p-4 shadow-theme-soft">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-fg-strong">Enlace público de reservas</p>
+                <p className="mt-1 text-xs text-muted">
+                  Compártelo como enlace o QR para que tus clientes reserven.
+                </p>
+              </div>
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-surface-muted text-accent">
+                <QrCode className="h-5 w-5" />
+              </div>
+            </div>
+            <p className="mt-1 break-all rounded-2xl border border-border-soft bg-surface px-3 py-2 text-xs text-muted">
+              {tenantBookingPublicUrl || "Configura el dominio público para generar el enlace."}
+            </p>
+            <div className="mt-3 rounded-3xl border border-border-soft bg-surface px-4 py-4">
+              {bookingQrDataUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={bookingQrDataUrl}
+                  alt="QR del enlace público de reservas"
+                  className="mx-auto h-40 w-40 rounded-2xl bg-white p-2"
+                />
+              ) : (
+                <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-border text-center text-xs text-muted">
+                  El QR aparecerá cuando exista un enlace público.
+                </div>
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!tenantBookingPublicUrl}
+                onClick={() => {
+                  void handleCopyTenantBookingUrl();
+                }}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium text-fg disabled:opacity-50"
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Copiar enlace
+              </button>
+              <button
+                type="button"
+                disabled={!bookingQrDataUrl}
+                onClick={handleDownloadTenantBookingQr}
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium text-fg disabled:opacity-50"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Descargar QR
+              </button>
+              <a
+                href={tenantBookingPublicUrl || undefined}
+                target="_blank"
+                rel="noreferrer"
+                aria-disabled={!tenantBookingPublicUrl}
+                className={`inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium text-fg ${
+                  tenantBookingPublicUrl ? "" : "pointer-events-none opacity-50"
+                }`}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Ver vista pública
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="rounded-[28px] border border-card-border bg-surface-panel p-5 shadow-theme-card">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
@@ -357,27 +781,6 @@ export default function BookingsManagement() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start">
-            {shouldShowTenantBookingClipboard ? (
-              <button
-                type="button"
-                disabled={!tenantBookingPublicUrl}
-                onClick={() => {
-                  void handleCopyTenantBookingUrl();
-                }}
-                className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition ${
-                  tenantBookingPublicUrl
-                    ? "border-border-strong bg-surface text-fg hover:bg-surface-hover"
-                    : "cursor-not-allowed border-border bg-surface text-muted"
-                }`}
-              >
-                {isBookingLinkCopied ? (
-                  <Check className="h-3.5 w-3.5 text-success" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
-                )}
-                {isBookingLinkCopied ? "URL copiada" : "Copiar URL booking"}
-              </button>
-            ) : null}
 
             <button
               type="button"
@@ -401,38 +804,41 @@ export default function BookingsManagement() {
               />
             </label>
 
-            <select
+            <SelectField
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as "" | BookingStatus)}
-              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-            >
-              {STATUS_FILTERS.map((status) => (
-                <option key={status.value || "all"} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
+              onValueChange={(value) => setStatusFilter(value as "" | BookingStatus)}
+              options={STATUS_FILTER_OPTIONS}
+              triggerClassName="h-11 rounded-2xl"
+            />
 
-            <select
+            <SelectField
               value={employeeFilter}
-              onChange={(event) => setEmployeeFilter(event.target.value)}
-              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-            >
-              <option value="">Todos los profesionales</option>
-              {activeEmployees.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name}
-                </option>
-              ))}
-            </select>
+              onValueChange={setEmployeeFilter}
+              options={employeeFilterOptions}
+              triggerClassName="h-11 rounded-2xl"
+              disabled={isLoadingMeta}
+            />
 
-            <input
-              type="date"
+            <CalendarDatePicker
               value={dateFilter}
-              onChange={(event) => setDateFilter(event.target.value)}
-              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
+              onChange={setDateFilter}
+              placeholder="Filtrar por día"
+              buttonClassName="h-11 rounded-2xl"
             />
         </div>
+
+        {hasActiveFilters ? (
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-medium text-fg transition hover:bg-surface-soft"
+            >
+              <ListFilter className="h-3.5 w-3.5" />
+              Limpiar filtros
+            </button>
+          </div>
+        ) : null}
 
         {errorMessage ? <p className="mt-4 text-sm text-danger">{errorMessage}</p> : null}
 
@@ -443,16 +849,50 @@ export default function BookingsManagement() {
             <p className="text-base font-medium text-fg">
               {hasActiveFilters
                 ? "No hay resultados para los filtros actuales."
-                : "No hay citas registradas todavia."}
+                : bookingsTodayCount === 0
+                  ? "No hay citas hoy."
+                  : "No hay citas registradas todavía."}
             </p>
               <p className="mt-2 text-sm text-muted">
-                Agenda una cita o ajusta filtros para visualizar la información.
+                {hasActiveFilters
+                  ? "Limpia los filtros o ajusta la búsqueda para ver más resultados."
+                  : "Crea una cita manual o comparte el enlace de reservas con tus clientes."}
               </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {hasActiveFilters ? (
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="rounded-xl border border-border bg-surface-soft px-4 py-2 text-sm font-medium text-fg"
+                  >
+                    Limpiar filtros
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={openCreateModal}
+                  className="rounded-xl bg-accent px-4 py-2 text-sm font-medium text-accent-text shadow-theme-accent"
+                >
+                  Crear cita
+                </button>
+                {tenantBookingPublicUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleCopyTenantBookingUrl();
+                    }}
+                    className="rounded-xl border border-border bg-surface-soft px-4 py-2 text-sm font-medium text-fg"
+                  >
+                    Compartir enlace
+                  </button>
+                ) : null}
+              </div>
           </div>
         ) : (
           <BookingsTable
             bookings={bookings}
             updatingBookingId={updatingBookingId}
+            onReschedule={openRescheduleModal}
             onStatusChange={(booking, status) => {
               void handleBookingStatusChange(booking, status);
             }}
@@ -493,6 +933,100 @@ export default function BookingsManagement() {
         onClose={closeCreateModal}
         onBookingCreated={loadBookings}
       />
+
+      <TableEditModal
+        isOpen={pendingReschedule !== null}
+        badgeLabel="Reprogramar"
+        badgeIcon={<CalendarPlus className="h-3.5 w-3.5" />}
+        title="Reprogramar cita"
+        description={
+          pendingReschedule
+            ? `Cliente: ${pendingReschedule.booking.customer_name}. Profesional: ${pendingReschedule.booking.employee?.name ?? "N/A"}.`
+            : ""
+        }
+        helperText="Solo se muestran horarios disponibles para el mismo servicio y profesional."
+        errorMessage={modalError || pendingReschedule?.errorMessage}
+        submitText={isRescheduling ? "Reprogramando..." : "Guardar nueva fecha"}
+        isSubmitting={isRescheduling}
+        maxWidthClassName="max-w-3xl"
+        onClose={closeRescheduleModal}
+        onSubmit={handleRescheduleSubmit}
+      >
+        {pendingReschedule ? (
+          <div className="space-y-5">
+            <div className="rounded-3xl border border-border-soft bg-surface px-4 py-4">
+              <p className="text-sm font-medium text-fg-strong">
+                Cita actual:{" "}
+                {new Date(pendingReschedule.booking.start_at_utc).toLocaleString("es-ES", {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </p>
+              <p className="mt-1 text-sm text-muted">
+                Servicio:{" "}
+                {pendingReschedule.booking.items
+                  .map((item) => item.service_name_snapshot)
+                  .join(", ")}
+              </p>
+            </div>
+
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-fg-label">Nueva fecha</span>
+              <CalendarDatePicker
+                value={pendingReschedule.date}
+                onChange={handleRescheduleDateChange}
+                minDate={getTodayDateInput()}
+                placeholder="Selecciona una fecha"
+                buttonClassName="h-11 rounded-2xl"
+              />
+            </label>
+
+            <div>
+              <p className="mb-2 text-sm font-medium text-fg-label">Horarios disponibles</p>
+              {pendingReschedule.isLoadingSlots ? (
+                <div className="rounded-3xl border border-border-soft bg-surface px-4 py-6 text-sm text-muted">
+                  Cargando horarios...
+                </div>
+              ) : pendingReschedule.slots.length === 0 ? (
+                <div className="rounded-3xl border border-border-soft bg-surface px-4 py-6 text-sm text-muted">
+                  No hay horarios disponibles para esta fecha.
+                </div>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {pendingReschedule.slots.map((slot) => {
+                    const isSelected =
+                      pendingReschedule.selectedSlotStartAt === slot.start_at_utc;
+                    return (
+                      <button
+                        key={slot.start_at_utc}
+                        type="button"
+                        onClick={() => {
+                          setPendingReschedule((current) =>
+                            current
+                              ? { ...current, selectedSlotStartAt: slot.start_at_utc }
+                              : current,
+                          );
+                          setModalError("");
+                        }}
+                        className={`rounded-2xl border px-3 py-3 text-left text-sm transition ${
+                          isSelected
+                            ? "border-accent bg-accent text-accent-text"
+                            : "border-border bg-surface text-fg hover:border-accent"
+                        }`}
+                      >
+                        <span className="block font-semibold">{formatSlotRange(slot)}</span>
+                        <span className="mt-1 block text-xs text-muted">
+                          Cupos disponibles: {slot.available_capacity}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </TableEditModal>
 
       <TableEditModal
         isOpen={pendingStatusChange !== null}

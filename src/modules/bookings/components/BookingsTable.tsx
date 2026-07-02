@@ -1,7 +1,17 @@
 import type { Booking, BookingStatus } from "@/types/booking.types";
 import { getPhoneDisplay } from "@/modules/phone/utils/phone";
 import Avatar from "@/modules/ui/Avatar";
-import { CalendarClock, Scissors, UserRound } from "lucide-react";
+import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
+import {
+  CalendarClock,
+  CalendarPlus,
+  CheckCircle2,
+  Clock3,
+  Scissors,
+  TimerReset,
+  UserRound,
+  XCircle,
+} from "lucide-react";
 
 const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   PENDING: "Pendiente",
@@ -9,7 +19,7 @@ const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   IN_PROGRESS: "En progreso",
   COMPLETED: "Completada",
   CANCELLED: "Cancelada",
-  NO_SHOW: "No asistio",
+  NO_SHOW: "No asistiÃ³",
 };
 
 const BOOKING_STATUS_STYLES: Record<BookingStatus, string> = {
@@ -25,10 +35,11 @@ type BookingsTableProps = {
   bookings: Booking[];
   updatingBookingId: string | null;
   onStatusChange: (booking: Booking, status: BookingStatus) => void;
+  onReschedule: (booking: Booking) => void;
 };
 
 const BOOKING_SOURCE_LABELS: Record<Booking["source"], string> = {
-  ADMIN: "Admin",
+  ADMIN: "Panel",
   WEB: "Web",
   API: "API",
   MANUAL: "Manual",
@@ -42,6 +53,51 @@ const BOOKING_STATUS_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   CANCELLED: ["CANCELLED"],
   NO_SHOW: ["NO_SHOW"],
 };
+
+const BOOKING_STATUS_OPTION_DETAILS: Record<
+  BookingStatus,
+  Pick<SelectOption, "label" | "description" | "icon">
+> = {
+  PENDING: { label: "Pendiente", description: "AÃºn sin confirmar", icon: Clock3 },
+  CONFIRMED: { label: "Confirmada", description: "Cita aceptada", icon: CheckCircle2 },
+  IN_PROGRESS: { label: "En progreso", description: "Servicio en curso", icon: TimerReset },
+  COMPLETED: { label: "Completada", description: "Servicio realizado", icon: CheckCircle2 },
+  CANCELLED: { label: "Cancelada", description: "Cita cancelada", icon: XCircle },
+  NO_SHOW: { label: "No asistiÃ³", description: "Cliente ausente", icon: XCircle },
+};
+
+function buildStatusOptions(currentStatus: BookingStatus): SelectOption[] {
+  return BOOKING_STATUS_TRANSITIONS[currentStatus].map((status) => ({
+    value: status,
+    ...BOOKING_STATUS_OPTION_DETAILS[status],
+  }));
+}
+
+function buildQuickActions(status: BookingStatus): Array<{
+  status: BookingStatus;
+  label: string;
+  toneClass: string;
+}> {
+  switch (status) {
+    case "PENDING":
+      return [
+        { status: "CONFIRMED", label: "Confirmar", toneClass: "border-border bg-surface text-fg" },
+        { status: "CANCELLED", label: "Cancelar", toneClass: "border-border-danger bg-surface-danger text-danger" },
+      ];
+    case "CONFIRMED":
+      return [
+        { status: "COMPLETED", label: "Completar", toneClass: "border-border-success bg-surface-success text-success" },
+        { status: "CANCELLED", label: "Cancelar", toneClass: "border-border-danger bg-surface-danger text-danger" },
+      ];
+    case "IN_PROGRESS":
+      return [
+        { status: "COMPLETED", label: "Completar", toneClass: "border-border-success bg-surface-success text-success" },
+        { status: "NO_SHOW", label: "No asistiÃ³", toneClass: "border-border bg-surface-muted text-fg" },
+      ];
+    default:
+      return [];
+  }
+}
 
 function formatDateTime(value: string) {
   return new Date(value).toLocaleString("es-ES", {
@@ -63,6 +119,7 @@ export default function BookingsTable({
   bookings,
   updatingBookingId,
   onStatusChange,
+  onReschedule,
 }: BookingsTableProps): React.ReactNode {
   return (
     <div className="mt-4">
@@ -75,6 +132,7 @@ export default function BookingsTable({
             e164: booking.customer_phone_e164,
           });
           const contactDisplay = booking.customer_email ?? customerPhoneDisplay ?? "Sin contacto";
+          const quickActions = buildQuickActions(booking.status);
 
           return (
             <article
@@ -139,22 +197,54 @@ export default function BookingsTable({
                 <p className="mt-2 text-xs text-muted">Motivo: {booking.cancellation_reason}</p>
               ) : null}
 
+              <div className="mt-3 rounded-2xl border border-border-soft bg-surface-soft px-3 py-2 text-xs text-muted">
+                <p>
+                  Creada: <span className="font-medium text-fg">{formatDateTime(booking.created_at)}</span>
+                </p>
+                <p className="mt-1">
+                  Estado actual:{" "}
+                  <span className="font-medium text-fg">{BOOKING_STATUS_LABELS[booking.status]}</span>
+                </p>
+              </div>
+
+              {quickActions.length > 0 ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {quickActions.map((action) => (
+                    <button
+                      key={action.status}
+                      type="button"
+                      disabled={updatingBookingId === booking.id}
+                      onClick={() => onStatusChange(booking, action.status)}
+                      className={`rounded-xl border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${action.toneClass}`}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                  {["PENDING", "CONFIRMED"].includes(booking.status) ? (
+                    <button
+                      type="button"
+                      disabled={updatingBookingId === booking.id}
+                      onClick={() => onReschedule(booking)}
+                      className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg disabled:opacity-50"
+                    >
+                      <CalendarPlus className="h-3 w-3" />
+                      Reprogramar
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+
               <div className="mt-3">
-                <select
+                <SelectField
                   value={booking.status}
                   disabled={
                     updatingBookingId === booking.id ||
                     BOOKING_STATUS_TRANSITIONS[booking.status].length === 1
                   }
-                  onChange={(event) => onStatusChange(booking, event.target.value as BookingStatus)}
-                  className="w-full rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover disabled:opacity-60"
-                >
-                  {BOOKING_STATUS_TRANSITIONS[booking.status].map((status) => (
-                    <option key={status} value={status}>
-                      {BOOKING_STATUS_LABELS[status]}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={(value) => onStatusChange(booking, value as BookingStatus)}
+                  options={buildStatusOptions(booking.status)}
+                  triggerClassName="rounded-xl border-border-strong text-xs"
+                />
               </div>
             </article>
           );
@@ -162,7 +252,7 @@ export default function BookingsTable({
       </div>
 
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[1080px] border-separate border-spacing-y-3 text-left text-sm">
+        <table className="w-full min-w-[1160px] border-separate border-spacing-y-3 text-left text-sm">
           <thead>
             <tr className="text-muted">
               <th className="px-4 pb-2 font-medium">Cliente</th>
@@ -184,6 +274,7 @@ export default function BookingsTable({
                 e164: booking.customer_phone_e164,
               });
               const contactDisplay = booking.customer_email ?? customerPhoneDisplay ?? "Sin contacto";
+              const quickActions = buildQuickActions(booking.status);
 
               return (
                 <tr key={booking.id} className="text-primary shadow-theme-row">
@@ -245,6 +336,9 @@ export default function BookingsTable({
                       {booking.total_price} {booking.currency}
                     </p>
                     <p className="mt-1 text-xs text-muted">{BOOKING_SOURCE_LABELS[booking.source]}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      Creada: {formatDateTime(booking.created_at)}
+                    </p>
                   </td>
 
                   <td className="border-y border-border-soft bg-surface px-4 py-4">
@@ -257,21 +351,42 @@ export default function BookingsTable({
                   </td>
 
                   <td className="rounded-r-3xl border-y border-r border-border-soft bg-surface px-4 py-4">
-                    <select
+                    {quickActions.length > 0 ? (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {quickActions.map((action) => (
+                          <button
+                            key={action.status}
+                            type="button"
+                            disabled={updatingBookingId === booking.id}
+                            onClick={() => onStatusChange(booking, action.status)}
+                            className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium disabled:opacity-50 ${action.toneClass}`}
+                          >
+                            {action.label}
+                          </button>
+                        ))}
+                        {["PENDING", "CONFIRMED"].includes(booking.status) ? (
+                          <button
+                            type="button"
+                            disabled={updatingBookingId === booking.id}
+                            onClick={() => onReschedule(booking)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-fg disabled:opacity-50"
+                          >
+                            <CalendarPlus className="h-3 w-3" />
+                            Reprogramar
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                    <SelectField
                       value={booking.status}
                       disabled={
                         updatingBookingId === booking.id ||
                         BOOKING_STATUS_TRANSITIONS[booking.status].length === 1
                       }
-                      onChange={(event) => onStatusChange(booking, event.target.value as BookingStatus)}
-                      className="rounded-xl border border-border-strong bg-surface px-3 py-2 text-xs font-medium text-neutral transition-colors hover:bg-secondary-hover disabled:opacity-60"
-                    >
-                      {BOOKING_STATUS_TRANSITIONS[booking.status].map((status) => (
-                        <option key={status} value={status}>
-                          {BOOKING_STATUS_LABELS[status]}
-                        </option>
-                      ))}
-                    </select>
+                      onValueChange={(value) => onStatusChange(booking, value as BookingStatus)}
+                      options={buildStatusOptions(booking.status)}
+                      triggerClassName="w-44 rounded-xl border-border-strong text-xs"
+                    />
                   </td>
                 </tr>
               );

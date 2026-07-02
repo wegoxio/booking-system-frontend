@@ -21,7 +21,7 @@ export default function TenantsTable({
               <Avatar name={tenant.name} imageUrl={tenant.tenant_logo_url} />
               <div className="min-w-0">
                 <p className="font-semibold text-fg-strong">{tenant.name}</p>
-                <p className="text-xs text-muted">ID del negocio: {tenant.id}</p>
+                <p className="text-xs text-muted">URL pública: {tenant.slug}</p>
               </div>
             </div>
 
@@ -83,7 +83,7 @@ export default function TenantsTable({
                     <Avatar name={tenant.name} imageUrl={tenant.tenant_logo_url} />
                     <div className="min-w-0">
                       <p className="font-semibold text-fg-strong">{tenant.name}</p>
-                      <p className="text-xs text-muted">ID del negocio: {tenant.id}</p>
+                      <p className="text-xs text-muted">URL pública: {tenant.slug}</p>
                     </div>
                   </div>
                 </td>

@@ -244,3 +244,8 @@ export type UpdateBookingStatusPayload = {
   status: BookingStatus;
   cancellation_reason?: string;
 };
+
+export type RescheduleBookingPayload = {
+  start_at_utc: string;
+  timezone?: string;
+};

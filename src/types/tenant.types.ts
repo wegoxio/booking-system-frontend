@@ -6,6 +6,7 @@ export type Tenant = {
   slug: string;
   is_active: boolean;
   tenant_logo_url?: string | null;
+  tenant_favicon_url?: string | null;
 };
 
 export type TenantPage = {

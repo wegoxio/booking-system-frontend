@@ -124,7 +124,7 @@ export default function TenantEditModalContent({
           <Avatar name={form.name || "Nuevo negocio"} />
           <div>
             <p className="font-semibold text-fg-strong">{form.name.trim() || "Nuevo negocio"}</p>
-            <p className="text-sm text-muted">{normalizeSlug(form.slug) || "tenant-slug"}</p>
+            <p className="text-sm text-muted">{normalizeSlug(form.slug) || "mi-negocio"}</p>
           </div>
         </div>
 

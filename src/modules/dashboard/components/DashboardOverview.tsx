@@ -1,7 +1,15 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { CircleHelp, LoaderCircle, RefreshCw } from "lucide-react";
+import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
+import {
+  CircleHelp,
+  Coins,
+  DollarSign,
+  Euro,
+  LoaderCircle,
+  RefreshCw,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { DashboardOverviewResponse } from "@/types/dashboard.types";
 import DashboardStatsGrid from "./DashboardStatsGrid";
@@ -10,6 +18,45 @@ import RecentAuditLogsCard from "./RecentAuditLogsCard";
 import DashboardRevenueChartCard from "./DashboardRevenueChartCard";
 import { dashboardService } from "../services/dashboard.service";
 import { normalizeString } from "@/utils/format";
+
+const CURRENCY_OPTIONS: SelectOption[] = [
+  {
+    value: "",
+    label: "Divisa automática",
+    description: "Usa la moneda principal del panel",
+    icon: Coins,
+  },
+  {
+    value: "USD",
+    label: "USD",
+    description: "Dólar estadounidense",
+    icon: DollarSign,
+  },
+  {
+    value: "EUR",
+    label: "EUR",
+    description: "Euro",
+    icon: Euro,
+  },
+  {
+    value: "DOP",
+    label: "DOP",
+    description: "Peso dominicano",
+    initials: "RD$",
+  },
+  {
+    value: "MXN",
+    label: "MXN",
+    description: "Peso mexicano",
+    initials: "MX$",
+  },
+  {
+    value: "COP",
+    label: "COP",
+    description: "Peso colombiano",
+    initials: "CO$",
+  },
+];
 
 export default function DashboardOverview() {
   const { user, token } = useAuth();
@@ -74,23 +121,19 @@ export default function DashboardOverview() {
         </div>
 
         <div className="inline-flex items-center gap-2">
-          <select
+          <SelectField
             value={currency}
-            onChange={(event) => setCurrency(event.target.value)}
-            aria-label="Divisa del panel"
-            className="rounded-lg border border-border bg-surface-soft px-2 py-2 text-xs text-muted"
-          >
-            <option value="">Divisa automática</option>
-            {['USD', 'EUR', 'DOP', 'MXN', 'COP'].map((value) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
+            onValueChange={setCurrency}
+            options={CURRENCY_OPTIONS}
+            triggerClassName="w-44 rounded-lg bg-surface-soft text-xs"
+            contentClassName="z-[80]"
+          />
           <button
             type="button"
             onClick={handleStartTour}
             disabled={!canRunTour}
             data-tour={canRunTour ? "dashboard-tour-trigger" : undefined}
-            className={`grid h-8 w-8 place-items-center rounded-lg border border-border bg-surface-soft text-muted ${
+            className={`grid h-8 w-20 place-items-center rounded-lg border border-border bg-surface-soft text-muted ${
               canRunTour
                 ? "hover:bg-surface"
                 : "cursor-not-allowed opacity-50"

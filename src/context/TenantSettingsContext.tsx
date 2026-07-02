@@ -164,7 +164,7 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
       const message =
         error instanceof Error
           ? error.message
-          : "No se pudieron cargar los tenant settings.";
+          : "No se pudo cargar la configuración del negocio.";
       setErrorMessage(message);
       setSettings(defaultTenantSettings);
     } finally {
@@ -181,15 +181,15 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
   const persistPatch = useCallback(
     async (payload: UpdateTenantSettingsPayload, optimisticSettings: TenantSettings) => {
       if (!token) {
-        throw new Error("No hay token de autenticacion.");
+        throw new Error("No hay una sesión activa.");
       }
 
       const target = resolvePersistTarget();
       if (!target) {
         throw new Error(
           user?.role === "SUPER_ADMIN"
-            ? "No se encontro contexto de plataforma para SUPER_ADMIN."
-            : "No hay tenant asociado para editar settings.",
+            ? "No se encontró el contexto de configuración global."
+            : "No hay un negocio asociado para editar la configuración.",
         );
       }
 
@@ -209,7 +209,7 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
         const message =
           error instanceof Error
             ? error.message
-            : "No se pudieron guardar los tenant settings.";
+            : "No se pudo guardar la configuración del negocio.";
         setErrorMessage(message);
         throw error;
       } finally {
@@ -250,15 +250,15 @@ export function TenantSettingsProvider({ children }: { children: ReactNode }) {
   const uploadBrandingAsset = useCallback(
     async (assetType: TenantSettingsAssetType, file: File) => {
       if (!token) {
-        throw new Error("No hay token de autenticacion.");
+        throw new Error("No hay una sesión activa.");
       }
 
       const target = resolvePersistTarget();
       if (!target) {
         throw new Error(
           user?.role === "SUPER_ADMIN"
-            ? "No se encontro contexto de plataforma para SUPER_ADMIN."
-            : "No hay tenant asociado para subir assets.",
+            ? "No se encontró el contexto de configuración global."
+            : "No hay un negocio asociado para subir archivos.",
         );
       }
 

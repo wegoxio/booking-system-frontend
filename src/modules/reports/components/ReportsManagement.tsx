@@ -5,7 +5,9 @@ import { employeesService } from "@/modules/employees/services/employees.service
 import { reportsService } from "@/modules/reports/services/reports.service";
 import { servicesService } from "@/modules/services/services/services.service";
 import Avatar from "@/modules/ui/Avatar";
+import CalendarDatePicker from "@/modules/ui/CalendarDatePicker";
 import Card from "@/modules/ui/Card";
+import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
 import type { Employee } from "@/types/employee.types";
 import type {
   ReportBookingSource,
@@ -19,13 +21,21 @@ import {
   BarChart3,
   BellRing,
   Building2,
+  CalendarDays,
   CalendarCheck2,
   CheckCircle2,
+  Clock3,
+  Coins,
   DollarSign,
   Download,
+  Euro,
+  Globe2,
+  Hand,
   LoaderCircle,
+  ListFilter,
   Radio,
   RefreshCcw,
+  TimerReset,
   UserX,
   Users,
   Wallet,
@@ -57,20 +67,93 @@ type ReportsFiltersState = {
   currency: string;
 };
 
-const STATUS_FILTERS = [
-  { value: "", label: "Todos los estados" },
-  { value: "PENDING", label: "Pendiente" },
-  { value: "CONFIRMED", label: "Confirmada" },
-  { value: "IN_PROGRESS", label: "En progreso" },
-  { value: "COMPLETED", label: "Completada" },
-  { value: "CANCELLED", label: "Cancelada" },
-  { value: "NO_SHOW", label: "No asistio" },
+const REPORTS_FILTERS_STORAGE_KEY = "bukky:reports:filters:v1";
+
+const GROUP_BY_OPTIONS: SelectOption[] = [
+  {
+    value: "day",
+    label: "Agrupar por día",
+    description: "Detalle diario",
+    icon: CalendarDays,
+  },
+  {
+    value: "week",
+    label: "Agrupar por semana",
+    description: "Resumen semanal",
+    icon: CalendarCheck2,
+  },
+  {
+    value: "month",
+    label: "Agrupar por mes",
+    description: "Resumen mensual",
+    icon: CalendarCheck2,
+  },
 ];
 
-const SOURCE_FILTERS = [
-  { value: "", label: "Todos los canales" },
-  { value: "WEB", label: "Web" },
-  { value: "MANUAL", label: "Manual" },
+const STATUS_FILTER_OPTIONS: SelectOption[] = [
+  {
+    value: "",
+    label: "Todos los estados",
+    description: "Incluye cualquier estado",
+    icon: ListFilter,
+  },
+  {
+    value: "PENDING",
+    label: "Pendiente",
+    description: "Aún sin confirmar",
+    icon: Clock3,
+  },
+  {
+    value: "CONFIRMED",
+    label: "Confirmada",
+    description: "Reserva aceptada",
+    icon: CheckCircle2,
+  },
+  {
+    value: "IN_PROGRESS",
+    label: "En progreso",
+    description: "Cita en curso",
+    icon: TimerReset,
+  },
+  {
+    value: "COMPLETED",
+    label: "Completada",
+    description: "Servicio finalizado",
+    icon: CheckCircle2,
+  },
+  {
+    value: "CANCELLED",
+    label: "Cancelada",
+    description: "Reserva cancelada",
+    icon: XCircle,
+  },
+  {
+    value: "NO_SHOW",
+    label: "No asistió",
+    description: "Cliente ausente",
+    icon: UserX,
+  },
+];
+
+const SOURCE_FILTER_OPTIONS: SelectOption[] = [
+  {
+    value: "",
+    label: "Todos los canales",
+    description: "Web y manual",
+    icon: Radio,
+  },
+  {
+    value: "WEB",
+    label: "Web",
+    description: "Reserva pública online",
+    icon: Globe2,
+  },
+  {
+    value: "MANUAL",
+    label: "Manual",
+    description: "Creada desde el panel",
+    icon: Hand,
+  },
 ];
 
 type SummaryCard = {
@@ -121,6 +204,41 @@ function getDefaultDateRange(): { date_from: string; date_to: string } {
   };
 }
 
+function getDefaultReportsFilters(): ReportsFiltersState {
+  return {
+    ...getDefaultDateRange(),
+    group_by: "day",
+    status: "",
+    source: "",
+    employee_id: "",
+    service_id: "",
+    currency: "",
+  };
+}
+
+function loadStoredReportFilters(): ReportsFiltersState {
+  const fallback = getDefaultReportsFilters();
+  if (typeof window === "undefined") return fallback;
+
+  try {
+    const raw = window.localStorage.getItem(REPORTS_FILTERS_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw) as Partial<ReportsFiltersState>;
+    return {
+      ...fallback,
+      ...parsed,
+      group_by: parsed.group_by ?? fallback.group_by,
+      status: parsed.status ?? "",
+      source: parsed.source ?? "",
+      employee_id: parsed.employee_id ?? "",
+      service_id: parsed.service_id ?? "",
+      currency: parsed.currency ?? "",
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 function formatInteger(value: number): string {
   return new Intl.NumberFormat("es-ES", {
     maximumFractionDigits: 0,
@@ -138,6 +256,62 @@ function formatMoney(value: number, currency: string): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function getInitials(value: string) {
+  return value
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
+}
+
+function buildCurrencyOption(currency: string): SelectOption {
+  switch (currency) {
+    case "USD":
+      return {
+        value: currency,
+        label: currency,
+        description: "Dólar estadounidense",
+        icon: DollarSign,
+      };
+    case "EUR":
+      return {
+        value: currency,
+        label: currency,
+        description: "Euro",
+        icon: Euro,
+      };
+    case "DOP":
+      return {
+        value: currency,
+        label: currency,
+        description: "Peso dominicano",
+        initials: "RD$",
+      };
+    case "MXN":
+      return {
+        value: currency,
+        label: currency,
+        description: "Peso mexicano",
+        initials: "MX$",
+      };
+    case "COP":
+      return {
+        value: currency,
+        label: currency,
+        description: "Peso colombiano",
+        initials: "CO$",
+      };
+    default:
+      return {
+        value: currency,
+        label: currency,
+        description: "Moneda del servicio",
+        initials: currency.slice(0, 3).toUpperCase(),
+      };
+  }
 }
 
 function downloadBlob(input: { blob: Blob; fileName: string }) {
@@ -162,21 +336,62 @@ export default function ReportsManagement() {
   const [isExporting, setIsExporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const defaultDateRange = useMemo(() => getDefaultDateRange(), []);
-  const [filters, setFilters] = useState<ReportsFiltersState>({
-    ...defaultDateRange,
-    group_by: "day",
-    status: "",
-    source: "",
-    employee_id: "",
-    service_id: "",
-    currency: "",
-  });
+  const defaultFilters = useMemo(() => getDefaultReportsFilters(), []);
+  const [filters, setFilters] = useState<ReportsFiltersState>(() =>
+    loadStoredReportFilters(),
+  );
 
   const isTenantAdmin = user?.role === "TENANT_ADMIN";
   const activeCurrency = overview?.filters.currency || filters.currency || "USD";
-  const currencyOptions = Array.from(
+  const currencyCodes = Array.from(
     new Set(["USD", "EUR", "DOP", "MXN", "COP", ...services.map((service) => service.currency)]),
+  );
+  const currencyOptions = useMemo<SelectOption[]>(
+    () => [
+      {
+        value: "",
+        label: "Divisa automática",
+        description: "Usa la moneda principal del reporte",
+        icon: Coins,
+      },
+      ...currencyCodes.map(buildCurrencyOption),
+    ],
+    [currencyCodes],
+  );
+  const employeeOptions = useMemo<SelectOption[]>(
+    () => [
+      {
+        value: "",
+        label: "Todos los profesionales",
+        description: "Cualquier profesional",
+        icon: Users,
+      },
+      ...employees.map((employee) => ({
+        value: employee.id,
+        label: employee.name,
+        description: employee.email,
+        imageUrl: employee.avatar_url,
+        initials: getInitials(employee.name),
+      })),
+    ],
+    [employees],
+  );
+  const serviceOptions = useMemo<SelectOption[]>(
+    () => [
+      {
+        value: "",
+        label: "Todos los servicios",
+        description: "Cualquier servicio activo",
+        icon: Wrench,
+      },
+      ...services.map((service) => ({
+        value: service.id,
+        label: service.name,
+        description: `${service.duration_minutes} min · ${service.currency} ${service.price}`,
+        icon: Wrench,
+      })),
+    ],
+    [services],
   );
 
   const buildQuery = useCallback((state: ReportsFiltersState): ReportsOverviewQuery => {
@@ -252,6 +467,11 @@ export default function ReportsManagement() {
   }, [loadReferenceData]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(REPORTS_FILTERS_STORAGE_KEY, JSON.stringify(filters));
+  }, [filters]);
+
+  useEffect(() => {
     void loadOverview(filters);
     // Initial fetch only. Further fetches are triggered by filter submit or actions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -301,27 +521,42 @@ export default function ReportsManagement() {
   }, [activeCurrency, overview]);
 
   const showServiceTenantColumn = overview?.scope.role === "SUPER_ADMIN";
+  const hasActiveFilters =
+    filters.date_from !== defaultFilters.date_from ||
+    filters.date_to !== defaultFilters.date_to ||
+    filters.group_by !== defaultFilters.group_by ||
+    filters.status !== "" ||
+    filters.source !== "" ||
+    filters.employee_id !== "" ||
+    filters.service_id !== "" ||
+    filters.currency !== "";
 
   const handleFilterSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void loadOverview(filters);
   };
 
+  const handleClearFilters = () => {
+    setFilters(defaultFilters);
+    void loadOverview(defaultFilters);
+  };
+
   const handleExport = async () => {
     if (!token) return;
 
     setIsExporting(true);
+    const toastId = toast.loading("Preparando Excel...");
     try {
       const blob = await reportsService.exportXlsx(token, buildQuery(filters));
       downloadBlob({
         blob,
         fileName: `reportes-${filters.date_from}-a-${filters.date_to}.xlsx`,
       });
-      toast.success("Reporte exportado.");
+      toast.success("Descarga lista.", { id: toastId });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "No se pudo exportar el reporte.";
-      toast.error(message);
+      toast.error(message, { id: toastId });
     } finally {
       setIsExporting(false);
     }
@@ -359,128 +594,97 @@ export default function ReportsManagement() {
               className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-accent-text shadow-theme-accent transition hover:brightness-[0.98] disabled:opacity-60"
             >
               {isExporting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              Exportar Excel
+              {isExporting ? "Preparando Excel..." : "Exportar Excel"}
             </button>
           </div>
         </div>
 
         <form onSubmit={handleFilterSubmit} className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          <input
-            type="date"
+          <CalendarDatePicker
             value={filters.date_from}
-            onChange={(event) =>
-              setFilters((current) => ({ ...current, date_from: event.target.value }))
+            onChange={(value) =>
+              setFilters((current) => ({ ...current, date_from: value }))
             }
-            className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
+            placeholder="Desde"
+            buttonClassName="h-11 rounded-2xl"
           />
 
-          <input
-            type="date"
+          <CalendarDatePicker
             value={filters.date_to}
-            onChange={(event) =>
-              setFilters((current) => ({ ...current, date_to: event.target.value }))
+            onChange={(value) =>
+              setFilters((current) => ({ ...current, date_to: value }))
             }
-            className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
+            placeholder="Hasta"
+            buttonClassName="h-11 rounded-2xl"
           />
 
-          <select
+          <SelectField
             value={filters.group_by}
-            onChange={(event) =>
+            onValueChange={(value) =>
               setFilters((current) => ({
                 ...current,
-                group_by: event.target.value as ReportGroupBy,
+                group_by: value as ReportGroupBy,
               }))
             }
-            className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-          >
-            <option value="day">Agrupar por día</option>
-            <option value="week">Agrupar por semana</option>
-            <option value="month">Agrupar por mes</option>
-          </select>
+            options={GROUP_BY_OPTIONS}
+            triggerClassName="h-11 rounded-2xl"
+          />
 
-          <select
+          <SelectField
             value={filters.status}
-            onChange={(event) =>
+            onValueChange={(value) =>
               setFilters((current) => ({
                 ...current,
-                status: event.target.value as ReportsFiltersState["status"],
+                status: value as ReportsFiltersState["status"],
               }))
             }
-            className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-          >
-            {STATUS_FILTERS.map((status) => (
-              <option key={status.value || "all-status"} value={status.value}>
-                {status.label}
-              </option>
-            ))}
-          </select>
+            options={STATUS_FILTER_OPTIONS}
+            triggerClassName="h-11 rounded-2xl"
+          />
 
-          <select
+          <SelectField
             value={filters.source}
-            onChange={(event) =>
+            onValueChange={(value) =>
               setFilters((current) => ({
                 ...current,
-                source: event.target.value as ReportsFiltersState["source"],
+                source: value as ReportsFiltersState["source"],
               }))
             }
-            className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-          >
-            {SOURCE_FILTERS.map((source) => (
-              <option key={source.value || "all-source"} value={source.value}>
-                {source.label}
-              </option>
-            ))}
-          </select>
+            options={SOURCE_FILTER_OPTIONS}
+            triggerClassName="h-11 rounded-2xl"
+          />
 
-          <select
+          <SelectField
             value={filters.currency}
-            onChange={(event) =>
-              setFilters((current) => ({ ...current, currency: event.target.value }))
+            onValueChange={(value) =>
+              setFilters((current) => ({ ...current, currency: value }))
             }
-            className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-          >
-            <option value="">Divisa automática</option>
-            {currencyOptions.map((currency) => (
-              <option key={currency} value={currency}>
-                {currency}
-              </option>
-            ))}
-          </select>
+            options={currencyOptions}
+            triggerClassName="h-11 rounded-2xl"
+          />
 
           {isTenantAdmin ? (
-            <select
+            <SelectField
               value={filters.employee_id}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, employee_id: event.target.value }))
+              onValueChange={(value) =>
+                setFilters((current) => ({ ...current, employee_id: value }))
               }
               disabled={isLoadingFilters}
-              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-            >
-              <option value="">Todos los profesionales</option>
-              {employees.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name}
-                </option>
-              ))}
-            </select>
+              options={employeeOptions}
+              triggerClassName="h-11 rounded-2xl"
+            />
           ) : null}
 
           {isTenantAdmin ? (
-            <select
+            <SelectField
               value={filters.service_id}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, service_id: event.target.value }))
+              onValueChange={(value) =>
+                setFilters((current) => ({ ...current, service_id: value }))
               }
               disabled={isLoadingFilters}
-              className="rounded-2xl border border-border bg-surface px-3 py-2.5 text-sm text-fg"
-            >
-              <option value="">Todos los servicios</option>
-              {services.map((service) => (
-                <option key={service.id} value={service.id}>
-                  {service.name}
-                </option>
-              ))}
-            </select>
+              options={serviceOptions}
+              triggerClassName="h-11 rounded-2xl"
+            />
           ) : null}
 
           <button
@@ -489,6 +693,16 @@ export default function ReportsManagement() {
           >
             Aplicar filtros
           </button>
+
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="rounded-2xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-fg transition hover:bg-surface-soft"
+            >
+              Limpiar filtros
+            </button>
+          ) : null}
         </form>
       </div>
 
@@ -858,4 +1072,3 @@ export default function ReportsManagement() {
     </section>
   );
 }
-

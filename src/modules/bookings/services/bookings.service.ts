@@ -12,6 +12,7 @@ import type {
   PublicBookingConfirmation,
   PublicBookingEmployee,
   PublicBookingService,
+  RescheduleBookingPayload,
   SetEmployeeSchedulePayload,
   UpdateBookingStatusPayload,
 } from "@/types/booking.types";
@@ -199,6 +200,18 @@ export const bookingsService = {
     token: string,
   ): Promise<Booking> => {
     return apiFetch<Booking>(`/bookings/${id}/status`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  reschedule: async (
+    id: string,
+    payload: RescheduleBookingPayload,
+    token: string,
+  ): Promise<Booking> => {
+    return apiFetch<Booking>(`/bookings/${id}/reschedule`, {
       method: "PATCH",
       token,
       body: JSON.stringify(payload),

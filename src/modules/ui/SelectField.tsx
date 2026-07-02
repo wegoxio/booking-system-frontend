@@ -2,11 +2,17 @@
 
 import * as Select from "@radix-ui/react-select";
 import { Check, ChevronDown } from "lucide-react";
+import Image from "next/image";
+import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 
 export type SelectOption = {
   value: string;
   label: string;
+  description?: string;
+  icon?: LucideIcon;
+  imageUrl?: string | null;
+  initials?: string;
 };
 
 const EMPTY_VALUE_TOKEN = "__select_empty__";
@@ -20,6 +26,51 @@ type SelectFieldProps = {
   contentClassName?: string;
   disabled?: boolean;
 };
+
+function getInitials(label: string) {
+  return label
+    .split(/[\s-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
+}
+
+function OptionVisual({ option }: { option: SelectOption }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const Icon = option.icon;
+  const initials = option.initials ?? getInitials(option.label);
+
+  if (option.imageUrl && !imageFailed) {
+    return (
+      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
+        <Image
+          src={option.imageUrl}
+          alt=""
+          width={28}
+          height={28}
+          unoptimized
+          className="h-full w-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      </span>
+    );
+  }
+
+  if (Icon) {
+    return (
+      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface-soft text-fg-icon">
+        <Icon className="h-3.5 w-3.5" />
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border-soft bg-surface-soft text-[10px] font-semibold text-fg">
+      {initials || "?"}
+    </span>
+  );
+}
 
 export default function SelectField({
   value,
@@ -47,12 +98,15 @@ export default function SelectField({
       <Select.Trigger
         className={`inline-flex h-10 w-full items-center justify-between rounded-xl border border-border bg-surface px-3 text-sm text-fg outline-none transition data-[placeholder]:text-fg-placeholder focus:border-accent ${triggerClassName}`.trim()}
       >
-        <span
-          className={`truncate ${
-            selectedOption ? "text-fg" : "text-fg-placeholder"
-          }`}
-        >
-          {selectedOption?.label ?? placeholder}
+        <span className="flex min-w-0 items-center gap-2">
+          {selectedOption ? <OptionVisual option={selectedOption} /> : null}
+          <span
+            className={`truncate ${
+              selectedOption ? "text-fg" : "text-fg-placeholder"
+            }`}
+          >
+            {selectedOption?.label ?? placeholder}
+          </span>
         </span>
         <Select.Icon>
           <ChevronDown className="h-4 w-4 text-fg-icon" />
@@ -73,12 +127,22 @@ export default function SelectField({
                   <Select.Item
                     key={optionValue}
                     value={optionValue}
-                    className="relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-sm text-fg outline-none data-[highlighted]:bg-surface-warning-soft data-[state=checked]:bg-surface-warning-soft"
+                    className="relative flex cursor-pointer select-none items-center gap-2 rounded-lg py-2 pl-8 pr-3 text-sm text-fg outline-none data-[highlighted]:bg-surface-warning-soft data-[state=checked]:bg-surface-warning-soft"
                   >
                     <Select.ItemIndicator className="absolute left-2 inline-flex h-4 w-4 items-center justify-center">
                       <Check className="h-3.5 w-3.5 text-warning" />
                     </Select.ItemIndicator>
-                    <Select.ItemText>{option.label}</Select.ItemText>
+                    <OptionVisual option={option} />
+                    <div className="min-w-0">
+                      <Select.ItemText>
+                        <span className="block truncate">{option.label}</span>
+                      </Select.ItemText>
+                      {option.description ? (
+                        <span className="mt-0.5 block truncate text-xs text-muted">
+                          {option.description}
+                        </span>
+                      ) : null}
+                    </div>
                   </Select.Item>
                 );
               })}

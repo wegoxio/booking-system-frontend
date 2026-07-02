@@ -53,13 +53,15 @@ export default function DashboardTenantsTableCard({
 
                 <div className="mt-3 rounded-2xl border border-border-soft bg-surface p-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-soft">
-                    Admin principal
+                    Administrador principal
                   </p>
                   <p className="mt-1 text-sm font-medium text-primary">
-                    {tenant.primary_admin_name || "Sin admin"}
+                    {tenant.primary_admin_name || "Sin administrador"}
                   </p>
                   <p className="text-xs text-fg-soft">{tenant.primary_admin_email || "-"}</p>
-                  <p className="mt-1 text-xs text-fg-soft">{tenant.tenant_admins_count} admins</p>
+                  <p className="mt-1 text-xs text-fg-soft">
+                    {tenant.tenant_admins_count} administradores
+                  </p>
                 </div>
 
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
@@ -92,7 +94,7 @@ export default function DashboardTenantsTableCard({
                     <Avatar name={employee.employee_name} />
                     <div>
                       <p className="font-semibold text-primary">{employee.employee_name}</p>
-                      <p className="text-xs text-fg-soft">ID: {employee.employee_id.slice(0, 8)}</p>
+                      <p className="text-xs text-fg-soft">{employee.employee_email}</p>
                     </div>
                   </div>
                   <StatusPill
@@ -125,7 +127,7 @@ export default function DashboardTenantsTableCard({
           )
         ) : (
           <div className="rounded-2xl border border-border-soft bg-surface-soft px-4 py-6 text-center text-sm text-muted">
-            No hay datos suficientes para mostrar esta tabla todavia.
+            No hay datos suficientes para mostrar esta tabla todavía.
           </div>
         )}
       </div>
@@ -137,7 +139,7 @@ export default function DashboardTenantsTableCard({
               {isSuperAdmin ? (
                 <>
                   <th className="px-4 py-3">Negocio</th>
-                  <th className="px-4 py-3">Admin principal</th>
+                  <th className="px-4 py-3">Administrador principal</th>
                   <th className="px-4 py-3">Personal</th>
                   <th className="px-4 py-3">Citas del mes</th>
                   <th className="px-4 py-3">Ingresos del mes</th>
@@ -175,13 +177,13 @@ export default function DashboardTenantsTableCard({
                       <td className="px-4 py-3">
                         <div>
                           <p className="font-medium text-primary">
-                            {tenant.primary_admin_name || "Sin admin"}
+                            {tenant.primary_admin_name || "Sin administrador"}
                           </p>
                           <p className="text-[10px] text-fg-soft">
                             {tenant.primary_admin_email || "-"}
                           </p>
                           <p className="text-[10px] text-fg-soft">
-                            {tenant.tenant_admins_count} admins
+                            {tenant.tenant_admins_count} administradores
                           </p>
                         </div>
                       </td>
@@ -221,9 +223,7 @@ export default function DashboardTenantsTableCard({
                           <Avatar name={employee.employee_name} />
                           <div>
                             <p className="font-semibold text-primary">{employee.employee_name}</p>
-                            <p className="text-[10px] text-fg-soft">
-                              ID: {employee.employee_id.slice(0, 8)}
-                            </p>
+                            <p className="text-[10px] text-fg-soft">{employee.employee_email}</p>
                           </div>
                         </div>
                       </td>
@@ -258,7 +258,7 @@ export default function DashboardTenantsTableCard({
             <tbody>
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-sm text-muted">
-                  No hay datos suficientes para mostrar esta tabla todavia.
+                  No hay datos suficientes para mostrar esta tabla todavía.
                 </td>
               </tr>
             </tbody>

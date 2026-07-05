@@ -9,7 +9,11 @@ import {
   syncCsrfTokenFromCookie,
 } from "@/modules/auth/services/auth-session.service";
 import { refreshAccessTokenWithStoredRefreshToken } from "@/modules/http/services/api";
-import { LoginPayload } from "@/types/auth.types";
+import {
+  AuthMfaChallengeResponse,
+  CompleteMfaLoginPayload,
+  LoginPayload,
+} from "@/types/auth.types";
 import { User } from "@/types/user.types";
 import { toast } from "react-hot-toast";
 import {
@@ -28,7 +32,8 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (data: LoginPayload) => Promise<void>;
+  login: (data: LoginPayload) => Promise<AuthMfaChallengeResponse | null>;
+  completeMfaLogin: (data: CompleteMfaLoginPayload) => Promise<void>;
   logout: () => Promise<void>;
   logoutAllSessions: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -43,6 +48,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
   const hasInitializedRef = useRef(false);
+
+  const completeAccessLogin = useCallback(async (accessToken: string) => {
+    setAccessToken(accessToken);
+    syncCsrfTokenFromCookie();
+
+    const me = await authService.getAuthenticatedUser(accessToken);
+    setUser(me);
+    toast.success(`Bienvenido, ${me.name}.`);
+  }, []);
 
   const logout = useCallback(async () => {
     setIsLoggingOut(true);
@@ -83,25 +97,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [logout]);
 
-  const login = useCallback(async ({ email, password, captcha_token }: LoginPayload) => {
-    setIsLoading(true);
-    try {
-      const response = await authService.login({ email, password, captcha_token });
-      setAccessToken(response.access_token);
-      syncCsrfTokenFromCookie();
+  const login = useCallback(
+    async ({ email, password, captcha_token }: LoginPayload) => {
+      setIsLoading(true);
+      try {
+        const response = await authService.login({
+          email,
+          password,
+          captcha_token,
+        });
 
-      const me = await authService.getAuthenticatedUser(response.access_token);
-      setUser(me);
-      toast.success(`Bienvenido, ${me.name}.`);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo iniciar sesión.";
-      toast.error(message);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+        if ("mfa_required" in response) {
+          toast.success("Verifica tu identidad para continuar.");
+          return response;
+        }
+
+        await completeAccessLogin(response.access_token);
+        return null;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "No se pudo iniciar sesión.";
+        toast.error(message);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [completeAccessLogin],
+  );
+
+  const completeMfaLogin = useCallback(
+    async (payload: CompleteMfaLoginPayload) => {
+      setIsLoading(true);
+      try {
+        const response = await authService.completeMfaLogin(payload);
+        await completeAccessLogin(response.access_token);
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudo verificar el código.";
+        toast.error(message);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [completeAccessLogin],
+  );
 
   const refreshUser = useCallback(async () => {
     const activeToken = getAccessToken();
@@ -179,6 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: !!token && !!user,
       isLoading,
       login,
+      completeMfaLogin,
       logout,
       logoutAllSessions,
       refreshUser,
@@ -189,6 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token,
       isLoading,
       login,
+      completeMfaLogin,
       logout,
       logoutAllSessions,
       refreshUser,

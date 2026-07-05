@@ -19,7 +19,7 @@ const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
   IN_PROGRESS: "En progreso",
   COMPLETED: "Completada",
   CANCELLED: "Cancelada",
-  NO_SHOW: "No asistiÃ³",
+  NO_SHOW: "No asistió",
 };
 
 const BOOKING_STATUS_STYLES: Record<BookingStatus, string> = {
@@ -58,12 +58,12 @@ const BOOKING_STATUS_OPTION_DETAILS: Record<
   BookingStatus,
   Pick<SelectOption, "label" | "description" | "icon">
 > = {
-  PENDING: { label: "Pendiente", description: "AÃºn sin confirmar", icon: Clock3 },
+  PENDING: { label: "Pendiente", description: "aún sin confirmar", icon: Clock3 },
   CONFIRMED: { label: "Confirmada", description: "Cita aceptada", icon: CheckCircle2 },
   IN_PROGRESS: { label: "En progreso", description: "Servicio en curso", icon: TimerReset },
   COMPLETED: { label: "Completada", description: "Servicio realizado", icon: CheckCircle2 },
   CANCELLED: { label: "Cancelada", description: "Cita cancelada", icon: XCircle },
-  NO_SHOW: { label: "No asistiÃ³", description: "Cliente ausente", icon: XCircle },
+  NO_SHOW: { label: "No asistió", description: "Cliente ausente", icon: XCircle },
 };
 
 function buildStatusOptions(currentStatus: BookingStatus): SelectOption[] {
@@ -92,7 +92,7 @@ function buildQuickActions(status: BookingStatus): Array<{
     case "IN_PROGRESS":
       return [
         { status: "COMPLETED", label: "Completar", toneClass: "border-border-success bg-surface-success text-success" },
-        { status: "NO_SHOW", label: "No asistiÃ³", toneClass: "border-border bg-surface-muted text-fg" },
+        { status: "NO_SHOW", label: "No asistió", toneClass: "border-border bg-surface-muted text-fg" },
       ];
     default:
       return [];
@@ -209,17 +209,6 @@ export default function BookingsTable({
 
               {quickActions.length > 0 ? (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {quickActions.map((action) => (
-                    <button
-                      key={action.status}
-                      type="button"
-                      disabled={updatingBookingId === booking.id}
-                      onClick={() => onStatusChange(booking, action.status)}
-                      className={`rounded-xl border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${action.toneClass}`}
-                    >
-                      {action.label}
-                    </button>
-                  ))}
                   {["PENDING", "CONFIRMED"].includes(booking.status) ? (
                     <button
                       type="button"
@@ -231,6 +220,17 @@ export default function BookingsTable({
                       Reprogramar
                     </button>
                   ) : null}
+                  {quickActions.map((action) => (
+                    <button
+                      key={action.status}
+                      type="button"
+                      disabled={updatingBookingId === booking.id}
+                      onClick={() => onStatusChange(booking, action.status)}
+                      className={`rounded-xl border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${action.toneClass}`}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
                 </div>
               ) : null}
 

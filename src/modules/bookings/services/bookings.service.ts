@@ -11,8 +11,10 @@ import type {
   ListBookingsResponse,
   PublicBookingConfirmation,
   PublicBookingEmployee,
+  PublicBookingManagement,
   PublicBookingService,
   RescheduleBookingPayload,
+  ReschedulePublicBookingPayload,
   SetEmployeeSchedulePayload,
   UpdateBookingStatusPayload,
 } from "@/types/booking.types";
@@ -81,6 +83,46 @@ export const bookingsService = {
       `/public/tenants/${encodeURIComponent(tenantSlug)}/bookings`,
       {
         method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Idempotency-Key": idempotencyKey },
+      },
+    );
+  },
+
+  findPublicBookingByToken: async (token: string): Promise<PublicBookingManagement> => {
+    return apiFetch<PublicBookingManagement>(
+      `/public/bookings/manage/${encodeURIComponent(token)}`,
+      {
+        method: "GET",
+      },
+    );
+  },
+
+  getPublicBookingManagementAvailability: async (
+    token: string,
+    query: Pick<AvailabilityQuery, "date" | "timezone">,
+  ): Promise<AvailabilityResponse> => {
+    const queryString = toQueryString({
+      date: query.date,
+      timezone: query.timezone,
+    });
+    return apiFetch<AvailabilityResponse>(
+      `/public/bookings/manage/${encodeURIComponent(token)}/availability${queryString}`,
+      {
+        method: "GET",
+      },
+    );
+  },
+
+  reschedulePublicByToken: async (
+    token: string,
+    payload: ReschedulePublicBookingPayload,
+    idempotencyKey: string,
+  ): Promise<PublicBookingManagement> => {
+    return apiFetch<PublicBookingManagement>(
+      `/public/bookings/manage/${encodeURIComponent(token)}/reschedule`,
+      {
+        method: "PATCH",
         body: JSON.stringify(payload),
         headers: { "Idempotency-Key": idempotencyKey },
       },

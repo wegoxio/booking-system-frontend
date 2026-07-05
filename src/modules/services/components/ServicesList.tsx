@@ -108,7 +108,7 @@ export function ServicesList({
           <thead>
             <tr className="text-muted">
               <th className="px-4 pb-2 font-medium">Nombre</th>
-              <th className="px-4 pb-2 font-medium">Duracion</th>
+              <th className="px-4 pb-2 font-medium">Duración</th>
               <th className="px-4 pb-2 font-medium">Precio</th>
               <th className="px-4 pb-2 font-medium">Empleados</th>
               <th className="px-4 pb-2 font-medium">Estado</th>

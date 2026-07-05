@@ -4,11 +4,14 @@ import { useAuth } from "@/context/AuthContext";
 import Button from "@/modules/ui/Button";
 import Input from "@/modules/ui/Input";
 import TurnstileWidget from "@/modules/ui/TurnstileWidget";
+import { AuthMfaChallengeResponse } from "@/types/auth.types";
 import {
+  ArrowLeft,
   ArrowRight,
   CalendarClock,
   Eye,
   EyeOff,
+  KeyRound,
   ShieldCheck,
   Users2,
   type LucideIcon,
@@ -27,11 +30,11 @@ const LOGIN_HIGHLIGHTS: HighlightItem[] = [
   {
     title: "Agenda por profesional",
     description:
-      "Controla slots reales por servicio, descansos y citas ya tomadas.",
+      "Controla horarios reales por servicio, descansos y citas ya tomadas.",
     icon: CalendarClock,
   },
   {
-    title: "Vista por tenant",
+    title: "Vista por negocio",
     description: "Cada negocio mantiene sus datos y operaciones aisladas.",
     icon: Users2,
   },
@@ -48,7 +51,7 @@ const TURNSTILE_LOGIN_ACTION =
   process.env.NEXT_PUBLIC_TURNSTILE_LOGIN_ACTION?.trim() || "login";
 
 export default function LoginForm() {
-  const { login, isLoading } = useAuth();
+  const { login, completeMfaLogin, isLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isTurnstileEnabled = TURNSTILE_SITE_KEY.length > 0;
@@ -59,6 +62,10 @@ export default function LoginForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaRefreshKey, setCaptchaRefreshKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
+  const [mfaChallenge, setMfaChallenge] =
+    useState<AuthMfaChallengeResponse | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
   const noticeMessage = useMemo(() => {
     const notice = searchParams.get("notice");
@@ -84,19 +91,41 @@ export default function LoginForm() {
     event.preventDefault();
     setErrorMessage("");
 
+    if (mfaChallenge) {
+      try {
+        await completeMfaLogin({
+          challenge_token: mfaChallenge.challenge_token,
+          ...(useRecoveryCode
+            ? { recovery_code: mfaCode }
+            : { code: mfaCode }),
+        });
+        router.push("/dashboard");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "No se pudo verificar el código.";
+        setErrorMessage(message);
+      }
+      return;
+    }
+
     if (isTurnstileEnabled && !captchaToken) {
       setErrorMessage("Completa la verificación de seguridad para continuar.");
       return;
     }
 
     try {
-      await login({
+      const challenge = await login({
         email,
         password,
         captcha_token: isTurnstileEnabled
           ? (captchaToken ?? undefined)
           : undefined,
       });
+      if (challenge) {
+        setMfaChallenge(challenge);
+        setMfaCode("");
+        return;
+      }
       router.push("/dashboard");
     } catch (error) {
       const message =
@@ -188,14 +217,28 @@ export default function LoginForm() {
 
             <div className="rounded-[30px] border border-border-strong bg-surface p-6 shadow-theme-soft sm:p-8">
               <div className="mb-6">
-                <h1 className="text-2xl font-semibold text-fg-strong">
-                  Iniciar sesión
+                <div className="inline-flex items-center gap-2 rounded-full border border-border-soft bg-surface-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-fg-secondary">
+                  {mfaChallenge ? (
+                    <>
+                      <ShieldCheck className="h-3.5 w-3.5 text-success" />
+                      Segundo factor
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound className="h-3.5 w-3.5 text-accent" />
+                      Acceso seguro
+                    </>
+                  )}
+                </div>
+                <h1 className="mt-4 text-2xl font-semibold text-fg-strong">
+                  {mfaChallenge ? "Verifica tu identidad" : "Iniciar sesión"}
                 </h1>
                 <p className="mt-2 text-sm text-fg-secondary">
-                  Accede a tu panel para administrar citas, equipo y
-                  configuraciones.
+                  {mfaChallenge
+                    ? `Ingresa el código de tu app autenticadora para ${mfaChallenge.user.email}.`
+                    : "Accede a tu panel para administrar citas, equipo y configuraciones."}
                 </p>
-                {noticeMessage ? (
+                {noticeMessage && !mfaChallenge ? (
                   <div className="mt-4 rounded-2xl border border-border-success bg-surface-success px-4 py-3 text-sm text-success">
                     {noticeMessage}
                   </div>
@@ -203,92 +246,144 @@ export default function LoginForm() {
               </div>
 
               <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
-                <Input
-                  type="email"
-                  id="email"
-                  name="email"
-                  label="Correo electrónico"
-                  placeholder="alguien@ejemplo.com"
-                  required
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="h-12 border-border bg-surface-soft text-fg focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
-                />
-
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="mb-2 block text-sm font-medium text-fg-strong"
-                  >
-                    Contraseña
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="********"
-                      className="h-12 w-full rounded-lg border border-border bg-surface-soft px-3 pr-11 text-fg focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+                {!mfaChallenge ? (
+                  <>
+                    <Input
+                      type="email"
+                      id="email"
+                      name="email"
+                      label="Correo electrónico"
+                      placeholder="alguien@ejemplo.com"
                       required
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      className="h-12 border-border bg-surface-soft text-fg focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+                    />
+
+                    <div>
+                      <label
+                        htmlFor="password"
+                        className="mb-2 block text-sm font-medium text-fg-strong"
+                      >
+                        Contraseña
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(event) => setPassword(event.target.value)}
+                          placeholder="********"
+                          className="h-12 w-full rounded-lg border border-border bg-surface-soft px-3 pr-11 text-fg focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-accent"
+                          aria-label={
+                            showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                          }
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-start gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                      <label className="inline-flex items-center gap-2 text-fg-secondary">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-border text-accent"
+                        />
+                        Recordar este equipo
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => router.push("/forgot-password")}
+                        className="font-medium text-fg-strong transition-colors hover:text-accent"
+                      >
+                        Olvidé mi contraseña
+                      </button>
+                    </div>
+
+                    {isTurnstileEnabled ? (
+                      <div className="overflow-hidden rounded-xl border border-border-strong bg-surface-soft p-2.5 sm:p-3">
+                        <TurnstileWidget
+                          siteKey={TURNSTILE_SITE_KEY}
+                          action={TURNSTILE_LOGIN_ACTION}
+                          refreshKey={captchaRefreshKey}
+                          onTokenChange={setCaptchaToken}
+                          className="w-full overflow-hidden"
+                        />
+                      </div>
+                    ) : null}
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-border-success bg-surface-success px-4 py-3 text-sm text-success">
+                      Tu contraseña fue validada. Falta confirmar el segundo
+                      factor para abrir la sesión.
+                    </div>
+                    <Input
+                      id="mfaCode"
+                      name="mfaCode"
+                      label={useRecoveryCode ? "Código de recuperación" : "Código de 6 dígitos"}
+                      placeholder={useRecoveryCode ? "ABCD-EFGH-IJKL" : "123456"}
+                      inputMode={useRecoveryCode ? "text" : "numeric"}
+                      autoComplete="one-time-code"
+                      required
+                      value={mfaCode}
+                      onChange={(event) => setMfaCode(event.target.value)}
+                      className="h-12 border-border bg-surface-soft text-fg tracking-[0.18em] focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-fg-secondary transition-colors hover:text-accent"
-                      aria-label={
-                        showPassword
-                          ? "Ocultar contraseña"
-                          : "Mostrar contraseña"
-                      }
+                      onClick={() => {
+                        setUseRecoveryCode((current) => !current);
+                        setMfaCode("");
+                      }}
+                      className="text-sm font-medium text-fg-strong transition-colors hover:text-accent"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {useRecoveryCode
+                        ? "Usar código de la app autenticadora"
+                        : "Usar código de recuperación"}
                     </button>
                   </div>
-                </div>
-
-                <div className="flex flex-col items-start gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                  <label className="inline-flex items-center gap-2 text-fg-secondary">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-border text-accent"
-                    />
-                    Recordar este equipo
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/forgot-password")}
-                    className="font-medium text-fg-strong transition-colors hover:text-accent"
-                  >
-                    Olvidé mi contraseña
-                  </button>
-                </div>
-
-                {isTurnstileEnabled ? (
-                  <div className="overflow-hidden rounded-xl border border-border-strong bg-surface-soft p-2.5 sm:p-3">
-                    <TurnstileWidget
-                      siteKey={TURNSTILE_SITE_KEY}
-                      action={TURNSTILE_LOGIN_ACTION}
-                      refreshKey={captchaRefreshKey}
-                      onTokenChange={setCaptchaToken}
-                      className="w-full overflow-hidden"
-                    />
-                  </div>
-                ) : null}
+                )}
 
                 <Button
                   type="submit"
                   disabled={isLoading}
                   className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-accent to-accent-hover text-accent-text shadow-theme-accent transition-all duration-200 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isLoading ? "Ingresando..." : "Entrar al panel"}
+                  {isLoading
+                    ? "Verificando..."
+                    : mfaChallenge
+                      ? "Verificar y entrar"
+                      : "Entrar al panel"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
+
+                {mfaChallenge ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMfaChallenge(null);
+                      setMfaCode("");
+                      setUseRecoveryCode(false);
+                    }}
+                    className="inline-flex w-full items-center justify-center gap-2 text-sm font-medium text-fg-secondary transition-colors hover:text-fg-strong"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Volver a credenciales
+                  </button>
+                ) : null}
 
                 {errorMessage && (
                   <p className="rounded-lg bg-surface-danger px-3 py-2 text-sm text-danger">

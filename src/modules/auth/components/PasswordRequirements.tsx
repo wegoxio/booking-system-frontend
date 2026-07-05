@@ -13,7 +13,7 @@ const REQUIREMENT_ITEMS: Array<{
   { key: "minLength", label: "Al menos 8 caracteres" },
   { key: "lowercase", label: "Una letra minuscula" },
   { key: "uppercase", label: "Una letra mayuscula" },
-  { key: "number", label: "Un numero" },
+  { key: "number", label: "Un número" },
   { key: "symbol", label: "Un simbolo" },
 ];
 

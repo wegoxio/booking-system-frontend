@@ -1,5 +1,5 @@
-import TenantSettingsPanel from "@/modules/settings/components/TenantSettingsPanel";
+import SettingsWorkspace from "@/modules/settings/components/SettingsWorkspace";
 
 export default function SettingsModulePage() {
-  return <TenantSettingsPanel />;
+  return <SettingsWorkspace />;
 }

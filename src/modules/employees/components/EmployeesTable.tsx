@@ -46,7 +46,7 @@ function EmployeesTable({
                 </p>
                 <p className="inline-flex items-center gap-2 text-xs text-fg-secondary">
                   <Phone className="h-4 w-4" />
-                  <span>{phoneDisplay ?? "Sin telefono"}</span>
+                  <span>{phoneDisplay ?? "Sin teléfono"}</span>
                 </p>
                 <p className="inline-flex items-center gap-2 rounded-full bg-surface-muted px-3 py-1.5 text-xs font-medium text-fg-secondary">
                   <UserRound className="h-3.5 w-3.5" />
@@ -89,7 +89,7 @@ function EmployeesTable({
             <tr className="text-muted">
               <th className="px-4 pb-2 font-medium">Nombre</th>
               <th className="px-4 pb-2 font-medium">Email</th>
-              <th className="px-4 pb-2 font-medium">Telefono</th>
+              <th className="px-4 pb-2 font-medium">Teléfono</th>
               <th className="px-4 pb-2 font-medium">Rol visual</th>
               <th className="px-4 pb-2 font-medium">Estado</th>
               <th className="px-4 pb-2 font-medium">Acciones</th>
@@ -124,7 +124,7 @@ function EmployeesTable({
                   <td className="border-y border-border-soft bg-surface px-4 py-4">
                     <div className="inline-flex items-center gap-2 text-fg-secondary">
                       <Phone className="h-4 w-4" />
-                      <span>{phoneDisplay ?? "Sin telefono"}</span>
+                      <span>{phoneDisplay ?? "Sin teléfono"}</span>
                     </div>
                   </td>
                   <td className="border-y border-border-soft bg-surface px-4 py-4">

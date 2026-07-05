@@ -126,6 +126,10 @@ export type PublicBookingConfirmation = {
   items: PublicBookingItem[];
 };
 
+export type PublicBookingManagement = PublicBookingConfirmation & {
+  can_reschedule: boolean;
+};
+
 export type AvailabilityResponse = {
   employee_id: string;
   date: string;
@@ -248,4 +252,8 @@ export type UpdateBookingStatusPayload = {
 export type RescheduleBookingPayload = {
   start_at_utc: string;
   timezone?: string;
+};
+
+export type ReschedulePublicBookingPayload = RescheduleBookingPayload & {
+  captcha_token?: string;
 };

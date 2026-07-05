@@ -27,12 +27,10 @@ import type {
 } from "@/types/booking.types";
 import type { TenantSettingsRecord } from "@/types/tenant-settings.types";
 import {
-  CalendarPlus,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Download,
   Scissors,
   UserRound,
 } from "lucide-react";
@@ -182,60 +180,6 @@ function formatCapacityLabel(slot: BookingSlot) {
   if (slot.available_capacity <= 0) return "Horario completo";
   if (slot.available_capacity === 1) return "Queda 1 cupo";
   return `Quedan ${slot.available_capacity} cupos`;
-}
-
-function escapeIcsText(value: string) {
-  return value
-    .replace(/\\/g, "\\\\")
-    .replace(/\n/g, "\\n")
-    .replace(/,/g, "\\,")
-    .replace(/;/g, "\\;");
-}
-
-function toIcsDate(value: string) {
-  return new Date(value).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-}
-
-function downloadTextFile(input: { fileName: string; content: string; type: string }) {
-  const blob = new Blob([input.content], { type: input.type });
-  const objectUrl = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = objectUrl;
-  anchor.download = input.fileName;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(objectUrl);
-}
-
-function buildBookingIcs(input: {
-  booking: PublicBookingConfirmation;
-  businessName: string;
-}) {
-  const firstService = input.booking.items[0]?.service_name_snapshot ?? "Cita";
-  const summary = `${firstService} - ${input.businessName}`;
-  const description = [
-    `Cliente: ${input.booking.customer_name}`,
-    `Negocio: ${input.businessName}`,
-    `Estado: ${input.booking.status === "PENDING" ? "Pendiente de confirmación" : "Confirmada"}`,
-    `Total: ${input.booking.total_price} ${input.booking.currency}`,
-  ].join("\\n");
-
-  return [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Bukky//Booking//ES",
-    "BEGIN:VEVENT",
-    `UID:${input.booking.id}@bukky-booking`,
-    `DTSTAMP:${toIcsDate(new Date().toISOString())}`,
-    `DTSTART:${toIcsDate(input.booking.start_at_utc)}`,
-    `DTEND:${toIcsDate(input.booking.end_at_utc)}`,
-    `SUMMARY:${escapeIcsText(summary)}`,
-    `DESCRIPTION:${escapeIcsText(description)}`,
-    `LOCATION:${escapeIcsText(input.businessName)}`,
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ].join("\r\n");
 }
 
 export default function TenantPublicBookingFlow({
@@ -671,39 +615,6 @@ export default function TenantPublicBookingFlow({
   };
 
   const stepNumber = STEP_ORDER.indexOf(currentStep) + 1;
-
-  const handleDownloadConfirmation = () => {
-    if (!createdBooking) return;
-    const lines = [
-      `${businessName} - Confirmación de reserva`,
-      "",
-      `Cliente: ${createdBooking.customer_name}`,
-      `Estado: ${createdBooking.status === "PENDING" ? "Pendiente de confirmación" : "Confirmada"}`,
-      `Fecha: ${formatSlotDate(createdBooking.start_at_utc)}`,
-      `Hora: ${formatSlotTime(createdBooking.start_at_utc)}`,
-      `Profesional: ${createdBooking.employee?.name ?? "Por asignar"}`,
-      `Personas: ${createdBooking.party_size}`,
-      `Total: ${createdBooking.total_price} ${createdBooking.currency}`,
-      "",
-      "Servicios:",
-      ...createdBooking.items.map((item) => `- ${item.service_name_snapshot}`),
-    ];
-
-    downloadTextFile({
-      fileName: `reserva-${createdBooking.id}.txt`,
-      content: lines.join("\n"),
-      type: "text/plain;charset=utf-8",
-    });
-  };
-
-  const handleDownloadCalendar = () => {
-    if (!createdBooking) return;
-    downloadTextFile({
-      fileName: `reserva-${createdBooking.id}.ics`,
-      content: buildBookingIcs({ booking: createdBooking, businessName }),
-      type: "text/calendar;charset=utf-8",
-    });
-  };
 
   if (isLoadingMeta) {
     return (
@@ -1273,24 +1184,6 @@ export default function TenantPublicBookingFlow({
                       </div>
                       <div className="mt-4 flex justify-end">
                         <div className="flex flex-wrap justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={handleDownloadConfirmation}
-                            disabled={!createdBooking}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-4 py-2 text-sm font-medium text-neutral disabled:opacity-50"
-                          >
-                            <Download className="h-4 w-4" />
-                            Descargar confirmación
-                          </button>
-                          <button
-                            type="button"
-                            onClick={handleDownloadCalendar}
-                            disabled={!createdBooking}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border-strong bg-surface px-4 py-2 text-sm font-medium text-neutral disabled:opacity-50"
-                          >
-                            <CalendarPlus className="h-4 w-4" />
-                            Agregar al calendario
-                          </button>
                           <button
                             type="button"
                             onClick={resetFlow}

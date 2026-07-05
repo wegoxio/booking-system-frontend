@@ -65,7 +65,7 @@ export default function ConfirmActionModal({
     >
       <button
         type="button"
-        aria-label="Cerrar modal de confirmacion"
+        aria-label="Cerrar modal de confirmación"
         className={`absolute inset-0 bg-overlay-strong backdrop-blur-[5px] ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}

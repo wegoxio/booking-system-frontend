@@ -173,7 +173,7 @@ export default function TenantsManagement() {
       }
 
       if (!/^\S+@\S+\.\S+$/.test(normalizedInviteEmail)) {
-        const inviteValidationError = "Debes ingresar un correo valido para la invitacion.";
+        const inviteValidationError = "Debes ingresar un correo válido para la invitación.";
         setFormError(inviteValidationError);
         toast.error(inviteValidationError);
         return;
@@ -211,13 +211,13 @@ export default function TenantsManagement() {
               },
               token,
             );
-            toast.success("Invitacion del administrador enviada.");
+            toast.success("Invitación del administrador enviada.");
           } catch (inviteError) {
             const inviteErrorMessage =
               inviteError instanceof Error
                 ? inviteError.message
-                : "No se pudo enviar la invitacion del administrador.";
-            toast.error(`Negocio creado, pero la invitacion fallo: ${inviteErrorMessage}`);
+                : "No se pudo enviar la invitación del administrador.";
+            toast.error(`Negocio creado, pero la invitación falló: ${inviteErrorMessage}`);
           }
         }
       }

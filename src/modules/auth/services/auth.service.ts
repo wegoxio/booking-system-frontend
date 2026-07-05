@@ -5,11 +5,18 @@ import {
     CompleteTenantDashboardTourResponse,
     CompleteTenantAdminOnboardingPayload,
     CompleteTenantAdminOnboardingResponse,
+    CompleteMfaLoginPayload,
     GenericSuccessResponse,
+    AuthSessionsResponse,
     LoginPayload,
     LoginResponse,
     LogoutAllResponse,
     LogoutResponse,
+    MfaDisableResponse,
+    MfaEnableResponse,
+    MfaRecoveryCodesResponse,
+    MfaSetupResponse,
+    MfaStatusResponse,
     RequestPasswordResetPayload,
     RefreshResponse,
     ResolvePasswordResetPayload,
@@ -26,6 +33,13 @@ export const authService = {
             body: JSON.stringify(payload),
             skipAuthRefresh: true,
         })
+    },
+    completeMfaLogin: async(payload: CompleteMfaLoginPayload): Promise<RefreshResponse> => {
+        return apiFetch<RefreshResponse>("/auth/login/mfa", {
+            method: "POST",
+            body: JSON.stringify(payload),
+            skipAuthRefresh: true,
+        });
     },
     refresh: async(): Promise<RefreshResponse> => {
         return apiFetch<RefreshResponse>("/auth/refresh", {
@@ -113,5 +127,65 @@ export const authService = {
                 token,
             },
         );
+    },
+    getMfaStatus: async(token: string): Promise<MfaStatusResponse> => {
+        return apiFetch<MfaStatusResponse>("/auth/mfa/status", {
+            method: "GET",
+            token,
+        });
+    },
+    startMfaSetup: async(token: string): Promise<MfaSetupResponse> => {
+        return apiFetch<MfaSetupResponse>("/auth/mfa/setup", {
+            method: "POST",
+            token,
+        });
+    },
+    enableMfa: async(token: string, code: string): Promise<MfaEnableResponse> => {
+        return apiFetch<MfaEnableResponse>("/auth/mfa/enable", {
+            method: "POST",
+            token,
+            body: JSON.stringify({ code }),
+        });
+    },
+    disableMfa: async(
+        token: string,
+        payload: { code?: string; recovery_code?: string },
+    ): Promise<MfaDisableResponse> => {
+        return apiFetch<MfaDisableResponse>("/auth/mfa/disable", {
+            method: "POST",
+            token,
+            body: JSON.stringify(payload),
+        });
+    },
+    regenerateRecoveryCodes: async(
+        token: string,
+        payload: { code?: string; recovery_code?: string },
+    ): Promise<MfaRecoveryCodesResponse> => {
+        return apiFetch<MfaRecoveryCodesResponse>(
+            "/auth/mfa/recovery-codes/regenerate",
+            {
+                method: "POST",
+                token,
+                body: JSON.stringify(payload),
+            },
+        );
+    },
+    listSessions: async(token: string): Promise<AuthSessionsResponse> => {
+        return apiFetch<AuthSessionsResponse>("/auth/sessions", {
+            method: "GET",
+            token,
+        });
+    },
+    revokeSession: async(token: string, sessionId: string): Promise<GenericSuccessResponse> => {
+        return apiFetch<GenericSuccessResponse>(`/auth/sessions/${sessionId}`, {
+            method: "DELETE",
+            token,
+        });
+    },
+    revokeOtherSessions: async(token: string): Promise<LogoutAllResponse> => {
+        return apiFetch<LogoutAllResponse>("/auth/sessions/revoke-others", {
+            method: "POST",
+            token,
+        });
     },
 }

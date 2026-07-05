@@ -185,7 +185,7 @@ export default function ManualBookingComposer({
           <div className="mt-3 grid gap-3 md:grid-cols-[1fr_180px] md:items-end">
             <p className="inline-flex flex-wrap items-center gap-1.5 text-xs text-muted">
               <Clock3 className="h-3.5 w-3.5 text-fg-icon" />
-              {selectedServices.length} servicio(s) seleccionado(s). Duracion estimada:{" "}
+              {selectedServices.length} servicio(s) seleccionado(s). Duración estimada:{" "}
               {formatDuration(estimatedDurationMinutes)}. Total estimado: {estimatedTotalPrice.toFixed(2)}{" "}
               {selectedServices[0]?.currency ?? "USD"}.
             </p>
@@ -389,7 +389,7 @@ export default function ManualBookingComposer({
 
         <PhoneField
           idPrefix="manual-booking-customer-phone"
-          label="Telefono"
+          label="Teléfono"
           countryIso2={customerForm.customer_phone_country_iso2}
           nationalNumber={customerForm.customer_phone_national_number}
           onCountryChange={(value) =>

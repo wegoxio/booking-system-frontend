@@ -45,7 +45,7 @@ function ActivateAccountContent() {
 
     const rawToken = searchParams.get("token")?.trim() ?? "";
     if (!rawToken) {
-      setResolveError("El enlace no es valido o ya no esta disponible.");
+      setResolveError("El enlace no es válido o ya no está disponible.");
       setIsResolving(false);
       didResolveRef.current = true;
       return;

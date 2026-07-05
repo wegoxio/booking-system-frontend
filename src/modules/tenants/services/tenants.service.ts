@@ -46,4 +46,22 @@ export const tenantsService = {
       body: JSON.stringify(payload),
     });
   },
+
+  getCurrent: async (token: string): Promise<Tenant> => {
+    return apiFetch<Tenant>("/tenant/me", {
+      method: "GET",
+      token,
+    });
+  },
+
+  updateCurrent: async (
+    payload: UpdateTenantPayload,
+    token: string,
+  ): Promise<Tenant> => {
+    return apiFetch<Tenant>("/tenant/me", {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
 };

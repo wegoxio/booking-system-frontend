@@ -31,8 +31,25 @@ export interface AuthAccessTokenResponse {
     access_token: string;
 }
 
-export type LoginResponse = AuthAccessTokenResponse;
+export interface AuthMfaChallengeResponse {
+    mfa_required: true;
+    challenge_token: string;
+    expires_at: string;
+    user: {
+        email: string;
+        name: string;
+        role: "SUPER_ADMIN" | "TENANT_ADMIN";
+    };
+}
+
+export type LoginResponse = AuthAccessTokenResponse | AuthMfaChallengeResponse;
 export type RefreshResponse = AuthAccessTokenResponse;
+
+export interface CompleteMfaLoginPayload {
+    challenge_token: string;
+    code?: string;
+    recovery_code?: string;
+}
 
 export interface LogoutResponse {
     success: true;
@@ -78,4 +95,48 @@ export interface CompleteTenantAdminOnboardingResponse {
 export interface CompleteTenantDashboardTourResponse {
     success: true;
     completed_at: string | null;
+}
+
+export interface MfaStatusResponse {
+    enabled: boolean;
+    enabled_at: string | null;
+    last_used_at: string | null;
+    recovery_codes_remaining: number;
+    pending_setup_expires_at: string | null;
+}
+
+export interface MfaSetupResponse {
+    secret: string;
+    otpauth_url: string;
+    expires_at: string;
+}
+
+export interface MfaEnableResponse {
+    success: true;
+    enabled_at: string;
+    recovery_codes: string[];
+}
+
+export interface MfaDisableResponse {
+    success: true;
+    revoked_sessions: number;
+}
+
+export interface MfaRecoveryCodesResponse {
+    success: true;
+    recovery_codes: string[];
+}
+
+export interface AuthSessionItem {
+    id: string;
+    current: boolean;
+    created_at: string;
+    last_used_at: string | null;
+    expires_at: string;
+    ip: string | null;
+    user_agent: string | null;
+}
+
+export interface AuthSessionsResponse {
+    sessions: AuthSessionItem[];
 }

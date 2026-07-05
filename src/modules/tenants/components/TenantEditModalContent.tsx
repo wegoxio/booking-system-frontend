@@ -147,7 +147,7 @@ export default function TenantEditModalContent({
             <p className="mt-2 text-sm text-muted">
               {isEditing
                 ? form.is_active
-                  ? "El negocio seguira habilitado para iniciar sesion."
+                  ? "El negocio seguirá habilitado para iniciar sesión."
                   : "El negocio quedara inactivo para administradores."
                 : "El negocio se creara como activo por defecto."}
             </p>
@@ -157,12 +157,12 @@ export default function TenantEditModalContent({
             <div className="rounded-2xl border border-border-soft bg-surface-panel-strong p-4">
               <div className="inline-flex items-center gap-2 text-sm font-medium text-fg">
                 <ShieldCheck className="h-4 w-4 text-fg-icon" />
-                Invitacion al administrador
+                Invitación al administrador
               </div>
               <p className="mt-2 text-sm text-muted">
                 {inviteAdminEnabled
-                  ? "Al crear el negocio se intentara enviar la invitacion al correo indicado."
-                  : "Puedes crear solo el negocio y enviar invitaciones mas tarde desde Admins de negocio."}
+                  ? "Al crear el negocio se intentará enviar la invitación al correo indicado."
+                  : "Puedes crear solo el negocio y enviar invitaciones más tarde desde Admins de negocio."}
               </p>
             </div>
           ) : null}

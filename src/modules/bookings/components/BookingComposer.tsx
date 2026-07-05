@@ -293,7 +293,7 @@ export default function BookingComposer({
         {requiredDurationMinutes ? (
           <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-muted">
             <Clock3 className="h-3.5 w-3.5 text-fg-icon" />
-            Duracion estimada: {formatDuration(requiredDurationMinutes)}.
+            Duración estimada: {formatDuration(requiredDurationMinutes)}.
           </p>
         ) : null}
       </div>
@@ -341,7 +341,7 @@ export default function BookingComposer({
 
         <PhoneField
           idPrefix="booking-customer-phone"
-          label="Telefono"
+          label="Teléfono"
           countryIso2={customerForm.customer_phone_country_iso2}
           nationalNumber={customerForm.customer_phone_national_number}
           onCountryChange={(value) =>

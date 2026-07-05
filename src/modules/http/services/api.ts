@@ -33,6 +33,90 @@ export class ApiError extends Error {
 
 let refreshInFlight: Promise<string | null> | null = null;
 
+const CONNECTION_ERROR_MESSAGE =
+  "No pudimos conectar con el servidor. Intenta nuevamente en unos segundos.";
+
+const REQUEST_TIMEOUT_MESSAGE =
+  "La solicitud tardó demasiado. Revisa tu conexión e intenta otra vez.";
+
+const GENERIC_ERROR_MESSAGE =
+  "No pudimos completar la operación. Intenta nuevamente.";
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+function toFriendlyNetworkError(error: unknown): ApiError {
+  if (isAbortError(error)) {
+    return new ApiError(REQUEST_TIMEOUT_MESSAGE, 0);
+  }
+
+  return new ApiError(CONNECTION_ERROR_MESSAGE, 0);
+}
+
+async function safeFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    throw toFriendlyNetworkError(error);
+  }
+}
+
+function statusToFriendlyMessage(status: number, statusText: string): string {
+  if (status === 400) return "Revisa los datos ingresados e intenta nuevamente.";
+  if (status === 401) return "Tu sesión expiró. Inicia sesión nuevamente.";
+  if (status === 403) return "No tienes permisos para realizar esta acción.";
+  if (status === 404) return "No encontramos la información solicitada.";
+  if (status === 409) return "La operación no se pudo completar por un conflicto de datos.";
+  if (status === 422) return "Hay datos inválidos. Corrígelos e intenta nuevamente.";
+  if (status === 429) return "Demasiados intentos. Espera un momento e intenta nuevamente.";
+  if (status >= 500) return "El servidor tuvo un problema. Intenta nuevamente en unos minutos.";
+
+  return statusText?.trim() ? GENERIC_ERROR_MESSAGE : GENERIC_ERROR_MESSAGE;
+}
+
+function normalizeApiMessage(message: unknown, status: number, statusText: string): string {
+  if (Array.isArray(message)) {
+    const joined = message
+      .map((item) => String(item).trim())
+      .filter(Boolean)
+      .join(", ");
+    return joined || statusToFriendlyMessage(status, statusText);
+  }
+
+  if (typeof message !== "string") {
+    return statusToFriendlyMessage(status, statusText);
+  }
+
+  const normalized = message.trim();
+  if (!normalized) {
+    return statusToFriendlyMessage(status, statusText);
+  }
+
+  const technicalPatterns = [
+    /networkerror/i,
+    /failed to fetch/i,
+    /fetch resource/i,
+    /load failed/i,
+    /cors/i,
+    /http status/i,
+    /internal server error/i,
+    /bad gateway/i,
+    /gateway timeout/i,
+    /service unavailable/i,
+    /^error\s+\d{3}/i,
+  ];
+
+  if (technicalPatterns.some((pattern) => pattern.test(normalized))) {
+    return statusToFriendlyMessage(status, statusText);
+  }
+
+  return normalized;
+}
+
 function buildHeaders(
   headers: HeadersInit | undefined,
   token: string | null,
@@ -54,7 +138,7 @@ function shouldTryRefresh(endpoint: string): boolean {
 
 async function requestFreshTokens(): Promise<string | null> {
   const executeRefresh = async (csrfToken: string | null) =>
-    fetch(`${API_URL}/auth/refresh`, {
+    safeFetch(`${API_URL}/auth/refresh`, {
       method: "POST",
       credentials: "include",
       cache: "no-store",
@@ -99,11 +183,11 @@ export async function refreshAccessTokenWithStoredRefreshToken(): Promise<string
 
 async function parseErrorMessage(response: Response): Promise<string> {
   const errorData = await response.json().catch(() => null);
-  const message = Array.isArray(errorData?.message)
-    ? errorData.message.join(", ")
-    : errorData?.message;
-
-  return message || `Error ${response.status}: ${response.statusText}`;
+  return normalizeApiMessage(
+    errorData?.message,
+    response.status,
+    response.statusText,
+  );
 }
 
 export async function apiFetch<t>(
@@ -123,7 +207,7 @@ export async function apiFetch<t>(
   const executeRequest = async (resolvedToken: string | null): Promise<Response> => {
     const csrfToken = getCsrfToken();
 
-    return fetch(`${API_URL}${endpoint}`, {
+    return safeFetch(`${API_URL}${endpoint}`, {
       ...restOptions,
       cache: restOptions.cache ?? "no-store",
       credentials: restOptions.credentials ?? "include",

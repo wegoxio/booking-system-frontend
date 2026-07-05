@@ -169,6 +169,8 @@ export const bookingsService = {
     const queryString = toQueryString({
       employee_id: query.employee_id,
       date: query.date,
+      date_from: query.date_from,
+      date_to: query.date_to,
       timezone: query.timezone,
       status: query.status,
       q: query.q,

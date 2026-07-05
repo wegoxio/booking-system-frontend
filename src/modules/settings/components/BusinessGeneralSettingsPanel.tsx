@@ -20,18 +20,25 @@ import type { Tenant } from "@/types/tenant.types";
 import {
   Building2,
   CheckCircle2,
+  Copy,
+  Download,
+  ExternalLink,
   KeyRound,
   LoaderCircle,
   Mail,
   MapPin,
+  QrCode,
   Save,
   ShieldAlert,
 } from "lucide-react";
+import * as QRCode from "qrcode";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 
 const FIXED_COUNTRY = "Venezuela";
 const VENEZUELA_PHONE_ISO2 = DEFAULT_PHONE_COUNTRY_ISO2;
+const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_DOMAIN?.trim() ?? "";
+const PUBLIC_BOOKING_PREFIX = "/book";
 
 const VENEZUELA_STATE_CITIES: Record<string, string[]> = {
   Amazonas: ["Puerto Ayacucho", "San Fernando de Atabapo"],
@@ -201,18 +208,36 @@ function FieldError({ message }: { message?: string }) {
   return <p className="mt-1.5 text-xs font-medium text-danger">{message}</p>;
 }
 
+function trimTrailingSlashes(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+function buildTenantBookingUrl(baseDomain: string, tenantSlug: string) {
+  const normalizedDomain = trimTrailingSlashes(baseDomain.trim());
+  const normalizedSlug = tenantSlug.trim();
+  if (!normalizedDomain || !normalizedSlug) return "";
+  return `${normalizedDomain}${PUBLIC_BOOKING_PREFIX}/${encodeURIComponent(normalizedSlug)}`;
+}
+
 export default function BusinessGeneralSettingsPanel() {
   const { token, user } = useAuth();
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [draft, setDraft] = useState<BusinessDraft>(() => toDraft(null));
   const [errors, setErrors] = useState<BusinessErrors>({});
   const [requestedEmail, setRequestedEmail] = useState("");
+  const [runtimeAppDomain, setRuntimeAppDomain] = useState("");
+  const [bookingQrDataUrl, setBookingQrDataUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSendingPasswordLink, setIsSendingPasswordLink] = useState(false);
 
   const isTenantAdmin = user?.role === "TENANT_ADMIN";
   const hasTenant = isTenantAdmin && !!user?.tenant_id;
+  const bookingAppDomain = APP_DOMAIN || runtimeAppDomain;
+  const tenantBookingPublicUrl = useMemo(
+    () => buildTenantBookingUrl(bookingAppDomain, tenant?.slug ?? user?.tenant?.slug ?? ""),
+    [bookingAppDomain, tenant?.slug, user?.tenant?.slug],
+  );
 
   const cityOptions = useMemo<SelectOption[]>(
     () =>
@@ -256,6 +281,43 @@ export default function BusinessGeneralSettingsPanel() {
   useEffect(() => {
     void loadTenant();
   }, [loadTenant]);
+
+  useEffect(() => {
+    if (APP_DOMAIN) return;
+    if (typeof window === "undefined") return;
+    setRuntimeAppDomain(window.location.origin);
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!tenantBookingPublicUrl) {
+      setBookingQrDataUrl("");
+      return () => {
+        isCancelled = true;
+      };
+    }
+
+    QRCode.toDataURL(tenantBookingPublicUrl, {
+      width: 360,
+      margin: 1,
+      errorCorrectionLevel: "M",
+      color: {
+        dark: "#111827",
+        light: "#ffffff",
+      },
+    })
+      .then((dataUrl) => {
+        if (!isCancelled) setBookingQrDataUrl(dataUrl);
+      })
+      .catch(() => {
+        if (!isCancelled) setBookingQrDataUrl("");
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [tenantBookingPublicUrl]);
 
   const updateField = (field: keyof BusinessDraft, value: string) => {
     setDraft((current) => {
@@ -316,6 +378,33 @@ export default function BusinessGeneralSettingsPanel() {
     } finally {
       setIsSendingPasswordLink(false);
     }
+  };
+
+  const copyPublicBookingLink = async () => {
+    if (!tenantBookingPublicUrl) {
+      toast.error("Configura el dominio público para generar el enlace.");
+      return;
+    }
+
+    if (!navigator.clipboard?.writeText) {
+      toast.error("Tu navegador no permite copiar al portapapeles.");
+      return;
+    }
+
+    await navigator.clipboard.writeText(tenantBookingPublicUrl);
+    toast.success("Enlace público copiado.");
+  };
+
+  const downloadPublicBookingQr = () => {
+    if (!bookingQrDataUrl || !tenant?.slug) {
+      toast.error("No se pudo generar el QR del enlace público.");
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = bookingQrDataUrl;
+    anchor.download = `qr-reservas-${tenant.slug}.png`;
+    anchor.click();
   };
 
   const copyEmailChangeRequest = async () => {
@@ -538,6 +627,74 @@ export default function BusinessGeneralSettingsPanel() {
               </div>
             </div>
           )}
+        </article>
+
+        <article className="rounded-[28px] border border-card-border bg-card p-5 shadow-theme-card sm:p-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 place-items-center rounded-2xl border border-card-border bg-surface text-accent">
+                <QrCode className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold text-fg-strong">
+                  Enlace público de reservas
+                </h2>
+                <p className="text-sm text-fg-secondary">
+                  Compártelo como enlace o QR para que tus clientes reserven.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-5 break-all rounded-2xl border border-border-soft bg-surface-soft px-3 py-2 text-xs text-fg-secondary">
+            {tenantBookingPublicUrl || "Configura el dominio público para generar el enlace."}
+          </p>
+
+          <div className="mt-4 rounded-3xl border border-border-soft bg-surface-soft px-4 py-5">
+            {bookingQrDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={bookingQrDataUrl}
+                alt="QR del enlace público de reservas"
+                className="mx-auto h-44 w-44 rounded-2xl bg-white p-2"
+              />
+            ) : (
+              <div className="flex h-44 items-center justify-center rounded-2xl border border-dashed border-border text-center text-xs text-muted">
+                El QR aparecerá cuando exista un enlace público.
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              onClick={() => void copyPublicBookingLink()}
+              disabled={!tenantBookingPublicUrl}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-fg-strong hover:border-accent disabled:opacity-60"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copiar enlace
+            </Button>
+            <Button
+              onClick={downloadPublicBookingQr}
+              disabled={!bookingQrDataUrl}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-fg-strong hover:border-accent disabled:opacity-60"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Descargar QR
+            </Button>
+            <a
+              href={tenantBookingPublicUrl || undefined}
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled={!tenantBookingPublicUrl}
+              className={`inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-fg-strong hover:border-accent ${
+                tenantBookingPublicUrl ? "" : "pointer-events-none opacity-60"
+              }`}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Ver vista pública
+            </a>
+          </div>
         </article>
 
         <article className="rounded-[28px] border border-card-border bg-card p-5 shadow-theme-card sm:p-6">

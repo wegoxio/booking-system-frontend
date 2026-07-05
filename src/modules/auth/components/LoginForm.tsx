@@ -11,7 +11,6 @@ import {
   CalendarClock,
   Eye,
   EyeOff,
-  KeyRound,
   ShieldCheck,
   Users2,
   type LucideIcon,
@@ -217,19 +216,6 @@ export default function LoginForm() {
 
             <div className="rounded-[30px] border border-border-strong bg-surface p-6 shadow-theme-soft sm:p-8">
               <div className="mb-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-border-soft bg-surface-soft px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-fg-secondary">
-                  {mfaChallenge ? (
-                    <>
-                      <ShieldCheck className="h-3.5 w-3.5 text-success" />
-                      Segundo factor
-                    </>
-                  ) : (
-                    <>
-                      <KeyRound className="h-3.5 w-3.5 text-accent" />
-                      Acceso seguro
-                    </>
-                  )}
-                </div>
                 <h1 className="mt-4 text-2xl font-semibold text-fg-strong">
                   {mfaChallenge ? "Verifica tu identidad" : "Iniciar sesión"}
                 </h1>

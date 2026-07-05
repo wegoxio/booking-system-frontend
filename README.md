@@ -12,10 +12,11 @@ Frontend web de Wegox Booking, una plataforma SaaS multiempresa para reservas, g
 - Flujo público de reservas por `tenantSlug`.
 - Flujo público de reprogramación mediante enlace seguro.
 - Gestión de servicios, profesionales y citas.
+- Vista calendario mensual, semanal y diaria para la operación de citas.
 - Branding dinámico por negocio y por plataforma.
 - Theme builder para identidad visual.
 - Configuración general del negocio.
-- QR del enlace público de reservas.
+- QR del enlace público de reservas dentro de Configuración General.
 - Onboarding visual para administradores de negocio.
 - Activación de cuenta y restablecimiento de contraseña.
 - Mensajes de error entendibles para usuarios finales.
@@ -172,7 +173,14 @@ El frontend cubre:
 - Gestión pública de cita mediante token.
 - Reprogramación desde enlace seguro.
 - Reprogramación operativa desde panel para el negocio.
+- Vista de citas en tabla o calendario mensual/semanal/diario.
+- Panel lateral de día seleccionado con resumen de actividad.
+- Citas coloreadas por estado para lectura rápida.
+- Drag and drop para reprogramar citas pendientes o confirmadas con validación final del backend.
+- Bloques visuales de horario no disponible cuando se filtra por profesional.
 - Acciones rápidas en tablas cuando el estado de la cita lo permite.
+- Detalle operativo de cita con cliente, servicios, profesional, timeline básico, notificaciones y acciones rápidas.
+- Copia de resumen listo para WhatsApp desde el detalle de cita.
 
 ## Branding, QR y assets
 
@@ -187,6 +195,7 @@ Los logos y favicon se cargan desde las URLs entregadas por el backend. Si el ba
 - Filtros con selects visuales e iconos.
 - Selects de moneda con iconos.
 - Date picker visual en reportes.
+- Calendario operativo de citas con vista mensual, semanal y diaria.
 - Badges de estado más claros.
 - Feedback de carga en exportaciones.
 - Textos internos reemplazados por copy entendible para usuarios.
@@ -206,10 +215,12 @@ El estado actual del frontend cubre:
 - CRUD visual de profesionales.
 - Upload y visualización de avatares.
 - Creación, gestión y reprogramación de citas.
+- Vista calendario de citas con panel de día seleccionado.
+- Detalle operativo de cita con timeline y acciones rápidas.
 - Flujo público de reserva multi-step.
 - Gestión pública de cita por token.
 - Branding dinámico con logo, favicon, título y variables CSS.
-- QR del enlace público de reservas.
+- QR del enlace público de reservas desde Configuración General.
 - Configuración general del negocio.
 - Theme builder.
 - Panel de MFA y sesiones.
@@ -222,4 +233,5 @@ El estado actual del frontend cubre:
 - No hay pagos integrados.
 - No hay WhatsApp o SMS nativo.
 - No hay sincronización con calendarios externos.
+- La vista calendario usa la lista de citas existente con rango `date_from/date_to`; si un negocio supera 100 citas visibles en el periodo, conviene crear un endpoint de calendario agregado.
 - La app depende de una configuración correcta de `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_DOMAIN`, cookies y CORS.

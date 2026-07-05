@@ -1,6 +1,8 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
+import BookingCalendarView from "@/modules/bookings/components/BookingCalendarView";
+import BookingDetailModal from "@/modules/bookings/components/BookingDetailModal";
 import BookingsCreateModal from "@/modules/bookings/components/BookingsCreateModal";
 import BookingsTable from "@/modules/bookings/components/BookingsTable";
 import { bookingsService } from "@/modules/bookings/services/bookings.service";
@@ -10,13 +12,18 @@ import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
 import SectionHeader from "@/modules/ui/SectionHeader";
 import TableEditModal from "@/modules/ui/TableEditModal";
 import TableSkeleton from "@/modules/ui/TableSkeleton";
-import type { Booking, BookingSlot, BookingStatus } from "@/types/booking.types";
+import type {
+  Booking,
+  BookingSlot,
+  BookingStatus,
+  EmployeeScheduleResponse,
+} from "@/types/booking.types";
 import type { Employee } from "@/types/employee.types";
 import {
   CalendarPlus,
+  CalendarDays,
   CheckCircle2,
   CircleAlert,
-  Clock3,
   Copy,
   Download,
   ExternalLink,
@@ -24,11 +31,12 @@ import {
   Plus,
   QrCode,
   Search,
+  Table2,
   TimerReset,
   UserRound,
   XCircle,
+  Clock3,
 } from "lucide-react";
-import * as QRCode from "qrcode";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 
@@ -110,6 +118,9 @@ type PendingReschedule = {
   errorMessage: string;
 };
 
+type BookingsPresentationMode = "table" | "calendar";
+type BookingCalendarMode = "month" | "week" | "day";
+
 function isCancellationStatus(status: BookingStatus) {
   return status === "CANCELLED" || status === "NO_SHOW";
 }
@@ -124,10 +135,54 @@ function getTodayDateInput() {
 
 function getDateInputFromIso(value: string) {
   const date = new Date(value);
+  return getDateInputFromDate(date);
+}
+
+function getDateInputFromDate(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function startOfWeek(date: Date) {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  const mondayBasedDay = (result.getDay() + 6) % 7;
+  result.setDate(result.getDate() - mondayBasedDay);
+  return result;
+}
+
+function addDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function getCalendarQueryRange(cursorDate: Date, mode: BookingCalendarMode) {
+  if (mode === "day") {
+    return {
+      date_from: getDateInputFromDate(cursorDate),
+      date_to: getDateInputFromDate(cursorDate),
+    };
+  }
+
+  if (mode === "week") {
+    const start = startOfWeek(cursorDate);
+    return {
+      date_from: getDateInputFromDate(start),
+      date_to: getDateInputFromDate(addDays(start, 6)),
+    };
+  }
+
+  const firstOfMonth = new Date(cursorDate.getFullYear(), cursorDate.getMonth(), 1);
+  const calendarStart = startOfWeek(firstOfMonth);
+  const calendarEnd = addDays(calendarStart, 41);
+
+  return {
+    date_from: getDateInputFromDate(calendarStart),
+    date_to: getDateInputFromDate(calendarEnd),
+  };
 }
 
 function formatSlotRange(slot: BookingSlot) {
@@ -178,10 +233,14 @@ export default function BookingsManagement() {
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [selectedEmployeeSchedule, setSelectedEmployeeSchedule] =
+    useState<EmployeeScheduleResponse | null>(null);
 
   const [isLoadingMeta, setIsLoadingMeta] = useState(true);
   const [isLoadingBookings, setIsLoadingBookings] = useState(true);
+  const [isLoadingCalendarSchedule, setIsLoadingCalendarSchedule] = useState(false);
   const [updatingBookingId, setUpdatingBookingId] = useState<string | null>(null);
+  const [dragReschedulingBookingId, setDragReschedulingBookingId] = useState<string | null>(null);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [modalError, setModalError] = useState("");
@@ -194,13 +253,19 @@ export default function BookingsManagement() {
   const [employeeFilter, setEmployeeFilter] = useState(storedFilters.employeeFilter);
   const [dateFilter, setDateFilter] = useState(storedFilters.dateFilter);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedBookingDetail, setSelectedBookingDetail] = useState<Booking | null>(null);
   const [pendingStatusChange, setPendingStatusChange] = useState<PendingStatusChange | null>(null);
   const [pendingReschedule, setPendingReschedule] = useState<PendingReschedule | null>(null);
   const [cancellationReason, setCancellationReason] = useState("");
   const [runtimeAppDomain, setRuntimeAppDomain] = useState("");
   const [isBookingLinkCopied, setIsBookingLinkCopied] = useState(false);
-  const [bookingQrDataUrl, setBookingQrDataUrl] = useState("");
+  const bookingQrDataUrl = "";
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [presentationMode, setPresentationMode] =
+    useState<BookingsPresentationMode>("table");
+  const [calendarMode, setCalendarMode] = useState<BookingCalendarMode>("month");
+  const [calendarCursorDate, setCalendarCursorDate] = useState(() => new Date());
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => new Date());
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
   const [totalBookings, setTotalBookings] = useState(0);
@@ -249,37 +314,6 @@ export default function BookingsManagement() {
   }, []);
 
   useEffect(() => {
-    let isCancelled = false;
-
-    if (!tenantBookingPublicUrl) {
-      setBookingQrDataUrl("");
-      return () => {
-        isCancelled = true;
-      };
-    }
-
-    QRCode.toDataURL(tenantBookingPublicUrl, {
-      width: 320,
-      margin: 1,
-      errorCorrectionLevel: "M",
-      color: {
-        dark: "#111827",
-        light: "#ffffff",
-      },
-    })
-      .then((dataUrl) => {
-        if (!isCancelled) setBookingQrDataUrl(dataUrl);
-      })
-      .catch(() => {
-        if (!isCancelled) setBookingQrDataUrl("");
-      });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [tenantBookingPublicUrl]);
-
-  useEffect(() => {
     const timeout = window.setTimeout(() => {
       setDebouncedSearchQuery(searchQuery.trim());
     }, 250);
@@ -321,15 +355,21 @@ export default function BookingsManagement() {
     setErrorMessage("");
 
     try {
+      const calendarRange =
+        presentationMode === "calendar"
+          ? getCalendarQueryRange(calendarCursorDate, calendarMode)
+          : null;
       const response = await bookingsService.findAll(
         {
           status: statusFilter || undefined,
           employee_id: employeeFilter || undefined,
-          date: dateFilter || undefined,
+          date: presentationMode === "table" ? dateFilter || undefined : undefined,
+          date_from: calendarRange?.date_from,
+          date_to: calendarRange?.date_to,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           q: debouncedSearchQuery || undefined,
-          page,
-          limit,
+          page: presentationMode === "calendar" ? 1 : page,
+          limit: presentationMode === "calendar" ? 100 : limit,
         },
         token,
       );
@@ -339,7 +379,7 @@ export default function BookingsManagement() {
       setTotalPages(response.pagination.total_pages);
       setBookingsTodayCount(response.summary.today_count);
 
-      if (page > response.pagination.total_pages) {
+      if (presentationMode === "table" && page > response.pagination.total_pages) {
         setPage(response.pagination.total_pages);
       }
     } catch (error) {
@@ -361,6 +401,9 @@ export default function BookingsManagement() {
     employeeFilter,
     limit,
     page,
+    calendarCursorDate,
+    calendarMode,
+    presentationMode,
     statusFilter,
     token,
   ]);
@@ -376,6 +419,34 @@ export default function BookingsManagement() {
   useEffect(() => {
     void loadBookings();
   }, [loadBookings]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadCalendarSchedule() {
+      if (!token || presentationMode !== "calendar" || !employeeFilter) {
+        setSelectedEmployeeSchedule(null);
+        setIsLoadingCalendarSchedule(false);
+        return;
+      }
+
+      setIsLoadingCalendarSchedule(true);
+      try {
+        const schedule = await bookingsService.getEmployeeSchedule(employeeFilter, token);
+        if (!isCancelled) setSelectedEmployeeSchedule(schedule);
+      } catch {
+        if (!isCancelled) setSelectedEmployeeSchedule(null);
+      } finally {
+        if (!isCancelled) setIsLoadingCalendarSchedule(false);
+      }
+    }
+
+    void loadCalendarSchedule();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [employeeFilter, presentationMode, token]);
 
   const pendingBookingsCount = useMemo(
     () =>
@@ -394,7 +465,7 @@ export default function BookingsManagement() {
     searchQuery.trim().length > 0 ||
     statusFilter.length > 0 ||
     employeeFilter.length > 0 ||
-    dateFilter.length > 0;
+    (presentationMode === "table" && dateFilter.length > 0);
 
   const handleClearFilters = useCallback(() => {
     setSearchQuery("");
@@ -426,16 +497,8 @@ export default function BookingsManagement() {
   }, [tenantBookingPublicUrl]);
 
   const handleDownloadTenantBookingQr = useCallback(() => {
-    if (!bookingQrDataUrl || !tenantSlug) {
-      toast.error("No se pudo generar el QR del enlace público.");
-      return;
-    }
-
-    const anchor = document.createElement("a");
-    anchor.href = bookingQrDataUrl;
-    anchor.download = `qr-reservas-${tenantSlug}.png`;
-    anchor.click();
-  }, [bookingQrDataUrl, tenantSlug]);
+    toast.error("El QR se gestiona desde Configuración.");
+  }, []);
 
   useEffect(() => {
     if (!isBookingLinkCopied) return;
@@ -478,6 +541,37 @@ export default function BookingsManagement() {
     }
   };
 
+  const handleCalendarDropReschedule = useCallback(
+    async (booking: Booking, startAtUtc: string) => {
+      if (!token) return;
+
+      setDragReschedulingBookingId(booking.id);
+      setErrorMessage("");
+      try {
+        await bookingsService.reschedule(
+          booking.id,
+          {
+            start_at_utc: startAtUtc,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+          token,
+        );
+        await loadBookings();
+        toast.success("Cita reprogramada.");
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No se pudo reprogramar la cita en ese horario.";
+        setErrorMessage(message);
+        toast.error(message);
+      } finally {
+        setDragReschedulingBookingId(null);
+      }
+    },
+    [loadBookings, token],
+  );
+
   const closeStatusModal = useCallback(() => {
     if (updatingBookingId) return;
     setPendingStatusChange(null);
@@ -491,6 +585,14 @@ export default function BookingsManagement() {
 
   const closeCreateModal = useCallback(() => {
     setIsCreateModalOpen(false);
+  }, []);
+
+  const openBookingDetail = useCallback((booking: Booking) => {
+    setSelectedBookingDetail(booking);
+  }, []);
+
+  const closeBookingDetail = useCallback(() => {
+    setSelectedBookingDetail(null);
   }, []);
 
   const loadRescheduleSlots = useCallback(
@@ -676,7 +778,7 @@ export default function BookingsManagement() {
         stats={bookingsStats}
       />
 
-      {isTenantAdmin ? (
+      {false && isTenantAdmin ? (
         <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
           <div className="rounded-[24px] border border-card-border bg-surface-panel p-4 shadow-theme-soft">
             <p className="text-sm font-semibold text-fg-strong">Checklist operativo</p>
@@ -781,7 +883,32 @@ export default function BookingsManagement() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start">
-
+            <div className="rounded-2xl border border-border bg-surface p-1">
+              <button
+                type="button"
+                onClick={() => setPresentationMode("table")}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                  presentationMode === "table"
+                    ? "bg-accent text-accent-text shadow-theme-accent"
+                    : "text-fg-secondary hover:bg-surface-soft"
+                }`}
+              >
+                <Table2 className="h-3.5 w-3.5" />
+                Tabla
+              </button>
+              <button
+                type="button"
+                onClick={() => setPresentationMode("calendar")}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                  presentationMode === "calendar"
+                    ? "bg-accent text-accent-text shadow-theme-accent"
+                    : "text-fg-secondary hover:bg-surface-soft"
+                }`}
+              >
+                <CalendarDays className="h-3.5 w-3.5" />
+                Calendario
+              </button>
+            </div>
             <button
               type="button"
               onClick={openCreateModal}
@@ -793,7 +920,11 @@ export default function BookingsManagement() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <div
+          className={`mt-4 grid gap-2 sm:grid-cols-2 ${
+            presentationMode === "table" ? "xl:grid-cols-4" : "xl:grid-cols-3"
+          }`}
+        >
             <label className="relative min-w-60">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-placeholder" />
               <input
@@ -819,12 +950,14 @@ export default function BookingsManagement() {
               disabled={isLoadingMeta}
             />
 
-            <CalendarDatePicker
-              value={dateFilter}
-              onChange={setDateFilter}
-              placeholder="Filtrar por día"
-              buttonClassName="h-11 rounded-2xl"
-            />
+            {presentationMode === "table" ? (
+              <CalendarDatePicker
+                value={dateFilter}
+                onChange={setDateFilter}
+                placeholder="Filtrar por día"
+                buttonClassName="h-11 rounded-2xl"
+              />
+            ) : null}
         </div>
 
         {hasActiveFilters ? (
@@ -844,6 +977,28 @@ export default function BookingsManagement() {
 
         {isLoadingMeta || isLoadingBookings ? (
           <TableSkeleton />
+        ) : presentationMode === "calendar" ? (
+          <div className="mt-6">
+            <BookingCalendarView
+              bookings={bookings}
+              employees={activeEmployees}
+              selectedEmployeeId={employeeFilter}
+              selectedEmployeeSchedule={selectedEmployeeSchedule}
+              mode={calendarMode}
+              cursorDate={calendarCursorDate}
+              selectedDate={selectedCalendarDate}
+              isLoading={isLoadingBookings || isLoadingCalendarSchedule}
+              reschedulingBookingId={dragReschedulingBookingId}
+              onModeChange={setCalendarMode}
+              onCursorDateChange={setCalendarCursorDate}
+              onSelectedDateChange={setSelectedCalendarDate}
+              onOpenDetail={openBookingDetail}
+              onCreateBooking={openCreateModal}
+              onDropReschedule={(booking, startAtUtc) => {
+                void handleCalendarDropReschedule(booking, startAtUtc);
+              }}
+            />
+          </div>
         ) : bookings.length === 0 ? (
           <div className="mt-6 rounded-[28px] border border-dashed border-border bg-surface px-6 py-10 text-center">
             <p className="text-base font-medium text-fg">
@@ -893,13 +1048,14 @@ export default function BookingsManagement() {
             bookings={bookings}
             updatingBookingId={updatingBookingId}
             onReschedule={openRescheduleModal}
+            onOpenDetail={openBookingDetail}
             onStatusChange={(booking, status) => {
               void handleBookingStatusChange(booking, status);
             }}
           />
         )}
 
-        {!isLoadingBookings && totalBookings > 0 ? (
+        {!isLoadingBookings && presentationMode === "table" && totalBookings > 0 ? (
           <div className="mt-4 flex items-center justify-between">
             <p className="text-xs text-muted">
               Mostrando {(page - 1) * limit + 1}-{(page - 1) * limit + bookings.length} de{" "}
@@ -932,6 +1088,25 @@ export default function BookingsManagement() {
         token={token}
         onClose={closeCreateModal}
         onBookingCreated={loadBookings}
+      />
+
+      <BookingDetailModal
+        isOpen={selectedBookingDetail !== null}
+        booking={
+          selectedBookingDetail
+            ? bookings.find((booking) => booking.id === selectedBookingDetail.id) ??
+              selectedBookingDetail
+            : null
+        }
+        onClose={closeBookingDetail}
+        onReschedule={(booking) => {
+          closeBookingDetail();
+          openRescheduleModal(booking);
+        }}
+        onStatusChange={(booking, status) => {
+          closeBookingDetail();
+          void handleBookingStatusChange(booking, status);
+        }}
       />
 
       <TableEditModal

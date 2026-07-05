@@ -206,6 +206,8 @@ export type AvailabilityQuery = {
 export type ListBookingsQuery = {
   employee_id?: string;
   date?: string;
+  date_from?: string;
+  date_to?: string;
   timezone?: string;
   status?: BookingStatus;
   q?: string;

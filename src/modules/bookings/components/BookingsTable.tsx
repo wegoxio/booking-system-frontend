@@ -1,12 +1,14 @@
 import type { Booking, BookingStatus } from "@/types/booking.types";
 import { getPhoneDisplay } from "@/modules/phone/utils/phone";
 import Avatar from "@/modules/ui/Avatar";
-import SelectField, { type SelectOption } from "@/modules/ui/SelectField";
+import type { SelectOption } from "@/modules/ui/SelectField";
 import {
   CalendarClock,
   CalendarPlus,
   CheckCircle2,
   Clock3,
+  Eye,
+  MoreVertical,
   Scissors,
   TimerReset,
   UserRound,
@@ -36,6 +38,7 @@ type BookingsTableProps = {
   updatingBookingId: string | null;
   onStatusChange: (booking: Booking, status: BookingStatus) => void;
   onReschedule: (booking: Booking) => void;
+  onOpenDetail: (booking: Booking) => void;
 };
 
 const BOOKING_SOURCE_LABELS: Record<Booking["source"], string> = {
@@ -120,6 +123,7 @@ export default function BookingsTable({
   updatingBookingId,
   onStatusChange,
   onReschedule,
+  onOpenDetail,
 }: BookingsTableProps): React.ReactNode {
   return (
     <div className="mt-4">
@@ -207,44 +211,58 @@ export default function BookingsTable({
                 </p>
               </div>
 
-              {quickActions.length > 0 ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {["PENDING", "CONFIRMED"].includes(booking.status) ? (
-                    <button
-                      type="button"
-                      disabled={updatingBookingId === booking.id}
-                      onClick={() => onReschedule(booking)}
-                      className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg disabled:opacity-50"
-                    >
-                      <CalendarPlus className="h-3 w-3" />
-                      Reprogramar
-                    </button>
-                  ) : null}
-                  {quickActions.map((action) => (
-                    <button
-                      key={action.status}
-                      type="button"
-                      disabled={updatingBookingId === booking.id}
-                      onClick={() => onStatusChange(booking, action.status)}
-                      className={`rounded-xl border px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${action.toneClass}`}
-                    >
-                      {action.label}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              <div className="mt-3">
-                <SelectField
-                  value={booking.status}
-                  disabled={
-                    updatingBookingId === booking.id ||
-                    BOOKING_STATUS_TRANSITIONS[booking.status].length === 1
-                  }
-                  onValueChange={(value) => onStatusChange(booking, value as BookingStatus)}
-                  options={buildStatusOptions(booking.status)}
-                  triggerClassName="rounded-xl border-border-strong text-xs"
-                />
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onOpenDetail(booking)}
+                  className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg"
+                >
+                  <Eye className="h-3 w-3" />
+                  Ver detalle
+                </button>
+                <details className="relative">
+                  <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-xl border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg">
+                    <MoreVertical className="h-3 w-3" />
+                    Gestionar
+                  </summary>
+                  <div className="absolute right-0 z-20 mt-2 w-52 rounded-2xl border border-border-soft bg-surface p-2 shadow-theme-card">
+                    {["PENDING", "CONFIRMED"].includes(booking.status) ? (
+                      <button
+                        type="button"
+                        disabled={updatingBookingId === booking.id}
+                        onClick={() => onReschedule(booking)}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-fg hover:bg-surface-soft disabled:opacity-50"
+                      >
+                        <CalendarPlus className="h-3.5 w-3.5" />
+                        Reprogramar
+                      </button>
+                    ) : null}
+                    {quickActions.map((action) => (
+                      <button
+                        key={action.status}
+                        type="button"
+                        disabled={updatingBookingId === booking.id}
+                        onClick={() => onStatusChange(booking, action.status)}
+                        className={`mt-1 w-full rounded-xl border px-3 py-2 text-left text-xs font-medium disabled:opacity-50 ${action.toneClass}`}
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                    {buildStatusOptions(booking.status)
+                      .filter((option) => option.value !== booking.status)
+                      .map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          disabled={updatingBookingId === booking.id}
+                          onClick={() => onStatusChange(booking, option.value as BookingStatus)}
+                          className="mt-1 w-full rounded-xl px-3 py-2 text-left text-xs font-medium text-fg hover:bg-surface-soft disabled:opacity-50"
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                  </div>
+                </details>
               </div>
             </article>
           );
@@ -261,7 +279,7 @@ export default function BookingsTable({
               <th className="px-4 pb-2 font-medium">Fecha y hora</th>
               <th className="px-4 pb-2 font-medium">Resumen</th>
               <th className="px-4 pb-2 font-medium">Estado</th>
-              <th className="px-4 pb-2 font-medium">Accion</th>
+              <th className="px-4 pb-2 font-medium">Acción</th>
             </tr>
           </thead>
 
@@ -351,42 +369,61 @@ export default function BookingsTable({
                   </td>
 
                   <td className="rounded-r-3xl border-y border-r border-border-soft bg-surface px-4 py-4">
-                    {quickActions.length > 0 ? (
-                      <div className="mb-2 flex flex-wrap gap-1.5">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onOpenDetail(booking)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] font-medium text-fg transition hover:bg-surface-soft"
+                      >
+                        <Eye className="h-3 w-3" />
+                        Detalle
+                      </button>
+                      <details className="relative">
+                        <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] font-medium text-fg transition hover:bg-surface-soft">
+                          <MoreVertical className="h-3 w-3" />
+                          Gestionar
+                        </summary>
+                        <div className="absolute right-0 z-20 mt-2 w-56 rounded-2xl border border-border-soft bg-surface p-2 shadow-theme-card">
+                          {["PENDING", "CONFIRMED"].includes(booking.status) ? (
+                            <button
+                              type="button"
+                              disabled={updatingBookingId === booking.id}
+                              onClick={() => onReschedule(booking)}
+                              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-fg hover:bg-surface-soft disabled:opacity-50"
+                            >
+                              <CalendarPlus className="h-3.5 w-3.5" />
+                              Reprogramar
+                            </button>
+                          ) : null}
                         {quickActions.map((action) => (
                           <button
                             key={action.status}
                             type="button"
                             disabled={updatingBookingId === booking.id}
                             onClick={() => onStatusChange(booking, action.status)}
-                            className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium disabled:opacity-50 ${action.toneClass}`}
+                            className={`mt-1 w-full rounded-xl border px-3 py-2 text-left text-xs font-medium disabled:opacity-50 ${action.toneClass}`}
                           >
                             {action.label}
                           </button>
                         ))}
-                        {["PENDING", "CONFIRMED"].includes(booking.status) ? (
-                          <button
-                            type="button"
-                            disabled={updatingBookingId === booking.id}
-                            onClick={() => onReschedule(booking)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-fg disabled:opacity-50"
-                          >
-                            <CalendarPlus className="h-3 w-3" />
-                            Reprogramar
-                          </button>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    <SelectField
-                      value={booking.status}
-                      disabled={
-                        updatingBookingId === booking.id ||
-                        BOOKING_STATUS_TRANSITIONS[booking.status].length === 1
-                      }
-                      onValueChange={(value) => onStatusChange(booking, value as BookingStatus)}
-                      options={buildStatusOptions(booking.status)}
-                      triggerClassName="w-44 rounded-xl border-border-strong text-xs"
-                    />
+                          {buildStatusOptions(booking.status)
+                            .filter((option) => option.value !== booking.status)
+                            .map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                disabled={updatingBookingId === booking.id}
+                                onClick={() =>
+                                  onStatusChange(booking, option.value as BookingStatus)
+                                }
+                                className="mt-1 w-full rounded-xl px-3 py-2 text-left text-xs font-medium text-fg hover:bg-surface-soft disabled:opacity-50"
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                        </div>
+                      </details>
+                    </div>
                   </td>
                 </tr>
               );
